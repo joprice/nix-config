@@ -10,6 +10,7 @@
     pkgs.sbt
     pkgs.vscode
     pkgs.jdk11
+    pkgs.bazel
   ];
   nixpkgs.config.allowUnfree = true;
   home.sessionVariables.JAVA_HOME = "${pkgs.jdk11.home}";
@@ -44,6 +45,7 @@
         "git"
         "gitfast"
         "github"
+        "bazel"
       ];
       theme = "robbyrussell";
     };
