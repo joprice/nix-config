@@ -38,3 +38,6 @@ set scrolloff=2
 set sidescrolloff=5
 
 set spell
+
+let g:zenburn_high_Contrast=1
+colorscheme zenburn

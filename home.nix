@@ -22,6 +22,7 @@
     extraConfig = lib.fileContents ./vimrc;
     plugins =  with pkgs.vimPlugins; [
       vim-polyglot
+      zenburn
     ];
   };
   programs.git = {
