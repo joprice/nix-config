@@ -31,6 +31,7 @@
     userEmail = "pricejosephd@gmail.com";
     aliases = {
       s = "status";
+      co = "checkout";
     };
   };
   programs.zsh = {
