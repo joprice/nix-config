@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   # Let Home Manager install and manage itself.
@@ -26,7 +26,11 @@
   ];
   nixpkgs.config.allowUnfree = true;
   home.sessionVariables.JAVA_HOME = "${pkgs.jdk11.home}";
-  programs.vim.enable = true;
+  #programs.vim.enable = true;
+  programs.neovim.enable = true;
+  programs.neovim.viAlias = true;
+  programs.neovim.vimAlias = true;
+  programs.neovim.configure.customRC = lib.fileContents ./vimrc;
   programs.zsh = {
     enable = true;
     enableAutosuggestions = true;
