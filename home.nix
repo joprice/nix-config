@@ -24,6 +24,14 @@
       vim-polyglot
     ];
   };
+  programs.git = {
+    enable = true;
+    userName = "Joseph Price";
+    userEmail = "pricejosephd@gmail.com";
+    aliases = {
+      s = "status";
+    };
+  };
   programs.zsh = {
     enable = true;
     enableAutosuggestions = true;
