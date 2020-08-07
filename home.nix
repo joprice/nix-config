@@ -13,16 +13,19 @@
   ];
   nixpkgs.config.allowUnfree = true;
   home.sessionVariables.JAVA_HOME = "${pkgs.jdk11.home}";
-  programs.neovim = {
+  programs.neovim = with pkgs.vimPlugins; {
     enable = true;
     viAlias = true;
     vimAlias = true;
-  };
-  programs.neovim = {
+    vimdiffAlias = true;
+    # needed by coc-nvim
+    withNodeJs = true;
     extraConfig = lib.fileContents ./vimrc;
-    plugins =  with pkgs.vimPlugins; [
+    plugins = [
       vim-polyglot
       zenburn
+      coc-nvim
+      coc-metals
     ];
   };
   programs.git = {
@@ -53,4 +56,5 @@
       bindkey "^?" backward-delete-char
     '';
   };
+  home.file.".sbt/1.0/plugins/plugins.sbt".text = lib.fileContents ./plugins.sbt;
 }
