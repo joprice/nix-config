@@ -57,4 +57,5 @@
     '';
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".text = lib.fileContents ./plugins.sbt;
+  home.file.".config/nvim/coc-settings.json".text = lib.fileContents ./coc-settings.json;
 }
