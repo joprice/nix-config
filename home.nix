@@ -10,6 +10,7 @@
     pkgs.sbt
     pkgs.vscode
     pkgs.jdk11
+    pkgs.direnv
   ];
   nixpkgs.config.allowUnfree = true;
   home.sessionVariables.JAVA_HOME = "${pkgs.jdk11.home}";
