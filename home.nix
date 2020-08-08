@@ -1,21 +1,24 @@
 { config, pkgs, lib, ... }:
 let async-profiler = pkgs.callPackage ./async-profiler.nix { }; in
+let haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
+  haskellPackages.pretty-simple
+]); in
 {
   programs.home-manager.enable = true;
   home.username = "josephprice";
   home.homeDirectory = "/Users/josephprice";
   home.stateVersion = "20.09";
   home.packages = with pkgs; [
-    (haskellPackages.ghcWithPackages (pkgs: [
-      haskellPackages.pretty-simple
-    ]))
     async-profiler
     direnv
+    haskell
     htop
     jdk11
+    nixpkgs-fmt
     sbt
     scala
     vscode
+    yarn
   ];
   nixpkgs.config.allowUnfree = true;
   home.sessionVariables = {
