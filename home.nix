@@ -15,6 +15,7 @@ let haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
     haskell
     htop
     jdk11
+    kubectl
     nixpkgs-fmt
     sbt
     scala
