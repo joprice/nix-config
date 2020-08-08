@@ -51,6 +51,9 @@ let haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
       s = "status";
       co = "checkout";
     };
+    extraConfig = {
+      pull.ff = "only";
+    };
   };
   programs.zsh = {
     enable = true;
