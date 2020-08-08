@@ -13,7 +13,10 @@
     pkgs.direnv
   ];
   nixpkgs.config.allowUnfree = true;
-  home.sessionVariables.JAVA_HOME = "${pkgs.jdk11.home}";
+  home.sessionVariables = {
+    JAVA_HOME = "${pkgs.jdk11.home}";
+    EDITOR = "vim";
+  };
   programs.neovim = with pkgs.vimPlugins; {
     enable = true;
     viAlias = true;
