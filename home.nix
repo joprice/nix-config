@@ -7,6 +7,12 @@ let
   haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
     haskellPackages.pretty-simple
   ]);
+  # git checkout with skim https://github.com/lotabout/skim
+  git-cof =
+    pkgs.writeShellScriptBin "git-cof" ''
+      export PATH=${pkgs.stdenv.lib.makeBinPath [ pkgs.git pkgs.skim ]}:$PATH
+      git for-each-ref --format='%(refname:short)' refs/heads | sk | xargs git checkout
+    '';
 in
 {
   programs.home-manager.enable = true;
@@ -19,6 +25,7 @@ in
     dhall-json
     direnv
     git-delete-squashed
+    git-cof
     haskell
     htop
     jdk11
@@ -28,6 +35,7 @@ in
     rustup
     sbt
     scala
+    skim
     vscode
     yarn
   ];
