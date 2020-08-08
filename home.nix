@@ -1,18 +1,19 @@
 { config, pkgs, lib, ... }:
 let
   async-profiler = pkgs.callPackage ./async-profiler.nix { };
-  # Find and delete branches that were squash-merged
-  git-delete-squashed =
-    pkgs.writeShellScriptBin "git-delete-squashed" (lib.fileContents ./delete-squashed.sh);
-  haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
-    haskellPackages.pretty-simple
-  ]);
   # git checkout with skim https://github.com/lotabout/skim
   git-cof =
     pkgs.writeShellScriptBin "git-cof" ''
       export PATH=${pkgs.stdenv.lib.makeBinPath [ pkgs.git pkgs.skim ]}:$PATH
       git for-each-ref --format='%(refname:short)' refs/heads | sk | xargs git checkout
     '';
+  # Find and delete branches that were squash-merged
+  git-delete-squashed =
+    pkgs.writeShellScriptBin "git-delete-squashed" (lib.fileContents ./delete-squashed.sh);
+  haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
+    haskellPackages.pretty-simple
+  ]);
+  z = pkgs.callPackage ./z.nix { };
 in
 {
   programs.home-manager.enable = true;
@@ -24,20 +25,22 @@ in
     bat
     dhall-json
     direnv
-    git-delete-squashed
     git-cof
+    git-delete-squashed
     haskell
     htop
     jdk11
     kubectl
     nixpkgs-fmt
     ocaml
+    ripgrep # rg - faster grep
     rustup
     sbt
     scala
     skim
     vscode
     yarn
+    z
   ];
   nixpkgs.config.allowUnfree = true;
   home.sessionVariables = {
@@ -102,6 +105,7 @@ in
       # -I ignores binary files
       grep = "grep --color -I";
       ips = "ifconfig | awk '\$1 == \"inet\" {print \$2}'";
+      hup = "home-manager switch";
     };
     oh-my-zsh = {
       enable = true;
@@ -113,9 +117,10 @@ in
       ];
       theme = "robbyrussell";
     };
-    loginExtra = ''
+    initExtra = ''
       set -o vi
       bindkey "^?" backward-delete-char
+      . ${z}/bin/z.sh
     '';
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".text = lib.fileContents ./plugins.sbt;
