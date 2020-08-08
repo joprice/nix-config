@@ -58,3 +58,11 @@ if has('nvim')
 else
   inoremap <silent><expr> <c-@> coc#refresh()
 endif
+
+let g:ale_fix_on_save = 1
+let g:ale_fixers = {
+\   '*': ['remove_trailing_lines', 'trim_whitespace'],
+\   'nix': ['nixpkgs-fmt'],
+\}
+let g:ale_linters = {
+\}

@@ -1,19 +1,21 @@
 { config, pkgs, lib, ... }:
-
-let async-profiler = pkgs.callPackage ./async-profiler.nix{}; in
+let async-profiler = pkgs.callPackage ./async-profiler.nix { }; in
 {
   programs.home-manager.enable = true;
   home.username = "josephprice";
   home.homeDirectory = "/Users/josephprice";
   home.stateVersion = "20.09";
-  home.packages = [
-    pkgs.htop
-    pkgs.sbt
-    pkgs.vscode
-    pkgs.jdk11
-    pkgs.direnv
-    pkgs.scala
+  home.packages = with pkgs; [
+    (haskellPackages.ghcWithPackages (pkgs: [
+      haskellPackages.pretty-simple
+    ]))
     async-profiler
+    direnv
+    htop
+    jdk11
+    sbt
+    scala
+    vscode
   ];
   nixpkgs.config.allowUnfree = true;
   home.sessionVariables = {
@@ -29,10 +31,13 @@ let async-profiler = pkgs.callPackage ./async-profiler.nix{}; in
     withNodeJs = true;
     extraConfig = lib.fileContents ./vimrc;
     plugins = [
+      ale
+      coc-metals
+      coc-nvim
+      vim-airline
+      vim-airline-themes
       vim-polyglot
       zenburn
-      coc-nvim
-      coc-metals
     ];
   };
   programs.git = {

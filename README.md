@@ -11,3 +11,4 @@ Nix configs for home-manager
 ## TODO
 
 * manage vscode extensions https://nixos.wiki/wiki/Vscode
+* manage ~/.ghc/ghci.conf
