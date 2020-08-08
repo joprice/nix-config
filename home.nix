@@ -23,6 +23,7 @@ in
   home.packages = with pkgs; [
     async-profiler
     bat
+    clang-tools
     dhall-json
     direnv
     git-cof
@@ -105,7 +106,8 @@ in
       # -I ignores binary files
       grep = "grep --color -I";
       ips = "ifconfig | awk '\$1 == \"inet\" {print \$2}'";
-      hup = "home-manager switch";
+      hup = "home-manager switch && exec $SHELL";
+      vim-debug = "vim -V9vim.log main.cpp";
     };
     oh-my-zsh = {
       enable = true;
@@ -123,6 +125,6 @@ in
       . ${z}/bin/z.sh
     '';
   };
-  home.file.".sbt/1.0/plugins/plugins.sbt".text = lib.fileContents ./plugins.sbt;
-  home.file.".config/nvim/coc-settings.json".text = lib.fileContents ./coc-settings.json;
+  home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
+  home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
 }

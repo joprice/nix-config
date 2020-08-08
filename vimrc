@@ -38,6 +38,7 @@ set scrolloff=2
 set sidescrolloff=5
 
 set spell
+set exrc
 
 let g:zenburn_high_Contrast=1
 colorscheme zenburn
@@ -63,6 +64,15 @@ let g:ale_fix_on_save = 1
 let g:ale_fixers = {
 \   '*': ['remove_trailing_lines', 'trim_whitespace'],
 \   'nix': ['nixpkgs-fmt'],
+\   'cpp': ['clang-format'],
 \}
 let g:ale_linters = {
+\   'cpp': ['clang-check'],
 \}
+
+# allow loading folder-specific configs
+let file = expand('%:p:h') . "/.vimrc"
+if filereadable(file)
+  echo "Loading local .vimrc file " . file
+  execute "source " . file
+endif
