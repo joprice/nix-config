@@ -10,6 +10,7 @@ let haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
   home.stateVersion = "20.09";
   home.packages = with pkgs; [
     async-profiler
+    bat
     direnv
     haskell
     htop
