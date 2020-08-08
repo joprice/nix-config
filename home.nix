@@ -1,6 +1,6 @@
 { config, pkgs, lib, ... }:
 
-let async-profiler = import ./async-profiler.nix{inherit pkgs;}; in
+let async-profiler = pkgs.callPackage ./async-profiler.nix{}; in
 {
   programs.home-manager.enable = true;
   home.username = "josephprice";
@@ -12,6 +12,7 @@ let async-profiler = import ./async-profiler.nix{inherit pkgs;}; in
     pkgs.vscode
     pkgs.jdk11
     pkgs.direnv
+    pkgs.scala
     async-profiler
   ];
   nixpkgs.config.allowUnfree = true;
