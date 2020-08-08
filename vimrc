@@ -70,7 +70,7 @@ let g:ale_linters = {
 \   'cpp': ['clang-check'],
 \}
 
-# allow loading folder-specific configs
+" allow loading folder-specific configs
 let file = expand('%:p:h') . "/.vimrc"
 if filereadable(file)
   echo "Loading local .vimrc file " . file

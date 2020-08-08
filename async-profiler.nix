@@ -1,12 +1,12 @@
-{ pkgs }:
+{ stdenv, fetchurl }:
 
 # async-profiler - jvm profiler that can produce flamegraphs,
 # ex:
 #   async-profiler -d 5 -f ./flamegraph.svg 63226
 
-pkgs.stdenv.mkDerivation{
+stdenv.mkDerivation {
   name = "async-profiler";
-  src = pkgs.fetchurl {
+  src = fetchurl {
     url = "https://github.com/jvm-profiling-tools/async-profiler/releases/download/v1.7.1/async-profiler-1.7.1-macos-x64.tar.gz";
     sha256 = "1ydmysyrbhsnk55kgwracpdii3mdfb58mdbzpns8qd0wmrjlczj5";
   };
