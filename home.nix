@@ -17,6 +17,7 @@ let haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
     jdk11
     kubectl
     nixpkgs-fmt
+    ocaml
     sbt
     scala
     vscode
