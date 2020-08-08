@@ -1,8 +1,13 @@
 { config, pkgs, lib, ... }:
-let async-profiler = pkgs.callPackage ./async-profiler.nix { }; in
-let haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
-  haskellPackages.pretty-simple
-]); in
+let
+  async-profiler = pkgs.callPackage ./async-profiler.nix { };
+  # Find and delete branches that were squash-merged
+  git-delete-squashed =
+    pkgs.writeShellScriptBin "git-delete-squashed" (lib.fileContents ./delete-squashed.sh);
+  haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
+    haskellPackages.pretty-simple
+  ]);
+in
 {
   programs.home-manager.enable = true;
   home.username = "josephprice";
@@ -11,8 +16,9 @@ let haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
   home.packages = with pkgs; [
     async-profiler
     bat
-    direnv
     dhall-json
+    direnv
+    git-delete-squashed
     haskell
     htop
     jdk11
