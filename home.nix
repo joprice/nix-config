@@ -42,6 +42,7 @@ in
   nixpkgs.config.allowUnfree = true;
   home.sessionVariables = {
     JAVA_HOME = "${pkgs.jdk11.home}";
+    LESS = "-RFX";
     EDITOR = "vim";
   };
   programs.neovim = with pkgs.vimPlugins; {
@@ -75,12 +76,33 @@ in
     };
     extraConfig = {
       pull.ff = "only";
+      # add fixup! 
+      rebase.autosquash = true;
     };
+    ignores = [
+      "*.swo"
+      "*.swp"
+      ".DS_Store"
+      ".bloop/"
+      ".idea/"
+      ".metals/"
+      ".vscode/"
+      "_esy/"
+      "project/metals.sbt"
+      "vim.log"
+    ];
   };
   programs.zsh = {
     enable = true;
     enableAutosuggestions = true;
     history.extended = true;
+    shellAliases = {
+      # prints contents of paths on separate lines
+      path = ''echo -e ''${PATH//:/\\n}'';
+      # -I ignores binary files
+      grep = "grep --color -I";
+      ips = "ifconfig | awk '\$1 == \"inet\" {print \$2}'";
+    };
     oh-my-zsh = {
       enable = true;
       plugins = [
