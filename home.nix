@@ -12,6 +12,7 @@ let haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
     async-profiler
     bat
     direnv
+    dhall-json
     haskell
     htop
     jdk11
