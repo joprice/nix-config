@@ -18,6 +18,7 @@ let haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
     kubectl
     nixpkgs-fmt
     ocaml
+    rustup
     sbt
     scala
     vscode
