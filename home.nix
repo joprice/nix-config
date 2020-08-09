@@ -31,13 +31,15 @@ in
     haskell
     htop
     jdk11
+    maven
     kubectl
     kubectx
     nixpkgs-fmt
     ocaml
     ripgrep # rg - faster grep
     rustup
-    sbt
+    # TODO: how to override jre globally?
+    (sbt.override { jre = jdk11; })
     scala
     skim
     vscode
