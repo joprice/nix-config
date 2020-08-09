@@ -32,6 +32,7 @@ in
     htop
     jdk11
     kubectl
+    kubectx
     nixpkgs-fmt
     ocaml
     ripgrep # rg - faster grep
