@@ -40,7 +40,7 @@ in
     rustup
     # TODO: how to override jre globally?
     (sbt.override { jre = jdk11; })
-    scala
+    (scala.override { jre = pkgs.jdk11; })
     skim
     vscode
     yarn
