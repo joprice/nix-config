@@ -13,6 +13,7 @@ let
   haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
     haskellPackages.pretty-simple
   ]);
+  jvmtop = pkgs.callPackage ./jvmtop.nix { };
   z = pkgs.callPackage ./z.nix { };
 in
 {
@@ -31,6 +32,7 @@ in
     haskell
     htop
     jdk11
+    jvmtop
     kubectl
     kubectx
     nixpkgs-fmt
