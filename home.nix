@@ -44,6 +44,7 @@ in
     skim
     vscode
     yarn
+    (visualvm.override { jdk = jdk11; })
     z
   ];
   nixpkgs.config.allowUnfree = true;
