@@ -12,12 +12,6 @@ let
   # Find and delete branches that were squash-merged
   git-delete-squashed =
     pkgs.writeShellScriptBin "git-delete-squashed" (lib.fileContents ./delete-squashed.sh);
-  haskell = with pkgs; haskellPackages.ghcWithPackages (
-    pkgs: [
-      haskellPackages.pretty-simple
-    ]
-  );
-  z = pkgs.callPackage ./z.nix {};
   ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix {};
   # install sbt with scala native at different path?
   #sbt = pkgs.sbt-with-scala-native;#.override { jre = pkgs.jdk11; };
@@ -84,6 +78,19 @@ let
     paths = [ pkgs.bazelisk ];
     postBuild = "ln $out/bin/bazelisk $out/bin/bazel";
   };
+  haskell = with pkgs; haskellPackages.ghcWithPackages (
+    pkgs: [
+      haskellPackages.pretty-simple
+    ]
+  );
+  z = pkgs.callPackage ./z.nix {};
+  scala = pkgs.scala.overrideAttrs (
+    oldAttrs: {
+      # this is set to an arbitrary number to allow fsc from fsharp to take
+      # precendence on the path over scala's fsc
+      meta.priority = "10";
+    }
+  );
 in
 {
   programs.home-manager.enable = true;
@@ -118,6 +125,10 @@ in
     easy-ps.psc-package
     easy-ps.spago
     easy-ps.pscid
+    direnv
+    fsharp
+    dotnet-sdk_3
+    (add ocamlformat and note on hound)
     git-cof
     git-delete-squashed
     github-cli
@@ -150,6 +161,8 @@ in
     #ocaml-lsp.opam2nixResolve
     #ocamlPackages.utop
     pstree
+    ocamlPackages.utop
+    (add ocamlformat and note on hound)
     ripgrep # rg - faster grep
     rlwrap
     rnix-lsp
