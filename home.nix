@@ -36,6 +36,7 @@ in
     kubectx
     nixpkgs-fmt
     ocaml
+    ocamlPackages.utop
     ripgrep # rg - faster grep
     rustup
     # TODO: how to override jre globally?
