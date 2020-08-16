@@ -14,6 +14,17 @@ let
     haskellPackages.pretty-simple
   ]);
   z = pkgs.callPackage ./z.nix { };
+  #ocaml = ocaml-ng.ocamlPackages_4_10.ocaml;
+  #opam2nix = import ./opam2nix.nix { };
+  #args = {
+  #  #inherit ocaml;
+  #  selection = ./opam-selection.nix;
+  #  src = {
+  #    home = ./.;
+  #  };
+  #};
+  #resolve = opam2nix.resolve args [ "home.opam" ];
+  #selection = opam2nix.build args;
 in
 {
   programs.home-manager.enable = true;
@@ -37,6 +48,8 @@ in
     nixpkgs-fmt
     ocaml
     ocamlPackages.utop
+    down
+    ocamlPackages.topfind
     ripgrep # rg - faster grep
     rustup
     # TODO: how to override jre globally?
@@ -132,4 +145,5 @@ in
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
+  #home.file.".config/dune/config".source = ./dune-config;
 }
