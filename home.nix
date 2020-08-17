@@ -48,6 +48,9 @@ in
     (visualvm.override { jdk = jdk11; })
     z
   ];
+  programs.opam = {
+    enable = true;
+  };
   nixpkgs.config.allowUnfree = true;
   home.sessionVariables = {
     JAVA_HOME = "${pkgs.jdk11.home}";
