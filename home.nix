@@ -25,13 +25,13 @@ in
     bat
     clang-tools
     dhall-json
-    direnv
     git-cof
     git-delete-squashed
     haskell
     htop
     jdk11
     maven
+    niv
     kubectl
     kubectx
     nixpkgs-fmt
@@ -135,4 +135,8 @@ in
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
+  programs.direnv = {
+    enable = true;
+    enableNixDirenvIntegration = true;
+  };
 }
