@@ -66,6 +66,7 @@ let g:ale_fixers = {
 \   'nix': ['nixpkgs-fmt'],
 \   'cpp': ['clang-format'],
 \   'ocaml': ['ocamlformat'],
+\   'purescript': ['purty'],
 \}
 let g:ale_linters = {
 \   'cpp': ['clang-check'],

@@ -72,6 +72,7 @@ in
       vim-airline
       vim-airline-themes
       vim-polyglot
+      psc-ide-vim
       zenburn
     ];
   };
