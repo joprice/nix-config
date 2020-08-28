@@ -23,6 +23,7 @@ in
   home.packages = with pkgs; [
     async-profiler
     bat
+    cabal2nix
     clang-tools
     dhall-json
     git-cof
@@ -74,6 +75,7 @@ in
       vim-polyglot
       psc-ide-vim
       zenburn
+      ghcid
     ];
   };
   programs.git = {
@@ -83,6 +85,8 @@ in
     aliases = {
       s = "status";
       co = "checkout";
+      d = "diff";
+      merged = "branch --merged";
       recent = "for-each-ref --sort=committerdate refs/heads/ --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(color:red)%(objectname:short)%(color:reset) - %(contents:subject) - %(authorname) (%(color:green)%(committerdate:relative)%(color:reset))'";
       lg = "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
       bclean = "!f() { git branch --merged master | grep -v '^\\*' | xargs -n 1 git branch -d; }; f";
@@ -100,6 +104,7 @@ in
       ".idea/"
       ".metals/"
       ".vscode/"
+      "!.vscode/settings.json"
       "_esy/"
       "project/metals.sbt"
       "vim.log"
@@ -132,6 +137,7 @@ in
       set -o vi
       bindkey "^?" backward-delete-char
       . ${z}/bin/z.sh
+      unsetopt AUTO_CD
     '';
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;

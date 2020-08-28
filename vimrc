@@ -70,6 +70,7 @@ let g:ale_fixers = {
 \}
 let g:ale_linters = {
 \   'cpp': ['clang-check'],
+\   'haskell': ['hlint', 'cabal-ghc'],
 \}
 
 " allow loading folder-specific configs
