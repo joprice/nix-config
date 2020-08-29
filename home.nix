@@ -36,6 +36,8 @@ in
     kubectl
     kubectx
     nixpkgs-fmt
+    nodejs-12_x
+    nodePackages.node2nix
     ocaml
     ocamlPackages.utop
     ripgrep # rg - faster grep
@@ -103,7 +105,7 @@ in
       ".bloop/"
       ".idea/"
       ".metals/"
-      ".vscode/"
+      ".vscode/*"
       "!.vscode/settings.json"
       "_esy/"
       "project/metals.sbt"
