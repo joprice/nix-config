@@ -17,12 +17,22 @@ let
 in
 {
   programs.home-manager.enable = true;
+  /*
+  fonts.fontconfig.enable = true;
+  programs.lsd = {
+    enable = true;
+    enableAliases = true;
+  };
+  */
   home.username = "josephprice";
   home.homeDirectory = "/Users/josephprice";
   home.stateVersion = "20.09";
   home.packages = with pkgs; [
     async-profiler
+    coreutils
+    #nerdfonts
     bat
+    cachix
     cabal2nix
     clang-tools
     dhall-json
@@ -55,11 +65,6 @@ in
     enable = true;
   };
   nixpkgs.config.allowUnfree = true;
-  home.sessionVariables = {
-    JAVA_HOME = "${pkgs.jdk11.home}";
-    LESS = "-RFX";
-    EDITOR = "vim";
-  };
   programs.neovim = with pkgs.vimPlugins; {
     enable = true;
     viAlias = true;
@@ -124,10 +129,12 @@ in
       ips = "ifconfig | awk '\$1 == \"inet\" {print \$2}'";
       hup = "home-manager switch && exec $SHELL";
       vim-debug = "vim -V9vim.log main.cpp";
+      ls = "ls --color=auto";
     };
     oh-my-zsh = {
       enable = true;
       plugins = [
+        "timer"
         "git-extras"
         "git"
         "gitfast"
@@ -141,6 +148,13 @@ in
       . ${z}/bin/z.sh
       unsetopt AUTO_CD
     '';
+  };
+  home.sessionVariables = {
+    JAVA_HOME = "${pkgs.jdk11.home}";
+    LESS = "-RFX";
+    EDITOR = "vim";
+    # TODO: the current graal package in nixpkgs isn't working. Replace this with something nicer
+    GRAAL_NATIVE_IMAGE = "$HOME/Downloads/graalvm-ce-java11-20.2.0/Contents/Home/bin/native-image";
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
