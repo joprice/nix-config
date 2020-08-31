@@ -23,8 +23,9 @@ in
   home.stateVersion = "20.09";
   home.packages = with pkgs; [
     async-profiler
-    # TODO: exclude df
     ocaml-lsp.ocaml-lsp-server
+    ocaml-lsp.opam2nixResolve
+    # TODO: exclude df
     coreutils
     bat
     cachix
