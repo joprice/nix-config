@@ -14,6 +14,7 @@ let
     haskellPackages.pretty-simple
   ]);
   z = pkgs.callPackage ./z.nix { };
+  ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix { };
 in
 {
   programs.home-manager.enable = true;
@@ -23,6 +24,7 @@ in
   home.packages = with pkgs; [
     async-profiler
     # TODO: exclude df
+    ocaml-lsp.ocaml-lsp-server
     coreutils
     bat
     cachix
