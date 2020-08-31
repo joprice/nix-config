@@ -17,22 +17,16 @@ let
 in
 {
   programs.home-manager.enable = true;
-  /*
-  fonts.fontconfig.enable = true;
-  programs.lsd = {
-    enable = true;
-    enableAliases = true;
-  };
-  */
   home.username = "josephprice";
   home.homeDirectory = "/Users/josephprice";
   home.stateVersion = "20.09";
   home.packages = with pkgs; [
     async-profiler
+    # TODO: exclude df
     coreutils
-    #nerdfonts
     bat
     cachix
+    rnix-lsp
     cabal2nix
     clang-tools
     dhall-json
@@ -102,6 +96,14 @@ in
       pull.ff = "only";
       # add fixup! 
       rebase.autosquash = true;
+      url = {
+        "git@github.com:" = {
+          insteadOf = "https://github.com/";
+        };
+        "git://" = {
+          insteadOf = "https://";
+        };
+      };
     };
     ignores = [
       "*.swo"
@@ -122,6 +124,8 @@ in
     enableAutosuggestions = true;
     history.extended = true;
     shellAliases = {
+      # TODO: this alias works around df only showing the nix volume when used from nix
+      df = "/bin/df";
       # prints contents of paths on separate lines
       path = ''echo -e ''${PATH//:/\\n}'';
       # -I ignores binary files
