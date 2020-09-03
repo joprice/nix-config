@@ -82,6 +82,8 @@ in
       psc-ide-vim
       zenburn
       ghcid
+      # coment out with double ctrl+/ or gcc
+      tcomment_vim
     ];
   };
   programs.git = {
