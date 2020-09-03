@@ -22,6 +22,7 @@ in
   home.homeDirectory = "/Users/josephprice";
   home.stateVersion = "20.09";
   home.packages = with pkgs; [
+    awscli
     async-profiler
     ocaml-lsp.ocaml-lsp-server
     ocaml-lsp.opam2nixResolve
