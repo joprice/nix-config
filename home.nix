@@ -28,6 +28,8 @@ in
     # TODO: exclude df
     coreutils
     bat
+    jq
+    gron
     cachix
     rnix-lsp
     cabal2nix
@@ -118,7 +120,7 @@ in
       ".vscode/*"
       "!.vscode/settings.json"
       "_esy/"
-      "project/metals.sbt"
+      "metals.sbt"
       "vim.log"
     ];
   };
