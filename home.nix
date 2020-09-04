@@ -29,6 +29,7 @@ in
     # TODO: exclude df
     coreutils
     bat
+    mill
     jq
     gron
     cachix
@@ -162,6 +163,8 @@ in
     '';
   };
   home.sessionVariables = {
+    # See https://github.com/direnv/direnv/issues/203#issuecomment-189873955
+    DIRENV_LOG_FORMAT = "";
     JAVA_HOME = "${pkgs.jdk11.home}";
     LESS = "-RFX";
     EDITOR = "vim";
