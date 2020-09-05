@@ -29,7 +29,10 @@ in
     # TODO: exclude df
     coreutils
     bat
-    mill
+    (mill.override {
+      jre = jdk11;
+    })
+    rust-analyzer
     jq
     gron
     cachix

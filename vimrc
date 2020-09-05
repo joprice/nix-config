@@ -132,6 +132,7 @@ let g:ale_fixers = {
 \   'cpp': ['clang-format'],
 \   'ocaml': ['ocamlformat'],
 \   'purescript': ['purty'],
+\   'rust': ['rustfmt'],
 \}
 let g:ale_linters = {
 \   'cpp': ['clang-check'],
