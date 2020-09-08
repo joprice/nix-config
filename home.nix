@@ -34,6 +34,7 @@ in
     cabal2nix
     cachix
     clang-tools
+    clojure
     coreutils
     dhall-json
     git-cof
