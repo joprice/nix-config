@@ -15,56 +15,59 @@ let
   ]);
   z = pkgs.callPackage ./z.nix { };
   ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix { };
+  # TODO: how to override jre globally?
+  sbt = pkgs.sbt.override { jre = pkgs.jdk11; };
+  scala = pkgs.scala.override { jre = pkgs.jdk11; };
+  visualvm = pkgs.visualvm.override { jdk = pkgs.jdk11; };
+  mill = pkgs.mill.override { jre = pkgs.jdk11; };
 in
 {
   programs.home-manager.enable = true;
   home.username = "josephprice";
   home.homeDirectory = "/Users/josephprice";
   home.stateVersion = "20.09";
+  # TODO: exclude df
   home.packages = with pkgs; [
-    awscli
     async-profiler
-    ocaml-lsp.ocaml-lsp-server
-    ocaml-lsp.opam2nixResolve
-    # TODO: exclude df
-    coreutils
-    pstree
+    awscli
     bat
-    (mill.override {
-      jre = jdk11;
-    })
-    rust-analyzer
-    jq
-    gron
-    cachix
-    rnix-lsp
     cabal2nix
+    cachix
     clang-tools
+    coreutils
     dhall-json
     git-cof
     git-delete-squashed
+    gron
     haskell
     htop
     jdk11
-    maven
-    niv
+    joker
+    jq
     kubectl
     kubectx
+    maven
+    mill
+    niv
     nixpkgs-fmt
-    nodejs-12_x
     nodePackages.node2nix
+    nodejs-12_x
     ocaml
+    ocaml-lsp.ocaml-lsp-server
+    ocaml-lsp.opam2nixResolve
     ocamlPackages.utop
+    pstree
     ripgrep # rg - faster grep
+    rnix-lsp
+    rust-analyzer
     rustup
-    # TODO: how to override jre globally?
-    (sbt.override { jre = jdk11; })
-    (scala.override { jre = pkgs.jdk11; })
+    sbt
+    scala
     skim
     tree
+    visualvm
     vscode
     yarn
-    (visualvm.override { jdk = jdk11; })
     z
   ];
   programs.opam = {
