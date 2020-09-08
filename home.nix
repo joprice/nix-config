@@ -28,6 +28,7 @@ in
     ocaml-lsp.opam2nixResolve
     # TODO: exclude df
     coreutils
+    pstree
     bat
     (mill.override {
       jre = jdk11;
@@ -60,6 +61,7 @@ in
     (sbt.override { jre = jdk11; })
     (scala.override { jre = pkgs.jdk11; })
     skim
+    tree
     vscode
     yarn
     (visualvm.override { jdk = jdk11; })
