@@ -149,3 +149,6 @@ endif
 let g:psc_ide_log_level = 3
 
 let g:deoplete#enable_at_startup = 1
+
+nnoremap <C-N> :bnext<CR>
+nnoremap <C-M> :bprevious<CR>
