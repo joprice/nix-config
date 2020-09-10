@@ -20,6 +20,7 @@ let
   scala = pkgs.scala.override { jre = pkgs.jdk11; };
   visualvm = pkgs.visualvm.override { jdk = pkgs.jdk11; };
   mill = pkgs.mill.override { jre = pkgs.jdk11; };
+  leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
 in
 {
   programs.home-manager.enable = true;
@@ -47,6 +48,7 @@ in
     jq
     kubectl
     kubectx
+    leiningen
     maven
     mill
     niv
