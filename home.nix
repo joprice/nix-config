@@ -40,6 +40,7 @@ in
     dhall-json
     git-cof
     git-delete-squashed
+    graphviz
     gron
     haskell
     htop
