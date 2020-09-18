@@ -90,6 +90,7 @@ in
       ale
       coc-metals
       coc-nvim
+      ctrlp
       vim-airline
       vim-airline-themes
       vim-polyglot
