@@ -37,6 +37,7 @@ in
     clang-tools
     clojure
     coreutils
+    cue
     dhall-json
     git-cof
     git-delete-squashed
