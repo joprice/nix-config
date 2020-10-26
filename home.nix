@@ -1,5 +1,8 @@
 { config, pkgs, lib, ... }:
 let
+  #crate2nix = import (builtins.fetchTarball "https://github.com/kolloch/crate2nix/tarball/e07af104b8e41d1cd7e41dc7ac3fdcdf4953efae") { };
+  # this version has experimental cross compilation support
+  crate2nix = import (builtins.fetchTarball "https://github.com/lopsided98/crate2nix/tarball/d0b41938906c2fcaf86ae0b5b5a5d0d738ba1fff") { };
   async-profiler = pkgs.callPackage ./async-profiler.nix { };
   # git checkout with skim https://github.com/lotabout/skim
   git-cof =
@@ -26,12 +29,18 @@ in
   programs.home-manager.enable = true;
   home.username = "josephprice";
   home.homeDirectory = "/Users/josephprice";
+  # TODO: use machines to make this relative? or other way to make dynamic?
+  #home.username = "joseph";
+  #home.homeDirectory = "/home/joseph";
   home.stateVersion = "20.09";
   # TODO: exclude df
   home.packages = with pkgs; [
+    alacritty
     async-profiler
     awscli
     bat
+    # bazel
+    crate2nix
     cabal2nix
     cachix
     clang-tools
@@ -42,15 +51,19 @@ in
     git-cof
     git-delete-squashed
     github-cli
+    go
     graphviz
     gron
     haskell
     htop
     jdk11
     joker
+    loc
     jq
     kubectl
     kubectx
+    # TODO: restrict to non-darwin?
+    # unixtools.netstat
     leiningen
     maven
     mill
@@ -66,9 +79,9 @@ in
     ripgrep # rg - faster grep
     rnix-lsp
     rust-analyzer
-    rustup
     sbt
     scala
+    stack
     skim
     tree
     visualvm
@@ -158,6 +171,7 @@ in
       hup = "home-manager switch && exec $SHELL";
       vim-debug = "vim -V9vim.log main.cpp";
       ls = "ls --color=auto";
+      gh-pr = "gh pr create --fill";
     };
     oh-my-zsh = {
       enable = true;
@@ -175,6 +189,7 @@ in
       bindkey "^?" backward-delete-char
       . ${z}/bin/z.sh
       unsetopt AUTO_CD
+      export PATH=$HOME/.local/bin:$PATH
     '';
   };
   home.sessionVariables = {
