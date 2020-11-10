@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, pkgsPath, lib, ... }:
 let
   #crate2nix = import (builtins.fetchTarball "https://github.com/kolloch/crate2nix/tarball/e07af104b8e41d1cd7e41dc7ac3fdcdf4953efae") { };
   # this version has experimental cross compilation support
@@ -20,7 +20,7 @@ let
   ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix { };
   # TODO: how to override jre globally?
   sbt = pkgs.sbt.override { jre = pkgs.jdk11; };
-  scala = pkgs.scala.override { jre = pkgs.jdk11; };
+  scala = (pkgs.callPackage "${pkgsPath}/pkgs/development/compilers/scala/2.x.nix" { jre = pkgs.jdk11; }).scala_2_13;
   visualvm = pkgs.visualvm.override { jdk = pkgs.jdk11; };
   mill = pkgs.mill.override { jre = pkgs.jdk11; };
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
