@@ -65,6 +65,7 @@ in
     # TODO: restrict to non-darwin?
     # unixtools.netstat
     leiningen
+    loc
     maven
     mill
     niv
@@ -106,12 +107,13 @@ in
       coc-metals
       coc-nvim
       ctrlp
+      ghcid
+      gitgutter
+      psc-ide-vim
       vim-airline
       vim-airline-themes
       vim-polyglot
-      psc-ide-vim
       zenburn
-      ghcid
       # coment out with double ctrl+/ or gcc
       tcomment_vim
     ];
@@ -161,6 +163,10 @@ in
     enableAutosuggestions = true;
     history.extended = true;
     shellAliases = {
+      vi = "nvim";
+      vim = "nvim";
+      nixgc = "nix-collect-garbage -d";
+      nixq = "nix-env -qaP";
       # TODO: this alias works around df only showing the nix volume when used from nix
       df = "/bin/df";
       # prints contents of paths on separate lines
@@ -197,7 +203,7 @@ in
     DIRENV_LOG_FORMAT = "";
     JAVA_HOME = "${pkgs.jdk11.home}";
     LESS = "-RFX";
-    EDITOR = "vim";
+    EDITOR = "nvim";
     # TODO: the current graal package in nixpkgs isn't working. Replace this with something nicer
     GRAAL_NATIVE_IMAGE = "$HOME/Downloads/graalvm-ce-java11-20.2.0/Contents/Home/bin/native-image";
   };

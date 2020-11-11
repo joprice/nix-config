@@ -47,6 +47,7 @@ nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
+nmap <leader>rn <Plug>(coc-rename)
 
 nnoremap <silent> K :call <SID>show_documentation()<CR>
 
@@ -155,3 +156,11 @@ let g:deoplete#enable_at_startup = 1
 
 nnoremap <C-N> :bnext<CR>
 nnoremap <C-M> :bprevious<CR>
+
+let g:ctrlp_custom_ignore = {
+  \ 'dir':  '\.git$\|node_modules$\|tmp$\|target$'
+  \ }
+
+let g:gitgutter_diff_base = 'master'
+"nmap <leader>dm let g:gitgutter_diff_base = 'master'
+"nmap <leader>db let g:gitgutter_diff_base = 'head'
