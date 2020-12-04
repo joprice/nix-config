@@ -32,15 +32,14 @@ in
   # TODO: use machines to make this relative? or other way to make dynamic?
   #home.username = "joseph";
   #home.homeDirectory = "/home/joseph";
-  home.stateVersion = "20.09";
+  home.stateVersion = "21.03";
   # TODO: exclude df
   home.packages = with pkgs; [
     alacritty
     async-profiler
     awscli
     bat
-    # bazel
-    crate2nix
+    #crate2nix
     cabal2nix
     cachix
     clang-tools
@@ -73,8 +72,8 @@ in
     nodePackages.node2nix
     nodejs-12_x
     ocaml
-    ocaml-lsp.ocaml-lsp-server
-    ocaml-lsp.opam2nixResolve
+    #ocaml-lsp.ocaml-lsp-server
+    #ocaml-lsp.opam2nixResolve
     ocamlPackages.utop
     pstree
     ripgrep # rg - faster grep

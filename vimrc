@@ -139,9 +139,10 @@ let g:ale_fixers = {
 \}
 let g:ale_linters = {
 \   'cpp': ['clang-check'],
-\   'haskell': ['hlint'],
 \   'rust': [],
+\   'haskell': [],
 \}
+" \   'haskell': ['hlint'],
 
 " allow loading folder-specific configs
 let file = expand('%:p:h') . "/.vimrc"
