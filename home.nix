@@ -24,6 +24,7 @@ let
   visualvm = pkgs.visualvm.override { jdk = pkgs.jdk11; };
   mill = pkgs.mill.override { jre = pkgs.jdk11; };
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
+  obelisk = (import (builtins.fetchTarball "https://github.com/obsidiansystems/obelisk/archive/11beb6e8cd2419b2429925b76a98f24035e40985.tar.gz") { }).command;
 in
 {
   programs.home-manager.enable = true;
@@ -71,6 +72,7 @@ in
     nixpkgs-fmt
     nodePackages.node2nix
     nodejs-12_x
+    #obelisk
     ocaml
     #ocaml-lsp.ocaml-lsp-server
     #ocaml-lsp.opam2nixResolve
