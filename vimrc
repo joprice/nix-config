@@ -165,3 +165,10 @@ let g:ctrlp_custom_ignore = {
 let g:gitgutter_diff_base = 'master'
 "nmap <leader>dm let g:gitgutter_diff_base = 'master'
 "nmap <leader>db let g:gitgutter_diff_base = 'head'
+"
+" set langmap=ЖФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;:ABCDEFGHIJKLMNOPQRSTUVWXYZ,фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz
+
+nnoremap <Leader>r :set keymap=russian-jcuken<CR>
+nnoremap <Leader>e :set keymap=<CR>
+inoremap <Leader>r <ESC>:set keymap=russian-jcuken<CR>a
+inoremap <Leader>e <ESC>:set keymap=<CR>a
