@@ -25,6 +25,15 @@ let
   mill = pkgs.mill.override { jre = pkgs.jdk11; };
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
   obelisk = (import (builtins.fetchTarball "https://github.com/obsidiansystems/obelisk/archive/11beb6e8cd2419b2429925b76a98f24035e40985.tar.gz") { }).command;
+  cabal-project-vim = pkgs.vimUtils.buildVimPlugin {
+    name = "cabal-project-vim";
+    src = pkgs.fetchFromGitHub {
+      owner = "vmchale";
+      repo = "cabal-project-vim";
+      rev = "0d41e7e41b1948de84847d9731023407bf2aea04";
+      sha256 = "15rn54wspy55v9lw3alhv5h9b7sv6yi6az9gzzskzyim76ka0n4g";
+    };
+  };
 in
 {
   programs.home-manager.enable = true;
@@ -114,6 +123,7 @@ in
       vim-airline
       vim-airline-themes
       vim-polyglot
+      cabal-project-vim
       zenburn
       # coment out with double ctrl+/ or gcc
       tcomment_vim
@@ -197,6 +207,9 @@ in
       . ${z}/bin/z.sh
       unsetopt AUTO_CD
       export PATH=$HOME/.local/bin:$PATH
+      nix-build-nodirenv() { 
+        pushd /; popd; 
+      }
     '';
   };
   home.sessionVariables = {
