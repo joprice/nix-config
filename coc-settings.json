@@ -1,3 +1,16 @@
 {
-  "coc.preferences.formatOnSaveFiletypes": ["scala", "haskell", "json", "nix"]
+  "coc.preferences.formatOnSaveFiletypes": [
+    "scala",
+    "haskell",
+    "json",
+    "nix"
+  ],
+  "languageserver": {
+    "nix": {
+      "command": "rnix-lsp",
+      "filetypes": [
+        "nix"
+      ]
+    }
+  }
 }

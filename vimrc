@@ -141,7 +141,7 @@ set hidden
 " make exiting insert mode fast
 set timeoutlen=1000 ttimeoutlen=0
 " keep extra lines/columns around cursor to see past while scrolling
-set scrolloff=2
+set scrolloff=10
 set sidescrolloff=5
 
 set spell
@@ -153,19 +153,29 @@ colorscheme zenburn
 let g:ale_fix_on_save = 1
 let g:ale_fixers = {
 \   '*': ['remove_trailing_lines', 'trim_whitespace'],
-\   'nix': ['nixpkgs-fmt'],
-\   'cpp': ['clang-format'],
-\   'ocaml': ['ocamlformat'],
+\   'nix': [],
 \   'purescript': ['purty'],
 \   'rust': ['rustfmt'],
 \   'xml': ['xmllint'],
 \   'json': ['jq'],
+\   'ocaml': [],
+\   'swift': [],
+\   'cpp': ['clang-format'],
 \}
+"\   'nix': ['nixpkgs-fmt'],
+" \   'ocaml': ['ocamlformat'],
 let g:ale_linters = {
-\   'cpp': ['clang-check'],
 \   'rust': [],
 \   'haskell': [],
+\   'ocaml': [],
+\   'swift': [],
+\   'cpp': [],
 \}
+"\   'swift': ['swift-format'],
+" \   'cpp': ['clang-check'],
+
+"let g:ale_swift_swiftformat_executable = "/Users/josephprice/dev/ocaml-bare-nix/swift-format/.build/x86_64-apple-macosx/debug/swift-format"
+
 " \   'haskell': ['hlint'],
 
 " allow loading folder-specific configs
@@ -182,9 +192,11 @@ let g:deoplete#enable_at_startup = 1
 nnoremap <C-N> :bnext<CR>
 nnoremap <C-M> :bprevious<CR>
 
-let g:ctrlp_custom_ignore = {
-  \ 'dir':  '\.git$\|node_modules$\|tmp$\|target$'
-  \ }
+let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
+
+"let g:ctrlp_custom_ignore = {
+"  \ 'dir':  '\.git$\|node_modules$\|tmp$\|target$'
+"  \ }
 
 let g:gitgutter_diff_base = 'master'
 "nmap <leader>dm let g:gitgutter_diff_base = 'master'

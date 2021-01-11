@@ -1,9 +1,8 @@
 { config, pkgs, pkgsPath, lib, ... }:
 let
   #crate2nix = import (builtins.fetchTarball "https://github.com/kolloch/crate2nix/tarball/e07af104b8e41d1cd7e41dc7ac3fdcdf4953efae") { };
-  # this version has experimental cross compilation support
-  crate2nix = import (builtins.fetchTarball "https://github.com/lopsided98/crate2nix/tarball/d0b41938906c2fcaf86ae0b5b5a5d0d738ba1fff") { };
-  async-profiler = pkgs.callPackage ./async-profiler.nix { };
+  crate2nix = import (builtins.fetchTarball "https://github.com/lopsided98/crate2nix/tarball/d0b41938906c2fcaf86ae0b5b5a5d0d738ba1fff") {};
+  async-profiler = pkgs.callPackage ./async-profiler.nix {};
   # git checkout with skim https://github.com/lotabout/skim
   git-cof =
     pkgs.writeShellScriptBin "git-cof" ''
@@ -13,18 +12,25 @@ let
   # Find and delete branches that were squash-merged
   git-delete-squashed =
     pkgs.writeShellScriptBin "git-delete-squashed" (lib.fileContents ./delete-squashed.sh);
-  haskell = with pkgs; haskellPackages.ghcWithPackages (pkgs: [
-    haskellPackages.pretty-simple
-  ]);
-  z = pkgs.callPackage ./z.nix { };
-  ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix { };
+  haskell = with pkgs; haskellPackages.ghcWithPackages (
+    pkgs: [
+      haskellPackages.pretty-simple
+    ]
+  );
+  z = pkgs.callPackage ./z.nix {};
+  ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix {};
+  # install sbt with scala native at different path?
+  #sbt = pkgs.sbt-with-scala-native;#.override { jre = pkgs.jdk11; };
   # TODO: how to override jre globally?
   sbt = pkgs.sbt.override { jre = pkgs.jdk11; };
-  scala = (pkgs.callPackage "${pkgsPath}/pkgs/development/compilers/scala/2.x.nix" { jre = pkgs.jdk11; }).scala_2_13;
+  scala = pkgs.scala;
+  #scala = (pkgs.callPackage "${pkgsPath}/pkgs/development/compilers/scala/2.x.nix" { jre = pkgs.jdk11; }).scala_2_13;
   visualvm = pkgs.visualvm.override { jdk = pkgs.jdk11; };
   mill = pkgs.mill.override { jre = pkgs.jdk11; };
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
-  obelisk = (import (builtins.fetchTarball "https://github.com/obsidiansystems/obelisk/archive/11beb6e8cd2419b2429925b76a98f24035e40985.tar.gz") { }).command;
+  # some android manager tooling fails on jdk11
+  jdk = pkgs.jdk8;
+  obelisk = (import (builtins.fetchTarball "https://github.com/obsidiansystems/obelisk/archive/11beb6e8cd2419b2429925b76a98f24035e40985.tar.gz") {}).command;
   cabal-project-vim = pkgs.vimUtils.buildVimPlugin {
     name = "cabal-project-vim";
     src = pkgs.fetchFromGitHub {
@@ -32,6 +38,45 @@ let
       repo = "cabal-project-vim";
       rev = "0d41e7e41b1948de84847d9731023407bf2aea04";
       sha256 = "15rn54wspy55v9lw3alhv5h9b7sv6yi6az9gzzskzyim76ka0n4g";
+    };
+  };
+  easy-ps = import
+    (
+      pkgs.fetchFromGitHub {
+        owner = "justinwoo";
+        repo = "easy-purescript-nix";
+        rev = "860a95cb9e1ebdf574cede2b4fcb0f66eac77242";
+        sha256 = "1ly3bm6i1viw6d64gi1zfiwdvjncm3963rj59320cr15na5bzjri";
+      }
+    )
+    {
+      inherit pkgs;
+    };
+  coc-sourcekit = pkgs.vimUtils.buildVimPluginFrom2Nix {
+    name = "coc-sourcekit";
+    src = pkgs.fetchFromGitHub {
+      owner = "klaaspieter";
+      repo = "coc-sourcekit";
+      rev = "c3a69580042353dcf31e0a48141d02ffaa353b29";
+      sha256 = "0qa64pizjma3zi4lcpbazravm5m60qd0sk3c8ds3z4y9dnjfmq21";
+    };
+  };
+  vim-swift = pkgs.vimUtils.buildVimPlugin {
+    name = "vim-swift";
+    src = pkgs.fetchFromGitHub {
+      owner = "bumaociyuan";
+      repo = "vim-swift";
+      rev = "76dd8b90aec0e934e5a9c524bba9327436d54348";
+      sha256 = "150sszxlgfn03yhmpjsivn2xxmrpjjzahc0ikc6j8b49ssjf6cd7";
+    };
+  };
+  vim-swift-format = pkgs.vimUtils.buildVimPlugin {
+    name = "vim-swift-format";
+    src = pkgs.fetchFromGitHub {
+      owner = "tokorom";
+      repo = "vim-swift-format";
+      rev = "2984712722b3ba16d06c2970e861196039b94dbe";
+      sha256 = "0v90qx40nk2zkxf8n0qm776ny81i255z4ns35n59kxvixmj73042";
     };
   };
 in
@@ -49,14 +94,23 @@ in
     async-profiler
     awscli
     bat
+    cabal-install
+    ccls
     #crate2nix
     cabal2nix
     cachix
     clang-tools
     clojure
+    cmake
     coreutils
     cue
+    gitAndTools.delta
+    dhall
     dhall-json
+    easy-ps.purs
+    easy-ps.psc-package
+    easy-ps.spago
+    easy-ps.pscid
     git-cof
     git-delete-squashed
     github-cli
@@ -65,7 +119,7 @@ in
     gron
     haskell
     htop
-    jdk11
+    jdk
     joker
     loc
     jq
@@ -79,15 +133,17 @@ in
     mill
     niv
     nixpkgs-fmt
+    nix-index
     nodePackages.node2nix
     nodejs-12_x
     #obelisk
-    ocaml
+    #ocaml
     #ocaml-lsp.ocaml-lsp-server
     #ocaml-lsp.opam2nixResolve
-    ocamlPackages.utop
+    #ocamlPackages.utop
     pstree
     ripgrep # rg - faster grep
+    rlwrap
     rnix-lsp
     rust-analyzer
     sbt
@@ -99,10 +155,15 @@ in
     vscode
     yarn
     z
+    zlib
+    nodePackages.bower
+    libiconv
+    xcpretty
+    #xquartz
   ];
-  programs.opam = {
-    enable = true;
-  };
+  #programs.opam = {
+  #  enable = true;
+  #};
   nixpkgs.config.allowUnfree = true;
   programs.neovim = with pkgs.vimPlugins; {
     enable = true;
@@ -113,12 +174,17 @@ in
     withNodeJs = true;
     extraConfig = lib.fileContents ./vimrc;
     plugins = [
+      # these don't work for some reason
+      #vim-swift
+      vim-swift-format
+      #coc-sourcekit
       ale
       coc-metals
       coc-nvim
+      coc-json
       ctrlp
       ghcid
-      gitgutter
+      #gitgutter
       psc-ide-vim
       vim-airline
       vim-airline-themes
@@ -155,6 +221,7 @@ in
         };
       };
     };
+    delta.enable = true;
     ignores = [
       "*.swo"
       "*.swp"
@@ -215,16 +282,35 @@ in
   home.sessionVariables = {
     # See https://github.com/direnv/direnv/issues/203#issuecomment-189873955
     DIRENV_LOG_FORMAT = "";
-    JAVA_HOME = "${pkgs.jdk11.home}";
+    JAVA_HOME = "${jdk.home}";
     LESS = "-RFX";
     EDITOR = "nvim";
     # TODO: the current graal package in nixpkgs isn't working. Replace this with something nicer
-    GRAAL_NATIVE_IMAGE = "$HOME/Downloads/graalvm-ce-java11-20.2.0/Contents/Home/bin/native-image";
+    GRAAL_NATIVE_IMAGE = "$HOME/Downloads/graalvm-ce-java11-20.3.0/Contents/Home/bin/native-image";
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
   programs.direnv = {
     enable = true;
     enableNixDirenvIntegration = true;
+  };
+  programs.emacs = {
+    enable = true;
+    extraPackages = epkgs: with epkgs; [
+      company
+      company-nixos-options
+      counsel
+      reykjavik-theme
+      #dracula-theme
+      evil
+      evil-collection
+      evil-magit
+      fzf
+      magit
+      nix-mode
+      use-package
+      which-key
+      proofgeneral_HEAD
+    ];
   };
 }
