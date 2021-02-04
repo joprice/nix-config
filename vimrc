@@ -161,6 +161,8 @@ let g:ale_fixers = {
 \   'ocaml': [],
 \   'swift': [],
 \   'cpp': ['clang-format'],
+\   'objc': [],
+\   'objcpp': [],
 \}
 "\   'nix': ['nixpkgs-fmt'],
 " \   'ocaml': ['ocamlformat'],
@@ -170,6 +172,7 @@ let g:ale_linters = {
 \   'ocaml': [],
 \   'swift': [],
 \   'cpp': [],
+\   'objcpp': [],
 \}
 "\   'swift': ['swift-format'],
 " \   'cpp': ['clang-check'],
@@ -211,3 +214,7 @@ nnoremap <Leader>r :set keymap=russian-jcuken<CR>
 nnoremap <Leader>e :set keymap=<CR>
 inoremap <Leader>r <ESC>:set keymap=russian-jcuken<CR>a
 inoremap <Leader>e <ESC>:set keymap=<CR>a
+
+" overrides auto-detection, which falls back to nroff when the first 10 lines
+" don't contain an import
+au BufNewFile,BufRead *.mm set filetype=objcpp

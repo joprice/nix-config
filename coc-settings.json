@@ -3,7 +3,8 @@
     "scala",
     "haskell",
     "json",
-    "nix"
+    "nix",
+    "ocaml"
   ],
   "languageserver": {
     "nix": {

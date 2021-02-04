@@ -79,6 +79,11 @@ let
       sha256 = "0v90qx40nk2zkxf8n0qm776ny81i255z4ns35n59kxvixmj73042";
     };
   };
+  bazel = pkgs.symlinkJoin {
+    name = "bazel";
+    paths = [ pkgs.bazelisk ];
+    postBuild = "ln $out/bin/bazelisk $out/bin/bazel";
+  };
 in
 {
   programs.home-manager.enable = true;
@@ -93,9 +98,11 @@ in
     alacritty
     async-profiler
     awscli
+    bazel
     bat
     cabal-install
     ccls
+    cocoapods
     #crate2nix
     cabal2nix
     cachix
@@ -122,6 +129,7 @@ in
     jdk
     joker
     loc
+    nim
     jq
     kubectl
     kubectx
@@ -137,7 +145,7 @@ in
     nodePackages.node2nix
     nodejs-12_x
     #obelisk
-    #ocaml
+    ocaml
     #ocaml-lsp.ocaml-lsp-server
     #ocaml-lsp.opam2nixResolve
     #ocamlPackages.utop
@@ -145,11 +153,13 @@ in
     ripgrep # rg - faster grep
     rlwrap
     rnix-lsp
+    rustup
     rust-analyzer
     sbt
     scala
     stack
     skim
+    telnet
     tree
     visualvm
     vscode
@@ -159,6 +169,7 @@ in
     nodePackages.bower
     libiconv
     xcpretty
+    websocat
     #xquartz
   ];
   #programs.opam = {
@@ -210,7 +221,7 @@ in
     };
     extraConfig = {
       pull.ff = "only";
-      # add fixup! 
+      # add fixup!
       rebase.autosquash = true;
       url = {
         "git@github.com:" = {
@@ -274,8 +285,8 @@ in
       . ${z}/bin/z.sh
       unsetopt AUTO_CD
       export PATH=$HOME/.local/bin:$PATH
-      nix-build-nodirenv() { 
-        pushd /; popd; 
+      nix-build-nodirenv() {
+        pushd /; popd;
       }
     '';
   };
@@ -285,8 +296,6 @@ in
     JAVA_HOME = "${jdk.home}";
     LESS = "-RFX";
     EDITOR = "nvim";
-    # TODO: the current graal package in nixpkgs isn't working. Replace this with something nicer
-    GRAAL_NATIVE_IMAGE = "$HOME/Downloads/graalvm-ce-java11-20.3.0/Contents/Home/bin/native-image";
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
