@@ -12,14 +12,33 @@ let
   # Find and delete branches that were squash-merged
   git-delete-squashed =
     pkgs.writeShellScriptBin "git-delete-squashed" (lib.fileContents ./delete-squashed.sh);
+  haskell = with pkgs; haskellPackages.ghcWithPackages (
+    pkgs: [
+      haskellPackages.pretty-simple
+    ]
+  );
+  z = pkgs.callPackage ./z.nix {};
   ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix {};
   # install sbt with scala native at different path?
   #sbt = pkgs.sbt-with-scala-native;#.override { jre = pkgs.jdk11; };
   # TODO: how to override jre globally?
   sbt = pkgs.sbt.override { jre = pkgs.jdk11; };
-  scala = pkgs.scala;
   #scala = (pkgs.callPackage "${pkgsPath}/pkgs/development/compilers/scala/2.x.nix" { jre = pkgs.jdk11; }).scala_2_13;
-  visualvm = pkgs.visualvm.override { jdk = pkgs.jdk11; };
+  scala = pkgs.scala.overrideAttrs (
+    oldAttrs: {
+      # this is set to an arbitrary number to allow fsc from fsharp to take
+      # precendence on the path over scala's fsc
+      meta.priority = "10";
+    }
+  );
+  visualvm = (
+    pkgs.visualvm.overrideAttrs (
+      oldAttrs: {
+        # this is set to an arbitrary number to allow LICENSE.txt from fsharp
+        meta.priority = "10";
+      }
+    )
+  ).override { jdk = pkgs.jdk11; };
   mill = pkgs.mill.override { jre = pkgs.jdk11; };
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
   # some android manager tooling fails on jdk11
@@ -78,19 +97,6 @@ let
     paths = [ pkgs.bazelisk ];
     postBuild = "ln $out/bin/bazelisk $out/bin/bazel";
   };
-  haskell = with pkgs; haskellPackages.ghcWithPackages (
-    pkgs: [
-      haskellPackages.pretty-simple
-    ]
-  );
-  z = pkgs.callPackage ./z.nix {};
-  scala = pkgs.scala.overrideAttrs (
-    oldAttrs: {
-      # this is set to an arbitrary number to allow fsc from fsharp to take
-      # precendence on the path over scala's fsc
-      meta.priority = "10";
-    }
-  );
 in
 {
   programs.home-manager.enable = true;
@@ -127,8 +133,8 @@ in
     easy-ps.pscid
     direnv
     fsharp
-    dotnet-sdk_3
-    (add ocamlformat and note on hound)
+    dotnet-sdk_5
+    #(add ocamlformat and note on hound)
     git-cof
     git-delete-squashed
     github-cli
@@ -162,7 +168,6 @@ in
     #ocamlPackages.utop
     pstree
     ocamlPackages.utop
-    (add ocamlformat and note on hound)
     ripgrep # rg - faster grep
     rlwrap
     rnix-lsp
@@ -309,6 +314,7 @@ in
     JAVA_HOME = "${jdk.home}";
     LESS = "-RFX";
     EDITOR = "nvim";
+    DOTNET_CLI_TELEMETRY_OPTOUT = "true";
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
