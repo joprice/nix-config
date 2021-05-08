@@ -1,22 +1,26 @@
 { ocamlPackages, fetchFromGitHub, lib, stdenv, git, writeShellScriptBin }:
 let
-  opam2nix = (import ./opam2nix.nix {
-    ocamlPackagesOverride = ocamlPackages;
-  }).overrideAttrs (o: {
-    # see https://github.com/timbertson/opam2nix/issues/34
-    buildInputs = (o.buildInputs or [ ]) ++ [ git ];
-  });
+  opam2nix = (
+    import ./opam2nix.nix {
+      ocamlPackagesOverride = ocamlPackages;
+    }
+  ).overrideAttrs (
+    o: {
+      # see https://github.com/timbertson/opam2nix/issues/34
+      buildInputs = (o.buildInputs or []) ++ [ git ];
+    }
+  );
   # Converted from shell
   # https://github.com/timbertson/opam2nix/blob/7ebd265ba4926062928c6b6cfece63b07ae853f4/nix/api.nix#L20
   resolve =
     { ocaml, selection, ... }: args:
-    writeShellScriptBin "resolve-ocaml-deps" ''
-      ${opam2nix}/bin/opam2nix resolve \
-        --dest ${builtins.toString selection} \
-        --ocaml-version ${ocaml.version} \
-        ${lib.concatStringsSep " " (map (arg: "'${builtins.toString arg}'") args)}
-      { exit $?; } 2>/dev/null
-    '';
+      writeShellScriptBin "ocaml-lsp-resolve" ''
+        ${opam2nix}/bin/opam2nix resolve \
+          --dest ${builtins.toString selection} \
+          --ocaml-version ${ocaml.version} \
+          ${lib.concatStringsSep " " (map (arg: "'${builtins.toString arg}'") args)}
+        { exit $?; } 2>/dev/null
+      '';
   ocaml-lsp-server = fetchFromGitHub {
     owner = "ocaml";
     repo = "ocaml-lsp";

@@ -18,7 +18,9 @@ let
     ]
   );
   z = pkgs.callPackage ./z.nix {};
-  ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix {};
+  ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix {
+    ocamlPackages = pkgs.ocaml-ng.ocamlPackages_4_11;
+  };
   # install sbt with scala native at different path?
   #sbt = pkgs.sbt-with-scala-native;#.override { jre = pkgs.jdk11; };
   # TODO: how to override jre globally?
@@ -101,7 +103,7 @@ in
     bazel
     bat
     cabal-install
-    ccls
+    #ccls
     cocoapods
     #crate2nix
     cabal2nix
@@ -118,6 +120,7 @@ in
     easy-ps.psc-package
     easy-ps.spago
     easy-ps.pscid
+    flow
     git-cof
     git-delete-squashed
     github-cli
@@ -147,7 +150,7 @@ in
     #obelisk
     ocaml
     #ocaml-lsp.ocaml-lsp-server
-    #ocaml-lsp.opam2nixResolve
+    ocaml-lsp.opam2nixResolve
     #ocamlPackages.utop
     pstree
     ripgrep # rg - faster grep
@@ -169,8 +172,11 @@ in
     nodePackages.bower
     libiconv
     xcpretty
-    websocat
+    #websocat
+    watchman
     #xquartz
+    fswatch
+    wrk
   ];
   #programs.opam = {
   #  enable = true;
@@ -193,6 +199,8 @@ in
       coc-metals
       coc-nvim
       coc-json
+      coc-prettier
+      coc-tsserver
       ctrlp
       ghcid
       #gitgutter
@@ -302,24 +310,5 @@ in
   programs.direnv = {
     enable = true;
     enableNixDirenvIntegration = true;
-  };
-  programs.emacs = {
-    enable = true;
-    extraPackages = epkgs: with epkgs; [
-      company
-      company-nixos-options
-      counsel
-      reykjavik-theme
-      #dracula-theme
-      evil
-      evil-collection
-      evil-magit
-      fzf
-      magit
-      nix-mode
-      use-package
-      which-key
-      proofgeneral_HEAD
-    ];
   };
 }

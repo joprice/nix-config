@@ -218,3 +218,4 @@ inoremap <Leader>e <ESC>:set keymap=<CR>a
 " overrides auto-detection, which falls back to nroff when the first 10 lines
 " don't contain an import
 au BufNewFile,BufRead *.mm set filetype=objcpp
+au BufNewFile,BufRead Cakefile set filetype=ruby

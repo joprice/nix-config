@@ -4,7 +4,12 @@
     "haskell",
     "json",
     "nix",
-    "ocaml"
+    "ocaml",
+    "javascript",
+    "typescript",
+    "typescriptreact",
+    "dart",
+    "ruby"
   ],
   "languageserver": {
     "nix": {
@@ -12,6 +17,13 @@
       "filetypes": [
         "nix"
       ]
+    },
+    "ocaml-lsp": {
+        "command": "ocamllsp",
+        "filetypes": [
+          "ocaml",
+          "reason"
+        ]
     }
   }
 }
