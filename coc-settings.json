@@ -9,7 +9,8 @@
     "typescript",
     "typescriptreact",
     "dart",
-    "ruby"
+    "ruby",
+    "java"
   ],
   "languageserver": {
     "nix": {

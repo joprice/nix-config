@@ -30,7 +30,7 @@ let
   visualvm = pkgs.visualvm.override { jdk = pkgs.jdk11; };
   mill = pkgs.mill.override { jre = pkgs.jdk11; };
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
-  # some android manager tooling fails on jdk11
+  # NOTE some android manager tooling fails on jdk11, so this needs to be jdk8 for android tasks
   jdk = pkgs.jdk8;
   obelisk = (import (builtins.fetchTarball "https://github.com/obsidiansystems/obelisk/archive/11beb6e8cd2419b2429925b76a98f24035e40985.tar.gz") {}).command;
   cabal-project-vim = pkgs.vimUtils.buildVimPlugin {
@@ -94,7 +94,7 @@ in
   # TODO: use machines to make this relative? or other way to make dynamic?
   #home.username = "joseph";
   #home.homeDirectory = "/home/joseph";
-  home.stateVersion = "21.03";
+  home.stateVersion = "21.05";
   # TODO: exclude df
   home.packages = with pkgs; [
     alacritty
@@ -199,6 +199,8 @@ in
       ale
       coc-metals
       coc-nvim
+      # this server crashes on start
+      #coc-java
       coc-json
       coc-prettier
       coc-tsserver
@@ -302,7 +304,7 @@ in
   home.sessionVariables = {
     # See https://github.com/direnv/direnv/issues/203#issuecomment-189873955
     DIRENV_LOG_FORMAT = "";
-    JAVA_HOME = "${jdk.home}";
+    #JAVA_HOME = "${pkgs.jdk.home}";
     LESS = "-RFX";
     EDITOR = "nvim";
   };

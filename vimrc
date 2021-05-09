@@ -1,5 +1,8 @@
 syntax on
 
+" Debugging language servers:
+" :CocCommand workspace.showOutput
+
 " coc.vim - see https://github.com/neoclide/coc.nvim#example-vim-configuration
 set cmdheight=2
 set updatetime=300
