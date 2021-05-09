@@ -23,7 +23,7 @@ let
 in
 {
   format-version = 4;
-  ocaml-version = "4.11.2";
+  ocaml-version = "4.12.0";
   repos = repos;
   selection = 
   {
@@ -115,6 +115,30 @@ in
       };
       version = "1.5.1";
     };
+    dot-merlin-reader = 
+    {
+      opamInputs = 
+      {
+        csexp = selection.csexp;
+        dune = selection.dune;
+        ocaml = selection.ocaml;
+        ocamlfind = selection.ocamlfind;
+        result = selection.result;
+        yojson = selection.yojson;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        hash = "sha256:14w8xfc8nbkkrcqzsx8ql9dar1ni9vh7wfg6pavlprjjzq3vhyll";
+        package = "packages/dot-merlin-reader/dot-merlin-reader.4.1";
+      };
+      pname = "dot-merlin-reader";
+      src = pkgs.fetchurl 
+      {
+        sha256 = "1kg765h6gqq5ffa1fdvm0kpa9w922y3af804ags5ssk4p1pnv8ql";
+        url = "https://github.com/ocaml/merlin/releases/download/v4.1/dot-merlin-reader-v4.1.tbz";
+      };
+      version = "4.1";
+    };
     dune = 
     {
       opamInputs = 
@@ -175,68 +199,6 @@ in
       };
       version = "1.3.2";
     };
-    menhir = 
-    {
-      opamInputs = 
-      {
-        dune = selection.dune;
-        menhirLib = selection.menhirLib;
-        menhirSdk = selection.menhirSdk;
-        ocaml = selection.ocaml;
-      };
-      opamSrc = repoPath (repos.opam-repository.src) 
-      {
-        hash = "sha256:1smhrhh098w4amj1ih5fkzhbpiabqa1n42q9plif1fwzq9l0262w";
-        package = "packages/menhir/menhir.20210419";
-      };
-      pname = "menhir";
-      src = pkgs.fetchurl 
-      {
-        sha256 = "1z471apfcfs9d1s85wg33z5prfnifzx07dprjxq4fgfpcbqpqh7q";
-        url = "https://gitlab.inria.fr/fpottier/menhir/repository/20210419/archive.tar.gz";
-      };
-      version = "20210419";
-    };
-    menhirLib = 
-    {
-      opamInputs = 
-      {
-        dune = selection.dune;
-        ocaml = selection.ocaml;
-      };
-      opamSrc = repoPath (repos.opam-repository.src) 
-      {
-        hash = "sha256:0xinqc298kplg5s54cs3riqyag8hxz2a4dghscb3cbjwp4cr4gww";
-        package = "packages/menhirLib/menhirLib.20210419";
-      };
-      pname = "menhirLib";
-      src = pkgs.fetchurl 
-      {
-        sha256 = "1z471apfcfs9d1s85wg33z5prfnifzx07dprjxq4fgfpcbqpqh7q";
-        url = "https://gitlab.inria.fr/fpottier/menhir/repository/20210419/archive.tar.gz";
-      };
-      version = "20210419";
-    };
-    menhirSdk = 
-    {
-      opamInputs = 
-      {
-        dune = selection.dune;
-        ocaml = selection.ocaml;
-      };
-      opamSrc = repoPath (repos.opam-repository.src) 
-      {
-        hash = "sha256:19f00dfi80r04kw76rwfln8v4bi1jxkc25mp1i68jl5x1flmbq58";
-        package = "packages/menhirSdk/menhirSdk.20210419";
-      };
-      pname = "menhirSdk";
-      src = pkgs.fetchurl 
-      {
-        sha256 = "1z471apfcfs9d1s85wg33z5prfnifzx07dprjxq4fgfpcbqpqh7q";
-        url = "https://gitlab.inria.fr/fpottier/menhir/repository/20210419/archive.tar.gz";
-      };
-      version = "20210419";
-    };
     ocaml = 
     {
       opamInputs = 
@@ -248,12 +210,12 @@ in
       };
       opamSrc = repoPath (repos.opam-repository.src) 
       {
-        hash = "sha256:0lnns62fmy7f38zxd84wpiz7q6csyvhsna95ljr3r8mhi2d8sn8l";
-        package = "packages/ocaml/ocaml.4.11.2";
+        hash = "sha256:0xrq7j9zfynk524j69i3and0mqgi32wav751s4cqc1q7pqm47xpc";
+        package = "packages/ocaml/ocaml.4.12.0";
       };
       pname = "ocaml";
       src = null;
-      version = "4.11.2";
+      version = "4.12.0";
     };
     ocaml-base-compiler = 
     {
@@ -261,16 +223,16 @@ in
       };
       opamSrc = repoPath (repos.opam-repository.src) 
       {
-        hash = "sha256:0xznlhmhxnaxccq67x6spqxql0wm0x9qyci4qn0l26fc3mjc3my9";
-        package = "packages/ocaml-base-compiler/ocaml-base-compiler.4.11.2";
+        hash = "sha256:0gf3z9qmi976x4iwndfslcim50ickla52x9fp94aqxrgvsy1ypn7";
+        package = "packages/ocaml-base-compiler/ocaml-base-compiler.4.12.0";
       };
       pname = "ocaml-base-compiler";
       src = pkgs.fetchurl 
       {
-        sha256 = "02day17rxrd0vla89mxl1yac657d1hs0lxspj8sd58ygyrl2ljh4";
-        url = "https://github.com/ocaml/ocaml/archive/4.11.2.tar.gz";
+        sha256 = "0i37laikik5vwydw1cwygxd8xq2d6n35l20irgrh691njlwpmh5d";
+        url = "https://github.com/ocaml/ocaml/archive/4.12.0.tar.gz";
       };
-      version = "4.11.2";
+      version = "4.12.0";
     };
     ocaml-config = 
     {
@@ -282,26 +244,24 @@ in
       };
       opamSrc = repoPath (repos.opam-repository.src) 
       {
-        hash = "sha256:1gc3pyhb64j8a91bgbpy9fzljpb1ps2ylgw31ldx879vdkk46nhp";
-        package = "packages/ocaml-config/ocaml-config.1";
+        hash = "sha256:0h0hgqq9mbywvqygppfdc50gf9ss8a97l4dgsv3hszmzh6gglgrg";
+        package = "packages/ocaml-config/ocaml-config.2";
       };
       pname = "ocaml-config";
       src = null;
-      version = "1";
+      version = "2";
     };
     ocaml-lsp-server = 
     {
       opamInputs = 
       {
         csexp = selection.csexp;
+        dot-merlin-reader = selection.dot-merlin-reader;
         dune = selection.dune;
         dune-build-info = selection.dune-build-info;
-        menhir = selection.menhir;
         ocaml = selection.ocaml;
-        ocamlfind = selection.ocamlfind;
         ppx_yojson_conv_lib = selection.ppx_yojson_conv_lib;
         result = selection.result;
-        stdlib-shims = selection.stdlib-shims;
         yojson = selection.yojson;
       };
       opamSrc = "ocaml-lsp-server.opam";
@@ -369,26 +329,6 @@ in
         url = "https://github.com/janestreet/result/releases/download/1.5/result-1.5.tbz";
       };
       version = "1.5";
-    };
-    stdlib-shims = 
-    {
-      opamInputs = 
-      {
-        dune = selection.dune;
-        ocaml = selection.ocaml;
-      };
-      opamSrc = repoPath (repos.opam-repository.src) 
-      {
-        hash = "sha256:19g9dnaxyh2ajz6pdczdsqzzvsmfrxwx6f613inkr31jw5hrqkiz";
-        package = "packages/stdlib-shims/stdlib-shims.0.3.0";
-      };
-      pname = "stdlib-shims";
-      src = pkgs.fetchurl 
-      {
-        sha256 = "0jnqsv6pqp5b5g7lcjwgd75zqqvcwcl5a32zi03zg1kvj79p5gxs";
-        url = "https://github.com/ocaml/stdlib-shims/releases/download/0.3.0/stdlib-shims-0.3.0.tbz";
-      };
-      version = "0.3.0";
     };
     yojson = 
     {

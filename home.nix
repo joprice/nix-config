@@ -19,7 +19,7 @@ let
   );
   z = pkgs.callPackage ./z.nix {};
   ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix {
-    ocamlPackages = pkgs.ocaml-ng.ocamlPackages_4_11;
+    ocamlPackages = pkgs.ocaml-ng.ocamlPackages_4_12;
   };
   # install sbt with scala native at different path?
   #sbt = pkgs.sbt-with-scala-native;#.override { jre = pkgs.jdk11; };
@@ -149,7 +149,7 @@ in
     nodejs-12_x
     #obelisk
     ocaml
-    #ocaml-lsp.ocaml-lsp-server
+    ocaml-lsp.ocaml-lsp-server
     ocaml-lsp.opam2nixResolve
     #ocamlPackages.utop
     pstree
@@ -177,6 +177,7 @@ in
     #xquartz
     fswatch
     wrk
+    gnuplot
   ];
   #programs.opam = {
   #  enable = true;
