@@ -1,4 +1,5 @@
 {
+  //"java.autobuild.enabled": true,
   "coc.preferences.formatOnSaveFiletypes": [
     "scala",
     "haskell",

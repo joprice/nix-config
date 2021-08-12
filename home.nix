@@ -6,8 +6,12 @@ let
   # git checkout with skim https://github.com/lotabout/skim
   git-cof =
     pkgs.writeShellScriptBin "git-cof" ''
-      export PATH=${pkgs.stdenv.lib.makeBinPath [ pkgs.git pkgs.skim ]}:$PATH
+      export PATH=${pkgs.lib.makeBinPath [ pkgs.git pkgs.skim ]}:$PATH
       git for-each-ref --format='%(refname:short)' refs/heads | sk | xargs git checkout
+    '';
+  idea =
+    pkgs.writeShellScriptBin "idea" ''
+      open -na "IntelliJ IDEA CE.app" --args "$@"
     '';
   # Find and delete branches that were squash-merged
   git-delete-squashed =
@@ -31,7 +35,7 @@ let
   mill = pkgs.mill.override { jre = pkgs.jdk11; };
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
   # NOTE some android manager tooling fails on jdk11, so this needs to be jdk8 for android tasks
-  jdk = pkgs.jdk8;
+  jdk = pkgs.jdk11;
   obelisk = (import (builtins.fetchTarball "https://github.com/obsidiansystems/obelisk/archive/11beb6e8cd2419b2429925b76a98f24035e40985.tar.gz") {}).command;
   cabal-project-vim = pkgs.vimUtils.buildVimPlugin {
     name = "cabal-project-vim";
@@ -47,8 +51,8 @@ let
       pkgs.fetchFromGitHub {
         owner = "justinwoo";
         repo = "easy-purescript-nix";
-        rev = "860a95cb9e1ebdf574cede2b4fcb0f66eac77242";
-        sha256 = "1ly3bm6i1viw6d64gi1zfiwdvjncm3963rj59320cr15na5bzjri";
+        rev = "eb64583e3e15749b3ae56573b2aebbaa9cbab4eb";
+        sha256 = "0hr7smk7avdgc5nm1r3drq91j1hf8wimp7sg747832345c8vq19a";
       }
     )
     {
@@ -61,6 +65,15 @@ let
       repo = "coc-sourcekit";
       rev = "c3a69580042353dcf31e0a48141d02ffaa353b29";
       sha256 = "0qa64pizjma3zi4lcpbazravm5m60qd0sk3c8ds3z4y9dnjfmq21";
+    };
+  };
+  coc-jedi = pkgs.vimUtils.buildVimPluginFrom2Nix {
+    name = "coc-jedi";
+    src = pkgs.fetchFromGitHub {
+      owner = "pappasam";
+      repo = "coc-jedi";
+      rev = "2c07ed71d6759ca2319559e5921e08eb5d46f83e";
+      sha256 = "0vn4nqhrzvdkndz13cdpjx8bzjcq5276cw5m9j35lxxggsq1bl0c";
     };
   };
   vim-swift = pkgs.vimUtils.buildVimPlugin {
@@ -81,6 +94,19 @@ let
       sha256 = "0v90qx40nk2zkxf8n0qm776ny81i255z4ns35n59kxvixmj73042";
     };
   };
+  vim-markdown-preview = pkgs.vimUtils.buildVimPlugin {
+    name = "vim-markdown-preview";
+    src = pkgs.fetchFromGitHub {
+      owner = "iamcco";
+      repo = "markdown-preview.nvim";
+      rev = "e5bfe9b89dc9c2fbd24ed0f0596c85fd0568b143";
+      sha256 = "0bfkcfjqg2jqm4ss16ks1mfnlnpyg1l4l18g7pagw1dfka14y8fg";
+    };
+    buildPhase = ''
+      touch .yarnrc
+      ${pkgs.yarn}/bin/yarn --no-default-rc --disable-pnp --pure-lockfile install
+    '';
+  };
   bazel = pkgs.symlinkJoin {
     name = "bazel";
     paths = [ pkgs.bazelisk ];
@@ -97,6 +123,7 @@ in
   home.stateVersion = "21.05";
   # TODO: exclude df
   home.packages = with pkgs; [
+    #bitcoin
     alacritty
     async-profiler
     awscli
@@ -124,11 +151,14 @@ in
     git-cof
     git-delete-squashed
     github-cli
+    gnupg
     go
     graphviz
     gron
     haskell
     htop
+    idea
+    istioctl
     jdk
     joker
     loc
@@ -139,13 +169,14 @@ in
     # TODO: restrict to non-darwin?
     # unixtools.netstat
     leiningen
+    libbitcoin-explorer
     loc
     maven
     mill
     niv
     nixpkgs-fmt
     nix-index
-    nodePackages.node2nix
+    #nodePackages.node2nix
     nodejs-12_x
     #obelisk
     ocaml
@@ -155,6 +186,7 @@ in
     pstree
     ripgrep # rg - faster grep
     rlwrap
+    rmlint
     rnix-lsp
     rustup
     rust-analyzer
@@ -176,8 +208,10 @@ in
     watchman
     #xquartz
     fswatch
+    upx
     wrk
     gnuplot
+    #micronaut
   ];
   #programs.opam = {
   #  enable = true;
@@ -195,12 +229,14 @@ in
       # these don't work for some reason
       #vim-swift
       vim-swift-format
+      #vim-markdown-preview
       #coc-sourcekit
       ale
       coc-metals
       coc-nvim
       # this server crashes on start
-      #coc-java
+      coc-java
+      coc-jedi
       coc-json
       coc-prettier
       coc-tsserver
@@ -270,7 +306,7 @@ in
       # TODO: this alias works around df only showing the nix volume when used from nix
       df = "/bin/df";
       # prints contents of paths on separate lines
-      path = ''echo -e ''${PATH//:/\\n}'';
+      path = '' echo - e ''${PATH // :/\\n}'';
       # -I ignores binary files
       grep = "grep --color -I";
       ips = "ifconfig | awk '\$1 == \"inet\" {print \$2}'";
@@ -312,6 +348,7 @@ in
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
   programs.direnv = {
     enable = true;
-    enableNixDirenvIntegration = true;
+    #enableNixDirenvIntegration = true;
+    nix-direnv.enable = true;
   };
 }

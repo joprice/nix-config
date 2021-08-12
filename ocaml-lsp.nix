@@ -24,8 +24,8 @@ let
   ocaml-lsp-server = fetchFromGitHub {
     owner = "ocaml";
     repo = "ocaml-lsp";
-    rev = "e6861a6a0bdcfd1bf597433f113cc4f7e57c8c03";
-    sha256 = "0s38r20xs19h9d248km5rjsavyy46vpixm3di8p22db015k8wrgi";
+    rev = "1.7.0";
+    sha256 = "0fs02qlicyzhq43fjkjd6hbiavrf0f8wcpzf082p1cwxc1v0r6ij";
     fetchSubmodules = true;
   };
   args = {

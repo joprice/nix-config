@@ -222,3 +222,10 @@ inoremap <Leader>e <ESC>:set keymap=<CR>a
 " don't contain an import
 au BufNewFile,BufRead *.mm set filetype=objcpp
 au BufNewFile,BufRead Cakefile set filetype=ruby
+
+nmap <C-s> <Plug>MarkdownPreview
+nmap <M-s> <Plug>MarkdownPreviewStop
+nmap <C-p> <Plug>MarkdownPreviewToggle
+let g:mkdp_auto_start = 1
+let g:mkdp_echo_preview_url = 1
+
