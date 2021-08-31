@@ -24,8 +24,8 @@ let
   ocaml-lsp-server = fetchFromGitHub {
     owner = "ocaml";
     repo = "ocaml-lsp";
-    rev = "1.7.0";
-    sha256 = "0fs02qlicyzhq43fjkjd6hbiavrf0f8wcpzf082p1cwxc1v0r6ij";
+    rev = "1.8.0";
+    sha256 = "0k0grnqm4gis9rj58njgy6cph1abim66d8vqs8yplxajgg36snhz";
     fetchSubmodules = true;
   };
   args = {
@@ -37,6 +37,7 @@ let
   };
   opam2nixResolve = resolve args [
     "${ocaml-lsp-server}/ocaml-lsp-server.opam"
+    "ocamlformat-rpc"
   ];
   selection = opam2nix.build args;
 in

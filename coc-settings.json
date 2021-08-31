@@ -11,8 +11,17 @@
     "typescriptreact",
     "dart",
     "ruby",
-    "java"
+    "java",
+    "kotlin"
   ],
+  "rust-analyzer.server.path": "rust-analyzer",
+  "rust-analyzer.diagnostics.enableExperimental": true,
+  //  "rust-analyzer.experimental.procAttrMacros": true,
+  //"rust-analyzer.inlayHints.refreshOnInsertMode": true,
+  // "rust-analyzer.cargo.runBuildScripts": true,
+  // "rust-analyzer.procMacro.enable": true,
+  // "rust-analyzer.lens.methodReferences": true,
+  // "rust-analyzer.hoverActions.linksInHover": true
   "languageserver": {
     "nix": {
       "command": "rnix-lsp",

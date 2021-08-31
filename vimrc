@@ -166,6 +166,7 @@ let g:ale_fixers = {
 \   'cpp': ['clang-format'],
 \   'objc': [],
 \   'objcpp': [],
+\   'scala': [],
 \}
 "\   'nix': ['nixpkgs-fmt'],
 " \   'ocaml': ['ocamlformat'],
@@ -176,6 +177,7 @@ let g:ale_linters = {
 \   'swift': [],
 \   'cpp': [],
 \   'objcpp': [],
+\   'scala': [],
 \}
 "\   'swift': ['swift-format'],
 " \   'cpp': ['clang-check'],
@@ -228,4 +230,3 @@ nmap <M-s> <Plug>MarkdownPreviewStop
 nmap <C-p> <Plug>MarkdownPreviewToggle
 let g:mkdp_auto_start = 1
 let g:mkdp_echo_preview_url = 1
-

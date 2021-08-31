@@ -22,8 +22,9 @@ let
     ]
   );
   z = pkgs.callPackage ./z.nix {};
+  ocamlPackages = pkgs.ocaml-ng.ocamlPackages_4_12;
   ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix {
-    ocamlPackages = pkgs.ocaml-ng.ocamlPackages_4_12;
+    inherit ocamlPackages;
   };
   # install sbt with scala native at different path?
   #sbt = pkgs.sbt-with-scala-native;#.override { jre = pkgs.jdk11; };
@@ -44,6 +45,15 @@ let
       repo = "cabal-project-vim";
       rev = "0d41e7e41b1948de84847d9731023407bf2aea04";
       sha256 = "15rn54wspy55v9lw3alhv5h9b7sv6yi6az9gzzskzyim76ka0n4g";
+    };
+  };
+  vim-capnp = pkgs.vimUtils.buildVimPlugin {
+    name = "vim-capnp";
+    src = pkgs.fetchFromGitHub {
+      owner = "cstrahan";
+      repo = "vim-capnp";
+      rev = "954202e2c6c1cb9185082de8ddb7f2823a9d1206";
+      sha256 = "02nwxibfq1ddl3idms29c73b06rc5gpimdasfnn4pdafd7mhil7a";
     };
   };
   easy-ps = import
@@ -94,6 +104,19 @@ let
       sha256 = "0v90qx40nk2zkxf8n0qm776ny81i255z4ns35n59kxvixmj73042";
     };
   };
+  coc-kotlin = pkgs.vimUtils.buildVimPlugin {
+    name = "coc-kotlin";
+    src = pkgs.fetchFromGitHub {
+      owner = "weirongxu";
+      repo = "coc-kotlin";
+      rev = "b13c9912f2f651f65014ae2a8b73040047956e74";
+      sha256 = "1bdix5c9bqp2j07p9fvcs3aghmahah7gnibb6nkb32mz6m5z0672";
+    };
+    buildPhase = ''
+      touch .yarnrc
+      ${pkgs.nodejs-12_x}/bin/npm --scripts-prepend-node-path run build
+    '';
+  };
   vim-markdown-preview = pkgs.vimUtils.buildVimPlugin {
     name = "vim-markdown-preview";
     src = pkgs.fetchFromGitHub {
@@ -126,12 +149,14 @@ in
     #bitcoin
     alacritty
     async-profiler
+    autoconf
     awscli
     bazel
     bat
     cabal-install
     #ccls
-    cocoapods
+    # not working https://github.com/NixOS/nixpkgs/issues/132049
+    #cocoapods
     #crate2nix
     cabal2nix
     cachix
@@ -147,12 +172,13 @@ in
     easy-ps.psc-package
     easy-ps.spago
     easy-ps.pscid
-    flow
+    #flow
     git-cof
     git-delete-squashed
     github-cli
     gnupg
     go
+    gradle
     graphviz
     gron
     haskell
@@ -176,13 +202,15 @@ in
     niv
     nixpkgs-fmt
     nix-index
-    #nodePackages.node2nix
-    nodejs-12_x
+    nodePackages.node2nix
+    nodePackages.esy
+    nushell
+    #nodejs-12_x
     #obelisk
     ocaml
     ocaml-lsp.ocaml-lsp-server
     ocaml-lsp.opam2nixResolve
-    #ocamlPackages.utop
+    ocamlPackages.utop
     pstree
     ripgrep # rg - faster grep
     rlwrap
@@ -196,7 +224,7 @@ in
     skim
     telnet
     tree
-    visualvm
+    #visualvm
     vscode
     yarn
     z
@@ -212,6 +240,19 @@ in
     wrk
     gnuplot
     #micronaut
+    #graalvm11-ce
+    ioping
+    openssl.out
+    openssl.dev
+    pkg-config
+    hound
+    #qemu
+    #wasmer
+    rust-analyzer
+    nim
+    tokei
+    procs
+    figlet
   ];
   #programs.opam = {
   #  enable = true;
@@ -232,6 +273,7 @@ in
       #vim-markdown-preview
       #coc-sourcekit
       ale
+      #coc-kotlin
       coc-metals
       coc-nvim
       # this server crashes on start
@@ -240,6 +282,7 @@ in
       coc-json
       coc-prettier
       coc-tsserver
+      coc-rust-analyzer
       ctrlp
       ghcid
       #gitgutter
@@ -247,6 +290,7 @@ in
       vim-airline
       vim-airline-themes
       vim-polyglot
+      vim-capnp
       cabal-project-vim
       zenburn
       # coment out with double ctrl+/ or gcc
@@ -299,6 +343,7 @@ in
     enableAutosuggestions = true;
     history.extended = true;
     shellAliases = {
+      cat = "bat";
       vi = "nvim";
       vim = "nvim";
       nixgc = "nix-collect-garbage -d";
@@ -343,6 +388,11 @@ in
     #JAVA_HOME = "${pkgs.jdk.home}";
     LESS = "-RFX";
     EDITOR = "nvim";
+    #OPENSSL_PREFIX = pkgs.openssl.dev;
+    OPENSSL_PREFIX = pkgs.buildEnv {
+      name = "openssl-combined";
+      paths = with pkgs; [ openssl openssl.out openssl.dev ];
+    };
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
