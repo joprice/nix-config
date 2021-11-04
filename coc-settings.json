@@ -12,7 +12,8 @@
     "dart",
     "ruby",
     "java",
-    "kotlin"
+    "kotlin",
+    "rust"
   ],
   "rust-analyzer.server.path": "rust-analyzer",
   "rust-analyzer.diagnostics.enableExperimental": true,

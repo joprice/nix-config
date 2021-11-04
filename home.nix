@@ -61,8 +61,11 @@ let
       pkgs.fetchFromGitHub {
         owner = "justinwoo";
         repo = "easy-purescript-nix";
-        rev = "eb64583e3e15749b3ae56573b2aebbaa9cbab4eb";
-        sha256 = "0hr7smk7avdgc5nm1r3drq91j1hf8wimp7sg747832345c8vq19a";
+        rev = "62364658d2979ee03728b099cf25648efe232244";
+        sha256 = "sha256:0fs6bscyzfqgm42knhz05bgslknmjlj8yjh1n052g6i652llnr1l";
+        #update once new package set is out
+        #rev = "7802db65618c2ead3a55121355816b4c41d276d9";
+        #sha256 = "sha256:0n99hxxcp9yc8yvx7bx4ac6askinfark7dnps3hzz5v9skrvq15q";
       }
     )
     {
@@ -150,6 +153,7 @@ in
     alacritty
     async-profiler
     autoconf
+    automake
     awscli
     bazel
     bat
@@ -172,6 +176,8 @@ in
     easy-ps.psc-package
     easy-ps.spago
     easy-ps.pscid
+    easy-ps.purty
+    easy-ps.purescript-language-server
     #flow
     git-cof
     git-delete-squashed
@@ -183,6 +189,7 @@ in
     gron
     haskell
     htop
+    hub
     idea
     istioctl
     jdk
@@ -225,7 +232,7 @@ in
     telnet
     tree
     #visualvm
-    vscode
+    #vscode
     yarn
     z
     zlib
@@ -253,6 +260,9 @@ in
     tokei
     procs
     figlet
+    #plantuml
+    #postgresql
+    pgcli
   ];
   #programs.opam = {
   #  enable = true;
@@ -268,7 +278,7 @@ in
     extraConfig = lib.fileContents ./vimrc;
     plugins = [
       # these don't work for some reason
-      #vim-swift
+      vim-swift
       vim-swift-format
       #vim-markdown-preview
       #coc-sourcekit
