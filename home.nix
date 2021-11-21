@@ -1,8 +1,8 @@
 { config, pkgs, pkgsPath, lib, ... }:
 let
   #crate2nix = import (builtins.fetchTarball "https://github.com/kolloch/crate2nix/tarball/e07af104b8e41d1cd7e41dc7ac3fdcdf4953efae") { };
-  crate2nix = import (builtins.fetchTarball "https://github.com/lopsided98/crate2nix/tarball/d0b41938906c2fcaf86ae0b5b5a5d0d738ba1fff") {};
-  async-profiler = pkgs.callPackage ./async-profiler.nix {};
+  crate2nix = import (builtins.fetchTarball "https://github.com/lopsided98/crate2nix/tarball/d0b41938906c2fcaf86ae0b5b5a5d0d738ba1fff") { };
+  async-profiler = pkgs.callPackage ./async-profiler.nix { };
   # git checkout with skim https://github.com/lotabout/skim
   git-cof =
     pkgs.writeShellScriptBin "git-cof" ''
@@ -21,7 +21,7 @@ let
       haskellPackages.pretty-simple
     ]
   );
-  z = pkgs.callPackage ./z.nix {};
+  z = pkgs.callPackage ./z.nix { };
   ocamlPackages = pkgs.ocaml-ng.ocamlPackages_4_12;
   ocaml-lsp = pkgs.callPackage ./ocaml-lsp.nix {
     inherit ocamlPackages;
@@ -37,7 +37,7 @@ let
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
   # NOTE some android manager tooling fails on jdk11, so this needs to be jdk8 for android tasks
   jdk = pkgs.jdk11;
-  obelisk = (import (builtins.fetchTarball "https://github.com/obsidiansystems/obelisk/archive/11beb6e8cd2419b2429925b76a98f24035e40985.tar.gz") {}).command;
+  obelisk = (import (builtins.fetchTarball "https://github.com/obsidiansystems/obelisk/archive/11beb6e8cd2419b2429925b76a98f24035e40985.tar.gz") { }).command;
   cabal-project-vim = pkgs.vimUtils.buildVimPlugin {
     name = "cabal-project-vim";
     src = pkgs.fetchFromGitHub {
@@ -187,12 +187,12 @@ in
     gradle
     graphviz
     gron
-    haskell
+    #haskell
     htop
     hub
     idea
     istioctl
-    jdk
+    #jdk
     joker
     loc
     nim
@@ -227,7 +227,7 @@ in
     rust-analyzer
     sbt
     scala
-    stack
+    #stack
     skim
     telnet
     tree
@@ -275,8 +275,10 @@ in
     vimdiffAlias = true;
     # needed by coc-nvim
     withNodeJs = true;
-    extraConfig = lib.fileContents ./vimrc;
+    extraConfig = builtins.toString ./vimrc;
+    #extraConfig = lib.fileContents ./vimrc;
     plugins = [
+      zig-vim
       # these don't work for some reason
       vim-swift
       vim-swift-format
@@ -294,13 +296,14 @@ in
       coc-tsserver
       coc-rust-analyzer
       ctrlp
-      ghcid
+      #ghcid
       #gitgutter
       psc-ide-vim
       vim-airline
       vim-airline-themes
       vim-polyglot
       vim-capnp
+      vim-colorschemes
       cabal-project-vim
       zenburn
       # coment out with double ctrl+/ or gcc

@@ -1,3 +1,7 @@
+set term=xterm-256color
+let g:zenburn_high_Contrast=1
+colorscheme zenburn
+
 syntax on
 
 " Debugging language servers:
@@ -137,7 +141,18 @@ set showmatch           " highlight matching braces
 set nowritebackup
 set backspace=2
 set listchars=tab:>\ ,trail:.
-set termguicolors
+if (empty($TMUX))
+  if (has("nvim"))
+    "For Neovim 0.1.3 and 0.1.4 < https://github.com/neovim/neovim/pull/2198 >
+    let $NVIM_TUI_ENABLE_TRUE_COLOR=1
+  endif
+  "For Neovim > 0.1.5 and Vim > patch 7.4.1799 < https://github.com/vim/vim/commit/61be73bb0f965a895bfb064ea3e55476ac175162 >
+  "Based on Vim patch 7.4.1770 (`guicolors` option) < https://github.com/vim/vim/commit/8a633e3427b47286869aa4b96f2bfc1fe65b25cd >
+  " < https://github.com/neovim/neovim/wiki/Following-HEAD#20160511 >
+  if (has("termguicolors"))
+    set termguicolors
+  endif
+endif
 
 "autocmd FileType netrw setl bufhidden=delete
 set hidden
@@ -150,8 +165,8 @@ set sidescrolloff=5
 set spell
 set exrc
 
-let g:zenburn_high_Contrast=1
-colorscheme zenburn
+"let g:zenburn_high_Contrast=1
+"colorscheme molokai
 
 let g:ale_fix_on_save = 1
 let g:ale_fixers = {
@@ -230,3 +245,4 @@ nmap <M-s> <Plug>MarkdownPreviewStop
 nmap <C-p> <Plug>MarkdownPreviewToggle
 let g:mkdp_auto_start = 1
 let g:mkdp_echo_preview_url = 1
+
