@@ -146,7 +146,7 @@ in
   # TODO: use machines to make this relative? or other way to make dynamic?
   #home.username = "joseph";
   #home.homeDirectory = "/home/joseph";
-  home.stateVersion = "21.05";
+  home.stateVersion = "21.11";
   # TODO: exclude df
   home.packages = with pkgs; [
     #bitcoin
@@ -215,9 +215,9 @@ in
     #nodejs-12_x
     #obelisk
     ocaml
-    ocaml-lsp.ocaml-lsp-server
+    #ocaml-lsp.ocaml-lsp-server
     ocaml-lsp.opam2nixResolve
-    ocamlPackages.utop
+    #ocamlPackages.utop
     pstree
     ripgrep # rg - faster grep
     rlwrap
@@ -263,53 +263,99 @@ in
     #plantuml
     #postgresql
     pgcli
+    pv
+    # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current 
+    # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
+    (neovim.override
+      {
+        configure = {
+          customRC = builtins.readFile ./vimrc;
+          packages.myPlugins = with pkgs.vimPlugins; {
+            start = [
+              zig-vim
+              # these don't work for some reason
+              vim-swift
+              vim-swift-format
+              #vim-markdown-preview
+              #coc-sourcekit
+              ale
+              #coc-kotlin
+              coc-metals
+              coc-nvim
+              # this server crashes on start
+              coc-java
+              coc-jedi
+              coc-json
+              coc-prettier
+              coc-tsserver
+              coc-rust-analyzer
+              ctrlp
+              #ghcid
+              #gitgutter
+              psc-ide-vim
+              vim-airline
+              vim-airline-themes
+              vim-polyglot
+              vim-capnp
+              vim-colorschemes
+              cabal-project-vim
+              zenburn
+              # coment out with double ctrl+/ or gcc
+              tcomment_vim
+            ];
+            opt = [ ];
+          };
+          # ...
+        };
+      })
   ];
   #programs.opam = {
   #  enable = true;
   #};
   nixpkgs.config.allowUnfree = true;
-  programs.neovim = with pkgs.vimPlugins; {
-    enable = true;
-    viAlias = true;
-    vimAlias = true;
-    vimdiffAlias = true;
-    # needed by coc-nvim
-    withNodeJs = true;
-    extraConfig = builtins.toString ./vimrc;
-    #extraConfig = lib.fileContents ./vimrc;
-    plugins = [
-      zig-vim
-      # these don't work for some reason
-      vim-swift
-      vim-swift-format
-      #vim-markdown-preview
-      #coc-sourcekit
-      ale
-      #coc-kotlin
-      coc-metals
-      coc-nvim
-      # this server crashes on start
-      coc-java
-      coc-jedi
-      coc-json
-      coc-prettier
-      coc-tsserver
-      coc-rust-analyzer
-      ctrlp
-      #ghcid
-      #gitgutter
-      psc-ide-vim
-      vim-airline
-      vim-airline-themes
-      vim-polyglot
-      vim-capnp
-      vim-colorschemes
-      cabal-project-vim
-      zenburn
-      # coment out with double ctrl+/ or gcc
-      tcomment_vim
-    ];
-  };
+  #  programs.neovim = with pkgs.vimPlugins; {
+  #    enable = true;
+  #    viAlias = true;
+  #    vimAlias = true;
+  #    vimdiffAlias = true;
+  #    # needed by coc-nvim
+  #    withNodeJs = true;
+  #    #extraConfig = builtins.toString ./vimrc;
+  #    extraConfig = builtins.readFile ./vimrc;
+  #    #extraConfig = lib.fileContents ./vimrc;
+  #    plugins = [
+  #      zig-vim
+  #      # these don't work for some reason
+  #      vim-swift
+  #      vim-swift-format
+  #      #vim-markdown-preview
+  #      #coc-sourcekit
+  #      ale
+  #      #coc-kotlin
+  #      coc-metals
+  #      coc-nvim
+  #      # this server crashes on start
+  #      coc-java
+  #      coc-jedi
+  #      coc-json
+  #      coc-prettier
+  #      coc-tsserver
+  #      coc-rust-analyzer
+  #      ctrlp
+  #      #ghcid
+  #      #gitgutter
+  #      psc-ide-vim
+  #      vim-airline
+  #      vim-airline-themes
+  #      vim-polyglot
+  #      vim-capnp
+  #      vim-colorschemes
+  #      cabal-project-vim
+  #      zenburn
+  #      # coment out with double ctrl+/ or gcc
+  #      tcomment_vim
+  #    ];
+  #  };
   programs.git = {
     enable = true;
     userName = "Joseph Price";

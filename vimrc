@@ -1,6 +1,3 @@
-set term=xterm-256color
-let g:zenburn_high_Contrast=1
-colorscheme zenburn
 
 syntax on
 
@@ -246,3 +243,5 @@ nmap <C-p> <Plug>MarkdownPreviewToggle
 let g:mkdp_auto_start = 1
 let g:mkdp_echo_preview_url = 1
 
+let g:zenburn_high_Contrast=1
+colorscheme zenburn
