@@ -11,7 +11,7 @@
     "typescriptreact",
     "dart",
     "ruby",
-    "java",
+    //"java",
     "kotlin",
     "rust"
   ],

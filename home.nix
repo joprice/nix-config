@@ -30,8 +30,11 @@ let
   #sbt = pkgs.sbt-with-scala-native;#.override { jre = pkgs.jdk11; };
   # TODO: how to override jre globally?
   sbt = pkgs.sbt.override { jre = pkgs.jdk11; };
-  scala = pkgs.scala;
-  #scala = (pkgs.callPackage "${pkgsPath}/pkgs/development/compilers/scala/2.x.nix" { jre = pkgs.jdk11; }).scala_2_13;
+  #scala = pkgs.scala3;
+  scala = (pkgs.callPackage "${pkgsPath}/pkgs/development/compilers/scala/2.x.nix" {
+    jre = pkgs.jdk11;
+    majorVersion = "2.13";
+  });
   visualvm = pkgs.visualvm.override { jdk = pkgs.jdk11; };
   mill = pkgs.mill.override { jre = pkgs.jdk11; };
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
@@ -71,13 +74,22 @@ let
     {
       inherit pkgs;
     };
+  vim-jack-syntax = pkgs.vimUtils.buildVimPluginFrom2Nix {
+    name = "vim-jack-syntax";
+    src = pkgs.fetchFromGitHub {
+      owner = "zirrostig";
+      repo = "vim-jack-syntax";
+      rev = "d1f19733ff5594cf5d6fb498fc599f02326860a6";
+      sha256 = "sha256-GY6wJuTjTHvMTs/JulTv90bfveH6yhP2wH9ha9q4BYU=";
+    };
+  };
   coc-sourcekit = pkgs.vimUtils.buildVimPluginFrom2Nix {
     name = "coc-sourcekit";
     src = pkgs.fetchFromGitHub {
       owner = "klaaspieter";
       repo = "coc-sourcekit";
-      rev = "c3a69580042353dcf31e0a48141d02ffaa353b29";
-      sha256 = "0qa64pizjma3zi4lcpbazravm5m60qd0sk3c8ds3z4y9dnjfmq21";
+      rev = "f83a2025c543d11d5a69b62fcbbfd6d47fec5960";
+      sha256 = "sha256-1rPCxLl+IxZvMeByxYYLHqH7nnIFlE+Tpmmk9ZUQL+k=";
     };
   };
   coc-jedi = pkgs.vimUtils.buildVimPluginFrom2Nix {
@@ -92,21 +104,21 @@ let
   vim-swift = pkgs.vimUtils.buildVimPlugin {
     name = "vim-swift";
     src = pkgs.fetchFromGitHub {
-      owner = "bumaociyuan";
-      repo = "vim-swift";
-      rev = "76dd8b90aec0e934e5a9c524bba9327436d54348";
-      sha256 = "150sszxlgfn03yhmpjsivn2xxmrpjjzahc0ikc6j8b49ssjf6cd7";
+      owner = "keith";
+      repo = "swift.vim";
+      rev = "3278cf3b0522e6f08eaf11275fedce619beffe9a";
+      sha256 = "sha256-yAr9yCRZCFDocTKaAlaOoam3KmFLAtljg/2/yWMiEUI=";
     };
   };
-  vim-swift-format = pkgs.vimUtils.buildVimPlugin {
-    name = "vim-swift-format";
-    src = pkgs.fetchFromGitHub {
-      owner = "tokorom";
-      repo = "vim-swift-format";
-      rev = "2984712722b3ba16d06c2970e861196039b94dbe";
-      sha256 = "0v90qx40nk2zkxf8n0qm776ny81i255z4ns35n59kxvixmj73042";
-    };
-  };
+  # vim-swift-format = pkgs.vimUtils.buildVimPlugin {
+  #   name = "vim-swift-format";
+  #   src = pkgs.fetchFromGitHub {
+  #     owner = "tokorom";
+  #     repo = "vim-swift-format";
+  #     rev = "2984712722b3ba16d06c2970e861196039b94dbe";
+  #     sha256 = "0v90qx40nk2zkxf8n0qm776ny81i255z4ns35n59kxvixmj73042";
+  #   };
+  # };
   coc-kotlin = pkgs.vimUtils.buildVimPlugin {
     name = "coc-kotlin";
     src = pkgs.fetchFromGitHub {
@@ -146,7 +158,7 @@ in
   # TODO: use machines to make this relative? or other way to make dynamic?
   #home.username = "joseph";
   #home.homeDirectory = "/home/joseph";
-  home.stateVersion = "21.11";
+  home.stateVersion = "22.11";
   # TODO: exclude df
   home.packages = with pkgs; [
     #bitcoin
@@ -157,27 +169,31 @@ in
     awscli
     bazel
     bat
-    cabal-install
+    #cabal-install
+    # TODO: binary doesn't seem to install 
+    chez
     #ccls
     # not working https://github.com/NixOS/nixpkgs/issues/132049
     #cocoapods
     #crate2nix
-    cabal2nix
-    cachix
+    # this causes ghc to hang on compiling a spec for interpolate
+    #cabal2nix
+    #cachix
     clang-tools
     clojure
     cmake
     coreutils
     cue
+    curl
     gitAndTools.delta
-    dhall
-    dhall-json
-    easy-ps.purs
-    easy-ps.psc-package
-    easy-ps.spago
-    easy-ps.pscid
-    easy-ps.purty
-    easy-ps.purescript-language-server
+    #dhall
+    #dhall-json
+    #easy-ps.purs
+    #easy-ps.psc-package
+    #easy-ps.spago
+    #easy-ps.pscid
+    #easy-ps.purty
+    #easy-ps.purescript-language-server
     #flow
     git-cof
     git-delete-squashed
@@ -194,6 +210,7 @@ in
     istioctl
     #jdk
     joker
+    kcat
     loc
     nim
     jq
@@ -217,6 +234,7 @@ in
     ocaml
     #ocaml-lsp.ocaml-lsp-server
     ocaml-lsp.opam2nixResolve
+    #(octave.withPackages (ps: with ps; [ symbolic optim ]))
     #ocamlPackages.utop
     pstree
     ripgrep # rg - faster grep
@@ -229,7 +247,7 @@ in
     scala
     #stack
     skim
-    telnet
+    inetutils
     tree
     #visualvm
     #vscode
@@ -264,6 +282,14 @@ in
     #postgresql
     pgcli
     pv
+    erlang
+    pcre
+    #SDL2
+    #SDL2.dev
+    imagemagick
+    protobuf
+    systemfd
+    trunk
     # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current 
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
     (neovim.override
@@ -274,10 +300,11 @@ in
             start = [
               zig-vim
               # these don't work for some reason
-              vim-swift
-              vim-swift-format
+              #vim-swift
+              #vim-swift-format
               #vim-markdown-preview
-              #coc-sourcekit
+              coc-sourcekit
+              vim-jack-syntax
               ale
               #coc-kotlin
               coc-metals
@@ -298,7 +325,7 @@ in
               vim-polyglot
               vim-capnp
               vim-colorschemes
-              cabal-project-vim
+              #cabal-project-vim
               zenburn
               # coment out with double ctrl+/ or gcc
               tcomment_vim
@@ -424,7 +451,7 @@ in
       plugins = [
         "timer"
         "git-extras"
-        "git"
+        #"git"
         "gitfast"
         "github"
       ];
