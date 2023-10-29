@@ -1,4 +1,8 @@
 {
+  "suggest.floatConfig.border": true,
+  "signature.floatConfig.border": true,
+  "diagnostic.floatConfig.border": true,
+  "hover.floatConfig.border": true,
   //"java.autobuild.enabled": true,
   "coc.preferences.formatOnSaveFiletypes": [
     "scala",
@@ -6,6 +10,7 @@
     "json",
     "nix",
     "ocaml",
+    "reason",
     "javascript",
     "typescript",
     "typescriptreact",
@@ -16,13 +21,15 @@
     "rust"
   ],
   "rust-analyzer.server.path": "rust-analyzer",
-  "rust-analyzer.diagnostics.enableExperimental": true,
   //  "rust-analyzer.experimental.procAttrMacros": true,
   //"rust-analyzer.inlayHints.refreshOnInsertMode": true,
-  // "rust-analyzer.cargo.runBuildScripts": true,
-  // "rust-analyzer.procMacro.enable": true,
+  "rust-analyzer.cargo.runBuildScripts": true,
+  "rust-analyzer.procMacro.enable": true,
+  "rust-analyzer.experimental.procAttrMacros": true,
   // "rust-analyzer.lens.methodReferences": true,
   // "rust-analyzer.hoverActions.linksInHover": true
+  "rust-analyzer.diagnostics.enableExperimental": true,
+  "rust-analyzer.completion.privateEditable.enable": true,
   "languageserver": {
     "nix": {
       "command": "rnix-lsp",

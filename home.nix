@@ -1,6 +1,75 @@
 { config, pkgs, pkgsPath, lib, ... }:
 let
   #crate2nix = import (builtins.fetchTarball "https://github.com/kolloch/crate2nix/tarball/e07af104b8e41d1cd7e41dc7ac3fdcdf4953efae") { };
+  # grammarToPlugin = grammar:
+  #   let
+  #     name = lib.pipe grammar [
+  #       lib.getName
+  #
+  #       # added in buildGrammar
+  #       (lib.removeSuffix "-grammar")
+  #
+  #       # grammars from tree-sitter.builtGrammars
+  #       (lib.removePrefix "tree-sitter-")
+  #       (lib.replaceStrings [ "-" ] [ "_" ])
+  #     ];
+  #   in
+  #   pkgs.neovimUtils.toVimPlugin (pkgs.runCommand "vimplugin-treesitter-grammar-${name}"
+  #     {
+  #       meta = {
+  #         platforms = lib.platforms.all;
+  #       } // grammar.meta;
+  #     }
+  #     ''
+  #       mkdir -p $out/parser
+  #       ln -s ${grammar}/parser $out/parser/${name}.so
+  #     '');
+  tree-sitter-reason = pkgs.stdenv.mkDerivation {
+    name = "tree-sitter-reason";
+    #version = "0.0.0";
+    buildInputs = [ pkgs.tree-sitter pkgs.nodejs ];
+    src = pkgs.fetchFromGitHub {
+      owner = "danielo515";
+      repo = "tree-sitter-reason";
+      rev = "936958c8c3b2d76cbeb4dffcfe5a8f929c958e7a";
+      hash = "sha256-pVHo8K6KCUAXwLI9dv2Mk1XxCDs990OwfaAhtPx6iEs=";
+    };
+    buildPhase = ''
+      cp binding.gyp.json binding.gyp
+      tree-sitter generate
+    '';
+    installPhase = ''
+      mkdir $out
+      cp -R {binding.gyp,Cargo.toml,grammar.js,bindings,src} $out/
+      cp -r queries $out/queries
+    '';
+  };
+  nvim-treesitter-reason =
+    (pkgs.tree-sitter.buildGrammar
+      {
+        language = "reason";
+        version = "0.0.0";
+        src = pkgs.fetchFromGitHub {
+          owner = "danielo515";
+          repo = "nvim-treesitter-reason";
+          rev = "f4b91b8daeed0a0ed2604ea663401bf0e97769c0";
+          hash = "sha256-HfY55v0mL9hpMrcCjrTPJIKtkwZpaDWB0LCov61EpmA=";
+        };
+        meta.homepage = "https://github.com/danielo515/nvim-treesitter-reason";
+      }).overrideAttrs (o: {
+      configurePhase = ''
+        cp -R ${tree-sitter-reason}/{binding.gyp,Cargo.toml,grammar.js,bindings,src} tree-sitter-reason/src/
+        cp ${tree-sitter-reason}/queries/* queries/reason/
+      '' + o.configurePhase;
+      buildPhase = ''
+        cd tree-sitter-reason
+      '' + o.buildPhase;
+      installPhase =
+        o.installPhase + ''
+          cd ../
+          cp -r queries $out
+        '';
+    });
   crate2nix = import (builtins.fetchTarball "https://github.com/lopsided98/crate2nix/tarball/d0b41938906c2fcaf86ae0b5b5a5d0d738ba1fff") { };
   async-profiler = pkgs.callPackage ./async-profiler.nix { };
   # git checkout with skim https://github.com/lotabout/skim
@@ -12,6 +81,11 @@ let
   idea =
     pkgs.writeShellScriptBin "idea" ''
       open -na "IntelliJ IDEA CE.app" --args "$@"
+    '';
+  nix-restart =
+    pkgs.writeShellScriptBin "nix-restart" ''
+      sudo launchctl stop org.nixos.nix-daemon
+      sudo launchctl start org.nixos.nix-daemon
     '';
   # Find and delete branches that were squash-merged
   git-delete-squashed =
@@ -40,7 +114,7 @@ let
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
   # NOTE some android manager tooling fails on jdk11, so this needs to be jdk8 for android tasks
   jdk = pkgs.jdk11;
-  obelisk = (import (builtins.fetchTarball "https://github.com/obsidiansystems/obelisk/archive/11beb6e8cd2419b2429925b76a98f24035e40985.tar.gz") { }).command;
+  #obelisk = (import (builtins.fetchTarball "https://github.com/obsidiansystems/obelisk/archive/11beb6e8cd2419b2429925b76a98f24035e40985.tar.gz") { }).command;
   cabal-project-vim = pkgs.vimUtils.buildVimPlugin {
     name = "cabal-project-vim";
     src = pkgs.fetchFromGitHub {
@@ -161,29 +235,30 @@ in
   home.stateVersion = "22.11";
   # TODO: exclude df
   home.packages = with pkgs; [
+    circleci-cli
     #bitcoin
-    alacritty
-    async-profiler
+    #alacritty
+    #async-profiler
     autoconf
     automake
     awscli
-    bazel
+    #bazel
     bat
     #cabal-install
     # TODO: binary doesn't seem to install 
-    chez
+    #chez
     #ccls
     # not working https://github.com/NixOS/nixpkgs/issues/132049
     #cocoapods
     #crate2nix
     # this causes ghc to hang on compiling a spec for interpolate
     #cabal2nix
-    #cachix
+    cachix
     clang-tools
-    clojure
-    cmake
+    #clojure
+    #cmake
     coreutils
-    cue
+    #cue
     curl
     gitAndTools.delta
     #dhall
@@ -198,15 +273,15 @@ in
     git-cof
     git-delete-squashed
     github-cli
-    gnupg
+    #gnupg
     go
-    gradle
-    graphviz
+    #gradle
+    #graphviz
     gron
     #haskell
     htop
     hub
-    idea
+    #idea
     istioctl
     #jdk
     joker
@@ -218,31 +293,35 @@ in
     kubectx
     # TODO: restrict to non-darwin?
     # unixtools.netstat
-    leiningen
-    libbitcoin-explorer
+    #leiningen
+    #libbitcoin-explorer
     loc
-    maven
-    mill
-    niv
+    #maven
+    #mill
+    #niv
     nixpkgs-fmt
+    icu
     nix-index
-    nodePackages.node2nix
-    nodePackages.esy
-    nushell
-    #nodejs-12_x
+    node2nix
+    #nodePackages.esy
+    #nushell
+    nodejs
     #obelisk
-    ocaml
+    #ocaml
     #ocaml-lsp.ocaml-lsp-server
-    ocaml-lsp.opam2nixResolve
+    #ocaml-lsp.opam2nixResolve
     #(octave.withPackages (ps: with ps; [ symbolic optim ]))
     #ocamlPackages.utop
     pstree
+    chafa
     ripgrep # rg - faster grep
+    fd
     rlwrap
     rmlint
     rnix-lsp
     rustup
-    rust-analyzer
+    zld
+    #rust-analyzer
     sbt
     scala
     #stack
@@ -254,26 +333,26 @@ in
     yarn
     z
     zlib
-    nodePackages.bower
+    #nodePackages.bower
     libiconv
-    xcpretty
+    #xcpretty
     #websocat
     watchman
     #xquartz
     fswatch
     upx
     wrk
-    gnuplot
+    #gnuplot
     #micronaut
     #graalvm11-ce
     ioping
     openssl.out
+    moreutils
     openssl.dev
     pkg-config
     hound
     #qemu
     #wasmer
-    rust-analyzer
     nim
     tokei
     procs
@@ -282,20 +361,27 @@ in
     #postgresql
     pgcli
     pv
-    erlang
+    #erlang
     pcre
     #SDL2
     #SDL2.dev
-    imagemagick
-    protobuf
+    #imagemagick
+    #protobuf
     systemfd
     trunk
+    ffmpeg
+    ffmpeg.dev
+    pcre
+    gource
+    nerdfonts
+    #coursier
+    #metals
     # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current 
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
     (neovim.override
       {
         configure = {
-          customRC = builtins.readFile ./vimrc;
+          customRC = ''luafile ${./vimrc.lua}'';
           packages.myPlugins = with pkgs.vimPlugins; {
             start = [
               zig-vim
@@ -303,20 +389,26 @@ in
               #vim-swift
               #vim-swift-format
               #vim-markdown-preview
-              coc-sourcekit
+              #coc-sourcekit
               vim-jack-syntax
-              ale
+              #ale
               #coc-kotlin
-              coc-metals
+              # required by nvim-metals
+              nvim-dap
+              # required by nvim-metals
+              plenary-nvim
+              #nvim-metals
               coc-nvim
+              catppuccin-nvim
               # this server crashes on start
               coc-java
               coc-jedi
+              comment-nvim
               coc-json
               coc-prettier
               coc-tsserver
               coc-rust-analyzer
-              ctrlp
+              #ctrlp
               #ghcid
               #gitgutter
               psc-ide-vim
@@ -329,6 +421,31 @@ in
               zenburn
               # coment out with double ctrl+/ or gcc
               tcomment_vim
+              nightfox-nvim
+              tokyonight-nvim
+              onedark-nvim
+              nvim-treesitter
+              trouble-nvim
+              (nvim-treesitter.withPlugins (p: with p; [
+                json
+                lua
+                ocaml
+                ocaml_interface
+                markdown
+                sql
+                vim
+                #nvim-treesitter-reason
+              ]))
+              #nvim-treesitter-reason
+              todo-comments-nvim
+              nvim-web-devicons
+              telescope-nvim
+              telescope-coc-nvim
+              telescope-fzy-native-nvim
+              telescope-frecency-nvim
+              telescope-media-files-nvim
+              telescope-z-nvim
+              which-key-nvim
             ];
             opt = [ ];
           };
@@ -385,6 +502,7 @@ in
   #  };
   programs.git = {
     enable = true;
+    lfs.enable = true;
     userName = "Joseph Price";
     userEmail = "pricejosephd@gmail.com";
     aliases = {
@@ -434,10 +552,11 @@ in
       vim = "nvim";
       nixgc = "nix-collect-garbage -d";
       nixq = "nix-env -qaP";
+      nix-search = ''nix --extra-experimental-features "nix-command flakes" search nixpkgs'';
       # TODO: this alias works around df only showing the nix volume when used from nix
       df = "/bin/df";
       # prints contents of paths on separate lines
-      path = '' echo - e ''${PATH // :/\\n}'';
+      path = ''echo -e ''${PATH//:/\\n}'';
       # -I ignores binary files
       grep = "grep --color -I";
       ips = "ifconfig | awk '\$1 == \"inet\" {print \$2}'";
@@ -454,6 +573,7 @@ in
         #"git"
         "gitfast"
         "github"
+        "web-search"
       ];
       theme = "robbyrussell";
     };
@@ -487,4 +607,15 @@ in
     #enableNixDirenvIntegration = true;
     nix-direnv.enable = true;
   };
+  #nix = {
+  #  distributedBuilds = true;
+  #  buildMachines = [{
+  #    hostName = "builder";
+  #    system = "aarch64-linux";
+  #    maxJobs = 10;
+  #    speedFactor = 2;
+  #    supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
+  #    mandatoryFeatures = [ ];
+  #  }];
+  #};
 }
