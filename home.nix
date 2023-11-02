@@ -206,19 +206,19 @@ let
       ${pkgs.nodejs-12_x}/bin/npm --scripts-prepend-node-path run build
     '';
   };
-  vim-markdown-preview = pkgs.vimUtils.buildVimPlugin {
-    name = "vim-markdown-preview";
-    src = pkgs.fetchFromGitHub {
-      owner = "iamcco";
-      repo = "markdown-preview.nvim";
-      rev = "e5bfe9b89dc9c2fbd24ed0f0596c85fd0568b143";
-      sha256 = "0bfkcfjqg2jqm4ss16ks1mfnlnpyg1l4l18g7pagw1dfka14y8fg";
-    };
-    buildPhase = ''
-      touch .yarnrc
-      ${pkgs.yarn}/bin/yarn --no-default-rc --disable-pnp --pure-lockfile install
-    '';
-  };
+  #vim-markdown-preview = pkgs.vimUtils.buildVimPlugin {
+  #  name = "vim-markdown-preview";
+  #  src = pkgs.fetchFromGitHub {
+  #    owner = "iamcco";
+  #    repo = "markdown-preview.nvim";
+  #    rev = "e5bfe9b89dc9c2fbd24ed0f0596c85fd0568b143";
+  #    sha256 = "0bfkcfjqg2jqm4ss16ks1mfnlnpyg1l4l18g7pagw1dfka14y8fg";
+  #  };
+  #  buildPhase = ''
+  #    touch .yarnrc
+  #    ${pkgs.yarn}/bin/yarn --no-default-rc --disable-pnp --pure-lockfile install
+  #  '';
+  #};
   bazel = pkgs.symlinkJoin {
     name = "bazel";
     paths = [ pkgs.bazelisk ];
@@ -235,6 +235,7 @@ in
   home.stateVersion = "22.11";
   # TODO: exclude df
   home.packages = with pkgs; [
+    lua-language-server
     circleci-cli
     #bitcoin
     #alacritty
@@ -374,6 +375,7 @@ in
     pcre
     gource
     nerdfonts
+    gnused
     #coursier
     #metals
     # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current 
@@ -381,33 +383,37 @@ in
     (neovim.override
       {
         configure = {
-          customRC = ''luafile ${./vimrc.lua}'';
+          #customRC = ''luafile ${./vimrc.lua}'';
+          customRC = ''luafile ~/.config/home-manager/init.lua'';
           packages.myPlugins = with pkgs.vimPlugins; {
             start = [
+              #telescope-coc-nvim
+              #coc-nvim
+              #coc-java
+              #coc-jedi
+              #coc-json
+              #coc-prettier
+              #coc-tsserver
+              #coc-rust-analyzer
+              #coc-sourcekit
+              #coc-kotlin
+              fidget-nvim
+              neodev-nvim
+              auto-session
               zig-vim
               # these don't work for some reason
               #vim-swift
               #vim-swift-format
-              #vim-markdown-preview
-              #coc-sourcekit
               vim-jack-syntax
               #ale
-              #coc-kotlin
               # required by nvim-metals
               nvim-dap
               # required by nvim-metals
               plenary-nvim
               #nvim-metals
-              coc-nvim
               catppuccin-nvim
               # this server crashes on start
-              coc-java
-              coc-jedi
               comment-nvim
-              coc-json
-              coc-prettier
-              coc-tsserver
-              coc-rust-analyzer
               #ctrlp
               #ghcid
               #gitgutter
@@ -439,13 +445,21 @@ in
               #nvim-treesitter-reason
               todo-comments-nvim
               nvim-web-devicons
-              telescope-nvim
-              telescope-coc-nvim
-              telescope-fzy-native-nvim
+              telescope-file-browser-nvim
               telescope-frecency-nvim
+              telescope-fzy-native-nvim
               telescope-media-files-nvim
+              telescope-nvim
               telescope-z-nvim
               which-key-nvim
+              markdown-preview-nvim
+              barbar-nvim
+              nvim-lspconfig
+              nvim-cmp
+              cmp-nvim-lsp
+              gitsigns-nvim
+              cmp-nvim-lsp-signature-help
+              lsp-format-nvim
             ];
             opt = [ ];
           };
