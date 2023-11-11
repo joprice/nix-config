@@ -132,6 +132,9 @@ inoremap <Leader>e <ESC>:set keymap=<CR>a
 " don't contain an import
 "au BufNewFile,BufRead *.mm set filetype=objcpp
 "au BufNewFile,BufRead Cakefile set filetype=ruby
+au BufNewFile,BufRead *.plist setf xml
+au BufNewFile,BufRead WORKSPACE.bzlmod setf bzl
+
 
 "nmap <C-s> <Plug>MarkdownPreview
 "nmap <M-s> <Plug>MarkdownPreviewStop
@@ -144,6 +147,11 @@ let g:zenburn_high_Contrast=1
 
 "set shortmess+=c
 set completeopt=menuone,noinsert,noselect
+
+let g:prettier#autoformat = 1
+let g:prettier#autoformat_require_pragma = 0
+let g:prettier#exec_cmd_async = 1
+let g:prettier#quickfix_enabled = 0
 ]])
 
 require('nvim-web-devicons').setup()
@@ -426,6 +434,8 @@ vim.opt.guifont = "FiraMono Nerd Font Mono:h15"
 
 local builtin = require('telescope.builtin')
 local telescope = require('telescope')
+
+-- See https://github.com/nvim-telescope/telescope.nvim#neovim-lsp-pickers
 vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
 vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
@@ -438,6 +448,7 @@ vim.keymap.set('n', '<leader>fi', builtin.current_buffer_fuzzy_find, {})
 vim.keymap.set('n', '<leader>ft', '<Cmd>TodoTelescope keywords=TODO,FIX<CR>', {})
 vim.keymap.set('n', '<leader>fd', builtin.git_status, {})
 vim.keymap.set('n', '<leader>fl', builtin.git_branches, {})
+vim.keymap.set('n', '<space>a', builtin.diagnostics, {})
 
 vim.keymap.set("n", "<C-p>", builtin.find_files, {})
 
@@ -447,19 +458,150 @@ vim.keymap.set('n', '<A-c>', '<Cmd>BufferClose<CR>', opts)
 require('neodev').setup()
 require("lsp-format").setup {}
 
+-- local nlspsettings = require("nlspsettings")
+--
+-- nlspsettings.setup({
+--   config_home = vim.fn.stdpath('config') .. '/nlsp-settings',
+--   local_settings_dir = ".nlsp-settings",
+--   local_settings_root_markers_fallback = { '.git' },
+--   append_default_schemas = true,
+--   loader = 'json'
+-- })
+
 local lspconfig = require('lspconfig')
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
+
+
+-- function on_attach(client, bufnr)
+--   local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
+--   buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+-- end
+
+-- local global_capabilities = vim.lsp.protocol.make_client_capabilities()
+-- global_capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+-- lspconfig.util.default_config = vim.tbl_extend("force", lspconfig.util.default_config, {
+-- capabilities = global_capabilities,
+-- })
+
+-- lsp_installer.on_server_ready(function(server)
+--   server:setup({
+--     on_attach = on_attach
+--   })
+-- end)
 
 local on_attach = function(client, bufnr)
   require("lsp-format").on_attach(client, bufnr)
 end
 
+-- lspconfig.jsonls.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
+--
+local swift_format = {
+  formatCommand = [[swift-format]],
+  formatStdin = true,
+}
+local buildifier = {
+  formatCommand = [[buildifier]],
+  formatStdin = true,
+}
+lspconfig.efm.setup {
+  on_attach = on_attach,
+  init_options = { documentFormatting = true },
+  settings = {
+    languages = {
+      bzl = {
+        buildifier
+      },
+      swift = {
+        swift_format
+      }
+    },
+  },
+}
+
+lspconfig.clangd.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+}
+
+lspconfig.tailwindcss.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  init_options = {
+    userLanguages = {
+      ocaml = "html"
+    }
+  },
+  filetypes = { "html", "reason",
+    -- this is disabled due to high cpu usage
+    -- "ocaml" },
+  },
+  -- filetypes = { "ocaml", "html", "reason" },
+  -- TODO: extend defaults somehow
+  -- filetypes = vim.tbl_extend(lspconfig.tailwindcss.default_config, { "ocaml" }),
+  settings = {
+    tailwindCSS = {
+      lint = {
+        cssConflict = "error",
+      },
+      -- colorDecorators = true,
+      includeLanguages = {
+        ocaml = "html"
+      },
+      -- TODO: get project-specific config working so this isn't global
+      -- * https://github.com/neovim/nvim-lspconfig/wiki/Project-local-settings
+      -- examples
+      -- * https://github.com/ecosse3/nvim/blob/01a4feef16d5714abb1e49ee8e047a32e7d8ec4e/lua/lsp/servers/tailwindcss.lua#L45-L53
+      -- * https://github.com/tailwindlabs/tailwindcss/issues/7553
+      -- * https://github.com/tailwindlabs/tailwindcss/discussions/7554
+      -- config schema https://github.com/tailwindlabs/tailwindcss-intellisense/blob/0b83e8d5fb81fe2d75835f38dfe8836e4e332c95/packages/vscode-tailwindcss/package.json#L204
+      experimental = {
+        classRegex = {
+          "~class_\\:\\s*\\(Prop.s\\s+\"([^\"]*)\"",
+        }
+      }
+    }
+  }
+}
+-- lspconfig.flow.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
+local util = require 'lspconfig.util'
+
+lspconfig.tsserver.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  -- root_dir = util.root_pattern(".git"),
+  single_file_support = false,
+  root_dir = util.root_pattern('package.json')
+}
+
+lspconfig.nil_ls.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  settings = {
+    ['nil'] = {
+      formatting = {
+        command = { "nixpkgs-fmt" },
+      },
+    },
+  },
+}
 lspconfig.ocamllsp.setup {
   capabilities = capabilities,
   on_attach = on_attach
 }
+lspconfig.sourcekit.setup {
+  capabilities = capabilities,
+  on_attach = on_attach
+}
 lspconfig.lua_ls.setup({
+  capabilities = capabilities,
   on_attach = on_attach,
   settings = {
     Lua = {
@@ -472,8 +614,11 @@ lspconfig.lua_ls.setup({
     }
   }
 })
+-- lspconfig.starlark_rust.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
 lspconfig.pyright.setup {}
-lspconfig.tsserver.setup {}
 lspconfig.rust_analyzer.setup {
   -- Server-specific settings. See `:help lspconfig-setup`
   settings = {
@@ -484,8 +629,8 @@ lspconfig.rust_analyzer.setup {
 -- Global mappings.
 -- See `:help vim.diagnostic.*` for documentation on any of the below functions
 vim.keymap.set('n', '<space>e', vim.diagnostic.open_float)
-vim.keymap.set('n', '[d', vim.diagnostic.goto_prev)
-vim.keymap.set('n', ']d', vim.diagnostic.goto_next)
+vim.keymap.set('n', '[g', vim.diagnostic.goto_prev)
+vim.keymap.set('n', ']g', vim.diagnostic.goto_next)
 vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist)
 
 -- Use LspAttach autocommand to only map the following keys
@@ -537,8 +682,8 @@ cmp.setup {
     ['<Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
-      elseif luasnip.expand_or_locally_jumpable() then
-        luasnip.expand_or_jump()
+        -- elseif luasnip.expand_or_locally_jumpable() then
+        --   luasnip.expand_or_jump()
       else
         fallback()
       end
@@ -546,8 +691,8 @@ cmp.setup {
     ['<S-Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_prev_item()
-      elseif luasnip.locally_jumpable(-1) then
-        luasnip.jump(-1)
+        -- elseif luasnip.locally_jumpable(-1) then
+        --   luasnip.jump(-1)
       else
         fallback()
       end
@@ -559,3 +704,13 @@ cmp.setup {
     -- { name = 'luasnip' },
   },
 }
+
+-- lsp_installer.on_server_ready(function(server)
+--   server:setup({
+--     on_attach = on_attach
+--   })
+-- end)
+--
+-- require("nvim-lightbulb").setup({
+--   autocmd = { enabled = true }
+-- })

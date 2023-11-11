@@ -105,10 +105,10 @@ let
   # TODO: how to override jre globally?
   sbt = pkgs.sbt.override { jre = pkgs.jdk11; };
   #scala = pkgs.scala3;
-  scala = (pkgs.callPackage "${pkgsPath}/pkgs/development/compilers/scala/2.x.nix" {
+  scala = pkgs.callPackage "${pkgsPath}/pkgs/development/compilers/scala/2.x.nix" {
     jre = pkgs.jdk11;
     majorVersion = "2.13";
-  });
+  };
   visualvm = pkgs.visualvm.override { jdk = pkgs.jdk11; };
   mill = pkgs.mill.override { jre = pkgs.jdk11; };
   leiningen = pkgs.leiningen.override { jdk = pkgs.jdk11; };
@@ -235,6 +235,17 @@ in
   home.stateVersion = "22.11";
   # TODO: exclude df
   home.packages = with pkgs; [
+    #ollama
+    efm-langserver
+    swift-format
+    #starlark-rust
+    zig
+    tailspin
+    nil
+    statix
+    nodePackages.vscode-langservers-extracted
+    nodePackages.typescript-language-server
+    nodePackages."@tailwindcss/language-server"
     lua-language-server
     circleci-cli
     #bitcoin
@@ -374,7 +385,10 @@ in
     ffmpeg.dev
     pcre
     gource
-    nerdfonts
+    #nerdfonts
+    (nerdfonts.override {
+      fonts = [ "FiraCode" ];
+    })
     gnused
     #coursier
     #metals
@@ -460,6 +474,11 @@ in
               gitsigns-nvim
               cmp-nvim-lsp-signature-help
               lsp-format-nvim
+              nlsp-settings-nvim
+              nvim-lightbulb
+              nil
+              vim-prettier
+              #statix
             ];
             opt = [ ];
           };
