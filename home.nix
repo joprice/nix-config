@@ -332,7 +332,6 @@ in
     rmlint
     rnix-lsp
     rustup
-    zld
     #rust-analyzer
     sbt
     scala
