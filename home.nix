@@ -227,16 +227,18 @@ let
 in
 {
   programs.home-manager.enable = true;
-  home.username = "josephprice";
-  home.homeDirectory = "/Users/josephprice";
+  #home.username = "josephprice";
+  #home.homeDirectory = "/Users/josephp";
   # TODO: use machines to make this relative? or other way to make dynamic?
-  #home.username = "joseph";
-  #home.homeDirectory = "/home/joseph";
-  home.stateVersion = "22.11";
+  home.username = "josephp";
+  home.homeDirectory = "/home/josephp";
+  home.stateVersion = "23.05";
   # TODO: exclude df
   home.packages = with pkgs; [
     lua-language-server
     circleci-cli
+    # TODO: wrap in linux check
+    cudatoolkit
     #bitcoin
     #alacritty
     #async-profiler
@@ -260,6 +262,7 @@ in
     #cmake
     coreutils
     #cue
+    #screen
     curl
     gitAndTools.delta
     #dhall
@@ -271,6 +274,7 @@ in
     #easy-ps.purty
     #easy-ps.purescript-language-server
     #flow
+    gcc
     git-cof
     git-delete-squashed
     github-cli
@@ -279,7 +283,6 @@ in
     #gradle
     #graphviz
     gron
-    #haskell
     htop
     hub
     #idea
@@ -291,7 +294,9 @@ in
     nim
     jq
     kubectl
+    setserial
     kubectx
+    tio
     # TODO: restrict to non-darwin?
     # unixtools.netstat
     #leiningen
@@ -300,12 +305,19 @@ in
     #maven
     #mill
     #niv
+    tdesktop
+    maven
+    mill
+    niv
     nixpkgs-fmt
     icu
     nix-index
     node2nix
     #nodePackages.esy
     #nushell
+    nodePackages.node2nix
+    nodePackages.esy
+    nushell
     nodejs
     #obelisk
     #ocaml
@@ -322,15 +334,22 @@ in
     rnix-lsp
     rustup
     zld
+    #rustup
     #rust-analyzer
     sbt
     scala
-    #stack
+    stack
     skim
+    file
+    dig
+    gnumake
+    xclip
+    nmap
+    rpi-imager
     inetutils
     tree
     #visualvm
-    #vscode
+    vscode
     yarn
     z
     zlib
@@ -352,6 +371,7 @@ in
     openssl.dev
     pkg-config
     hound
+    kitty
     #qemu
     #wasmer
     nim
@@ -360,6 +380,7 @@ in
     figlet
     #plantuml
     #postgresql
+    dtc
     pgcli
     pv
     #erlang
@@ -378,6 +399,14 @@ in
     gnused
     #coursier
     #metals
+    imagemagick
+    pciutils
+    grpc_cli
+    #protobuf
+    systemfd
+    trunk
+    dune_3
+    #docker
     # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current 
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
     (neovim.override
@@ -466,6 +495,7 @@ in
           # ...
         };
       })
+    discord
   ];
   #programs.opam = {
   #  enable = true;
@@ -561,6 +591,7 @@ in
     enableAutosuggestions = true;
     history.extended = true;
     shellAliases = {
+      vimdiff = "nvim -d";
       cat = "bat";
       vi = "nvim";
       vim = "nvim";
@@ -568,7 +599,7 @@ in
       nixq = "nix-env -qaP";
       nix-search = ''nix --extra-experimental-features "nix-command flakes" search nixpkgs'';
       # TODO: this alias works around df only showing the nix volume when used from nix
-      df = "/bin/df";
+      #df = "/bin/df";
       # prints contents of paths on separate lines
       path = ''echo -e ''${PATH//:/\\n}'';
       # -I ignores binary files
@@ -578,6 +609,8 @@ in
       vim-debug = "vim -V9vim.log main.cpp";
       ls = "ls --color=auto";
       gh-pr = "gh pr create --fill";
+      pbcopy = "xclip -selection clipboard";
+      pbpaste = "xclip -selection clipboard -o";
     };
     oh-my-zsh = {
       enable = true;
@@ -591,16 +624,25 @@ in
       ];
       theme = "robbyrussell";
     };
-    initExtra = ''
-      set -o vi
-      bindkey "^?" backward-delete-char
-      . ${z}/bin/z.sh
-      unsetopt AUTO_CD
-      export PATH=$HOME/.local/bin:$PATH
-      nix-build-nodirenv() {
-        pushd /; popd;
-      }
-    '';
+    initExtra =
+      let
+        NIX_LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
+          stdenv.cc.cc
+          zlib
+        ];
+      in
+      ''
+        set -o vi
+        bindkey "^?" backward-delete-char
+        . ${z}/bin/z.sh
+        unsetopt AUTO_CD
+        export PATH=$HOME/.local/bin:$PATH
+        nix-build-nodirenv() {
+          pushd /; popd;
+        }
+        #export NIX_LD=${pkgs.lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker"}
+        #export NIX_LD_LIBRARY_PATH=${NIX_LD_LIBRARY_PATH}
+      '';
   };
   home.sessionVariables = {
     # See https://github.com/direnv/direnv/issues/203#issuecomment-189873955
