@@ -249,6 +249,7 @@ in
     nodePackages.vscode-langservers-extracted
     nodePackages.typescript-language-server
     nodePackages."@tailwindcss/language-server"
+    nvtop
     lua-language-server
     circleci-cli
     # TODO: wrap in linux check
@@ -352,7 +353,7 @@ in
     #sbt
     #scala
     #stack
-    zld
+    #zld
     #rustup
     #rust-analyzer
     sbt
