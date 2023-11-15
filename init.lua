@@ -34,8 +34,9 @@ set incsearch " search as characters are typed
 set hlsearch " highlight search matches
 set showmatch           " highlight matching braces
 
-set nobackup
-set nowritebackup
+"set nobackup
+"set nowritebackup
+set backupcopy=yes
 set backspace=2
 set listchars=tab:>\ ,trail:.
 if (empty($TMUX))
@@ -134,6 +135,7 @@ inoremap <Leader>e <ESC>:set keymap=<CR>a
 "au BufNewFile,BufRead Cakefile set filetype=ruby
 au BufNewFile,BufRead *.plist setf xml
 au BufNewFile,BufRead WORKSPACE.bzlmod setf bzl
+au BufNewFile,BufRead Pods.WORKSPACE setf bzl
 
 
 "nmap <C-s> <Plug>MarkdownPreview
@@ -505,23 +507,23 @@ local swift_format = {
   formatStdin = true,
 }
 local buildifier = {
-  formatCommand = [[buildifier]],
+  formatCommand = [[buildifier -lint=fix]],
   formatStdin = true,
 }
-lspconfig.efm.setup {
-  on_attach = on_attach,
-  init_options = { documentFormatting = true },
-  settings = {
-    languages = {
-      bzl = {
-        buildifier
-      },
-      swift = {
-        swift_format
-      }
-    },
-  },
-}
+-- lspconfig.efm.setup {
+--   on_attach = on_attach,
+--   init_options = { documentFormatting = true },
+--   settings = {
+--     languages = {
+--       bzl = {
+--         buildifier
+--       },
+--       swift = {
+--         swift_format
+--       }
+--     },
+--   },
+-- }
 
 lspconfig.clangd.setup {
   capabilities = capabilities,
@@ -598,7 +600,22 @@ lspconfig.ocamllsp.setup {
 }
 lspconfig.sourcekit.setup {
   capabilities = capabilities,
-  on_attach = on_attach
+  on_attach = on_attach,
+  cmd = {
+    -- "xcrun",
+    "sourcekit-lsp",
+    "--log-level",
+    "warning",
+    "-Xswiftc",
+    "-sdk",
+    "-Xswiftc",
+    "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk",
+    "-Xswiftc",
+    "-target",
+    "-Xswiftc",
+    "x86_64-apple-ios17.0-simulator",
+    "--completion-max-results", "100"
+  }
 }
 lspconfig.lua_ls.setup({
   capabilities = capabilities,
@@ -614,6 +631,87 @@ lspconfig.lua_ls.setup({
     }
   }
 })
+
+local function get_file_name()
+  return vim.api.nvim_buf_get_name(0)
+end
+
+local swiftlint_severities = {
+  -- info = vim.diagnostic.severity.INFO,
+  -- refactor = vim.diagnostic.severity.HINT,
+  -- convention = vim.diagnostic.severity.WARN,
+  Warning = vim.diagnostic.severity.WARN,
+  Error = vim.diagnostic.severity.ERROR,
+  -- fatal = vim.diagnostic.severity.ERROR,
+}
+
+require("lint").linters.swiftlint = {
+  cmd = "bazelisk",
+  stdin = true,
+  args = {
+    "run",
+    "@SwiftLint//:swiftlint", "-c", "opt",
+    "--",
+    "lint", "--use-stdin", "--reporter", "json", "--quiet", get_file_name },
+  stream = "stdout",
+  ignore_exitcode = true,
+  env = nil,
+  parser = function(output, bufnr)
+    print(output)
+    local offenses = vim.json.decode(output)
+    if vim.tbl_isempty(offenses) then
+      return {}
+    end
+    local diagnostics = {}
+    for _, offense in pairs(offenses) do
+      table.insert(diagnostics, {
+        lnum = offense.line - 1,
+        col = 0,
+        message = offense.reason,
+        severity = swiftlint_severities[offense.severity],
+        source = "swiftlint",
+      })
+    end
+    return diagnostics
+  end,
+}
+
+
+require("lint").linters_by_ft = {
+  swift = { "swiftlint" },
+  bzl = { "buildifier" },
+  -- go = { "golangcilint" },
+}
+
+local util = require "formatter.util"
+
+-- Provides the Format, FormatWrite, FormatLock, and FormatWriteLock commands
+require("formatter").setup {
+  logging = true,
+  log_level = vim.log.levels.WARN,
+  filetype = {
+    swift = {
+      function()
+        return {
+          exe = "swift-format",
+          args = { vim.api.nvim_buf_get_name(0) },
+          stdin = true
+        }
+      end },
+    ["*"] = {
+      require("formatter.filetypes.any").remove_trailing_whitespace
+    }
+  }
+}
+
+vim.api.nvim_create_autocmd('BufWritePost', {
+  pattern = '*',
+  callback = function()
+    require("lint").try_lint()
+    vim.cmd('FormatWriteLock')
+  end,
+})
+
 -- lspconfig.starlark_rust.setup {
 --   capabilities = capabilities,
 --   on_attach = on_attach,
@@ -667,8 +765,16 @@ vim.api.nvim_create_autocmd('LspAttach', {
 local cmp = require 'cmp'
 
 require("fidget").setup {}
+local luasnip = require 'luasnip'
+require('luasnip.loaders.from_vscode').lazy_load()
+luasnip.config.setup {}
 
 cmp.setup {
+  snippet = {
+    expand = function(args)
+      luasnip.lsp_expand(args.body)
+    end,
+  },
   mapping = cmp.mapping.preset.insert {
     ['<C-n>'] = cmp.mapping.select_next_item(),
     ['<C-p>'] = cmp.mapping.select_prev_item(),

@@ -235,6 +235,9 @@ in
   home.stateVersion = "22.11";
   # TODO: exclude df
   home.packages = with pkgs; [
+    bazelisk
+    buildifier
+    mosh
     #ollama
     efm-langserver
     swift-format
@@ -257,7 +260,7 @@ in
     #bazel
     bat
     #cabal-install
-    # TODO: binary doesn't seem to install 
+    # TODO: binary doesn't seem to install
     #chez
     #ccls
     # not working https://github.com/NixOS/nixpkgs/issues/132049
@@ -391,7 +394,7 @@ in
     gnused
     #coursier
     #metals
-    # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current 
+    # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
     (neovim.override
       {
@@ -456,7 +459,20 @@ in
                 #nvim-treesitter-reason
               ]))
               #nvim-treesitter-reason
-              todo-comments-nvim
+              barbar-nvim
+              cmp-nvim-lsp
+              cmp-nvim-lsp-signature-help
+              cmp_luasnip
+              friendly-snippets
+              gitsigns-nvim
+              lsp-format-nvim
+              luasnip
+              markdown-preview-nvim
+              nil
+              nlsp-settings-nvim
+              nvim-cmp
+              nvim-lightbulb
+              nvim-lspconfig
               nvim-web-devicons
               telescope-file-browser-nvim
               telescope-frecency-nvim
@@ -464,19 +480,18 @@ in
               telescope-media-files-nvim
               telescope-nvim
               telescope-z-nvim
-              which-key-nvim
-              markdown-preview-nvim
-              barbar-nvim
-              nvim-lspconfig
-              nvim-cmp
-              cmp-nvim-lsp
-              gitsigns-nvim
-              cmp-nvim-lsp-signature-help
-              lsp-format-nvim
-              nlsp-settings-nvim
-              nvim-lightbulb
-              nil
+              todo-comments-nvim
               vim-prettier
+              which-key-nvim
+              (nvim-lint.overrideAttrs {
+                src = pkgs.fetchFromGitHub {
+                  owner = "mfussenegger";
+                  repo = "nvim-lint";
+                  rev = "4f2d968a827d86bb40b7b1fad28c11f7b764fef3";
+                  sha256 = "sha256-S2m6MpYIirEX5R05xNRhtaKnmerEtzJP7P9aCL+nwEQ=";
+                };
+              })
+              formatter-nvim
               #statix
             ];
             opt = [ ];
@@ -579,6 +594,7 @@ in
     enableAutosuggestions = true;
     history.extended = true;
     shellAliases = {
+      bazel = "bazelisk";
       cat = "bat";
       vi = "nvim";
       vim = "nvim";
