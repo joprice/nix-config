@@ -34,9 +34,9 @@ set incsearch " search as characters are typed
 set hlsearch " highlight search matches
 set showmatch           " highlight matching braces
 
-"set nobackup
-"set nowritebackup
-set backupcopy=yes
+set nobackup
+set nowritebackup
+"set backupcopy=yes
 set backspace=2
 set listchars=tab:>\ ,trail:.
 if (empty($TMUX))
@@ -583,17 +583,17 @@ lspconfig.tsserver.setup {
   root_dir = util.root_pattern('package.json')
 }
 
-lspconfig.nil_ls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  settings = {
-    ['nil'] = {
-      formatting = {
-        command = { "nixpkgs-fmt" },
-      },
-    },
-  },
-}
+-- lspconfig.nil_ls.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   settings = {
+--     ['nil'] = {
+--       formatting = {
+--         command = { "nixpkgs-fmt" },
+--       },
+--     },
+--   },
+-- }
 lspconfig.ocamllsp.setup {
   capabilities = capabilities,
   on_attach = on_attach
@@ -603,17 +603,20 @@ lspconfig.sourcekit.setup {
   on_attach = on_attach,
   cmd = {
     -- "xcrun",
+    "xcrun",
+    "--toolchain",
+    "swift",
     "sourcekit-lsp",
     "--log-level",
     "warning",
-    "-Xswiftc",
-    "-sdk",
-    "-Xswiftc",
-    "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk",
-    "-Xswiftc",
-    "-target",
-    "-Xswiftc",
-    "x86_64-apple-ios17.0-simulator",
+    -- "-Xswiftc",
+    -- "-sdk",
+    -- "-Xswiftc",
+    -- "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk",
+    -- "-Xswiftc",
+    -- "-target",
+    -- "-Xswiftc",
+    -- "x86_64-apple-ios17.0-simulator",
     "--completion-max-results", "100"
   }
 }
@@ -645,13 +648,39 @@ local swiftlint_severities = {
   -- fatal = vim.diagnostic.severity.ERROR,
 }
 
+-- See https://github.com/peripheryapp/periphery
+require("lint").linters.periphery = {
+  cmd = "./scripts/lint.sh",
+  stdin = false,
+  stream = "stdout",
+  ignore_exitcode = false,
+  parser = function(output, _)
+    local offenses = vim.json.decode(output)
+    if vim.tbl_isempty(offenses) then
+      return {}
+    end
+    local diagnostics = {}
+    for _, offense in pairs(offenses) do
+      table.insert(diagnostics, {
+        lnum = offense.line - 1,
+        col = offense.column - 1,
+        message = offense.reason,
+        severity = swiftlint_severities[offense.severity],
+        source = "periphery",
+      })
+    end
+    return diagnostics
+  end,
+}
+
 require("lint").linters.swiftlint = {
-  cmd = "bazelisk",
+  -- cmd = "bazelisk",
+  cmd = "swiftlint",
   stdin = true,
   args = {
-    "run",
-    "@SwiftLint//:swiftlint", "-c", "opt",
-    "--",
+    -- "run",
+    -- "@SwiftLint//:swiftlint", "-c", "opt",
+    -- "--",
     "lint", "--use-stdin", "--reporter", "json", "--quiet", get_file_name },
   stream = "stdout",
   ignore_exitcode = true,
@@ -678,8 +707,8 @@ require("lint").linters.swiftlint = {
 
 
 require("lint").linters_by_ft = {
-  swift = { "swiftlint" },
-  bzl = { "buildifier" },
+  swift = { "swiftlint", "periphery" },
+  -- bzl = { "buildifier" },
   -- go = { "golangcilint" },
 }
 
@@ -690,6 +719,14 @@ require("formatter").setup {
   logging = true,
   log_level = vim.log.levels.WARN,
   filetype = {
+    bzl = {
+      function()
+        return {
+          exe = "buildifier",
+          -- args = { vim.api.nvim_buf_get_name(0) },
+          stdin = false
+        }
+      end },
     swift = {
       function()
         return {
@@ -709,6 +746,7 @@ vim.api.nvim_create_autocmd('BufWritePost', {
   callback = function()
     require("lint").try_lint()
     vim.cmd('FormatWriteLock')
+    -- vim.cmd('FormatLock')
   end,
 })
 
@@ -820,3 +858,11 @@ cmp.setup {
 -- require("nvim-lightbulb").setup({
 --   autocmd = { enabled = true }
 -- })
+--
+-- vim.diagnostic.config({
+--   virtual_text = false
+-- })
+--
+-- -- Show line diagnostics automatically in hover window
+-- vim.o.updatetime = 250
+-- vim.cmd [[autocmd CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {focus=false})]]

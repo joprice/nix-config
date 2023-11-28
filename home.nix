@@ -269,7 +269,7 @@ in
     # this causes ghc to hang on compiling a spec for interpolate
     #cabal2nix
     cachix
-    clang-tools
+    #clang-tools
     #clojure
     #cmake
     coreutils
@@ -336,8 +336,8 @@ in
     rnix-lsp
     rustup
     #rust-analyzer
-    sbt
-    scala
+    #sbt
+    #scala
     #stack
     skim
     inetutils
@@ -354,7 +354,7 @@ in
     watchman
     #xquartz
     fswatch
-    upx
+    #upx
     wrk
     #gnuplot
     #micronaut
@@ -369,8 +369,8 @@ in
     #wasmer
     nim
     tokei
-    procs
-    figlet
+    #procs
+    #figlet
     #plantuml
     #postgresql
     pgcli
