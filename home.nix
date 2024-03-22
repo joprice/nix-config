@@ -240,9 +240,9 @@ in
     mosh
     #ollama
     efm-langserver
-    swift-format
+    #swift-format
     #starlark-rust
-    zig
+    #zig
     tailspin
     nil
     statix
@@ -269,12 +269,12 @@ in
     # this causes ghc to hang on compiling a spec for interpolate
     #cabal2nix
     cachix
-    #clang-tools
+    clang-tools
     #clojure
     #cmake
     coreutils
     #cue
-    curl
+    #curl
     gitAndTools.delta
     #dhall
     #dhall-json
@@ -291,7 +291,7 @@ in
     #gnupg
     go
     #gradle
-    #graphviz
+    graphviz
     gron
     #haskell
     htop
@@ -302,7 +302,7 @@ in
     joker
     kcat
     loc
-    nim
+    #nim
     jq
     kubectl
     kubectx
@@ -363,23 +363,22 @@ in
     openssl.out
     moreutils
     openssl.dev
-    pkg-config
+    #pkg-config
     hound
     #qemu
     #wasmer
-    nim
     tokei
     #procs
     #figlet
     #plantuml
-    #postgresql
+    postgresql
     pgcli
     pv
     #erlang
     pcre
     #SDL2
     #SDL2.dev
-    #imagemagick
+    imagemagick
     #protobuf
     systemfd
     trunk
@@ -393,7 +392,7 @@ in
     })
     gnused
     #coursier
-    #metals
+    metals
     # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
     (neovim.override

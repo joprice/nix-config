@@ -1,4 +1,5 @@
 vim.cmd([[
+set t_BE=
 "syntax on
 
 " Debugging language servers:
@@ -131,11 +132,13 @@ inoremap <Leader>e <ESC>:set keymap=<CR>a
 
 " overrides auto-detection, which falls back to nroff when the first 10 lines
 " don't contain an import
-"au BufNewFile,BufRead *.mm set filetype=objcpp
+au BufNewFile,BufRead *.mm set filetype=objcpp
 "au BufNewFile,BufRead Cakefile set filetype=ruby
 au BufNewFile,BufRead *.plist setf xml
+au BufNewFile,BufRead *.intentdefinition setf xml
 au BufNewFile,BufRead WORKSPACE.bzlmod setf bzl
 au BufNewFile,BufRead Pods.WORKSPACE setf bzl
+au BufNewFile,BufRead *.entitlements setf xml
 
 
 "nmap <C-s> <Plug>MarkdownPreview
@@ -154,6 +157,14 @@ let g:prettier#autoformat = 1
 let g:prettier#autoformat_require_pragma = 0
 let g:prettier#exec_cmd_async = 1
 let g:prettier#quickfix_enabled = 0
+
+
+if &term =~ "screen"
+	  let &t_BE = "\e[?2004h"
+	  let &t_BD = "\e[?2004l"
+	  exec "set t_PS=\e[200~"
+	  exec "set t_PE=\e[201~"
+endif
 ]])
 
 require('nvim-web-devicons').setup()
@@ -451,6 +462,7 @@ vim.keymap.set('n', '<leader>ft', '<Cmd>TodoTelescope keywords=TODO,FIX<CR>', {}
 vim.keymap.set('n', '<leader>fd', builtin.git_status, {})
 vim.keymap.set('n', '<leader>fl', builtin.git_branches, {})
 vim.keymap.set('n', '<space>a', builtin.diagnostics, {})
+vim.keymap.set('n', '<space>f', builtin.buffers, {})
 
 vim.keymap.set("n", "<C-p>", builtin.find_files, {})
 
@@ -458,7 +470,13 @@ local opts = { noremap = true, silent = true }
 vim.keymap.set('n', '<A-c>', '<Cmd>BufferClose<CR>', opts)
 
 require('neodev').setup()
-require("lsp-format").setup {}
+
+-- see https://github.com/lukas-reineke/lsp-format.nvim/issues/50
+local config = {}
+for _, v in pairs(vim.fn.getcompletion("", "filetype")) do
+  config[v] = { sync = true }
+end
+require("lsp-format").setup(config)
 
 -- local nlspsettings = require("nlspsettings")
 --
@@ -525,50 +543,118 @@ local buildifier = {
 --   },
 -- }
 
-lspconfig.clangd.setup {
+-- lspconfig.clangd.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
+
+-- lspconfig.starlark_rust.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
+lspconfig.pyright.setup {
   capabilities = capabilities,
   on_attach = on_attach,
 }
 
-lspconfig.tailwindcss.setup {
+lspconfig.metals.setup {
   capabilities = capabilities,
   on_attach = on_attach,
+}
+
+lspconfig.haxe_language_server.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  cmd = { "node", "/Users/josephprice/dev/haxe-language-server/bin/server.js" },
   init_options = {
-    userLanguages = {
-      ocaml = "html"
-    }
+    displayArguments = { 'build.hxml' },
+    -- displayArguments = { 'html5.hxml' },
   },
-  filetypes = { "html", "reason",
-    -- this is disabled due to high cpu usage
-    -- "ocaml" },
-  },
-  -- filetypes = { "ocaml", "html", "reason" },
-  -- TODO: extend defaults somehow
-  -- filetypes = vim.tbl_extend(lspconfig.tailwindcss.default_config, { "ocaml" }),
+
+})
+
+lspconfig.nim_langserver.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+}
+
+lspconfig.gopls.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
   settings = {
-    tailwindCSS = {
-      lint = {
-        cssConflict = "error",
-      },
-      -- colorDecorators = true,
-      includeLanguages = {
-        ocaml = "html"
-      },
-      -- TODO: get project-specific config working so this isn't global
-      -- * https://github.com/neovim/nvim-lspconfig/wiki/Project-local-settings
-      -- examples
-      -- * https://github.com/ecosse3/nvim/blob/01a4feef16d5714abb1e49ee8e047a32e7d8ec4e/lua/lsp/servers/tailwindcss.lua#L45-L53
-      -- * https://github.com/tailwindlabs/tailwindcss/issues/7553
-      -- * https://github.com/tailwindlabs/tailwindcss/discussions/7554
-      -- config schema https://github.com/tailwindlabs/tailwindcss-intellisense/blob/0b83e8d5fb81fe2d75835f38dfe8836e4e332c95/packages/vscode-tailwindcss/package.json#L204
-      experimental = {
-        classRegex = {
-          "~class_\\:\\s*\\(Prop.s\\s+\"([^\"]*)\"",
-        }
+    gopls = {
+      analyses = {
+        unusedparams = true,
+        unusedvariable = true,
+        unusedwrite = true,
       }
     }
   }
 }
+
+lspconfig.hls.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+}
+
+lspconfig.elmls.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+}
+
+-- lspconfig.java_language_server.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
+
+lspconfig.rust_analyzer.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  -- Server-specific settings. See `:help lspconfig-setup`
+  settings = {
+    ['rust-analyzer'] = {},
+  },
+}
+
+-- lspconfig.tailwindcss.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   -- init_options = {
+--   --   userLanguages = {
+--   --     ocaml = "html"
+--   --   }
+--   -- },
+--   -- filetypes = { "html", "reason",
+--   --   -- this is disabled due to high cpu usage
+--   --   -- "ocaml" },
+--   -- },
+--   -- filetypes = { "ocaml", "html", "reason" },
+--   -- TODO: extend defaults somehow
+--   -- filetypes = vim.tbl_extend(lspconfig.tailwindcss.default_config, { "ocaml" }),
+--   settings = {
+--     tailwindCSS = {
+--       lint = {
+--         cssConflict = "error",
+--       },
+--       -- colorDecorators = true,
+--       includeLanguages = {
+--         ocaml = "html"
+--       },
+--       -- TODO: get project-specific config working so this isn't global
+--       -- * https://github.com/neovim/nvim-lspconfig/wiki/Project-local-settings
+--       -- examples
+--       -- * https://github.com/ecosse3/nvim/blob/01a4feef16d5714abb1e49ee8e047a32e7d8ec4e/lua/lsp/servers/tailwindcss.lua#L45-L53
+--       -- * https://github.com/tailwindlabs/tailwindcss/issues/7553
+--       -- * https://github.com/tailwindlabs/tailwindcss/discussions/7554
+--       -- config schema https://github.com/tailwindlabs/tailwindcss-intellisense/blob/0b83e8d5fb81fe2d75835f38dfe8836e4e332c95/packages/vscode-tailwindcss/package.json#L204
+--       experimental = {
+--         classRegex = {
+--           "~class_\\:\\s*\\(Prop.s\\s+\"([^\"]*)\"",
+--         }
+--       }
+--     }
+--   }
+-- }
 -- lspconfig.flow.setup {
 --   capabilities = capabilities,
 --   on_attach = on_attach,
@@ -583,21 +669,29 @@ lspconfig.tsserver.setup {
   root_dir = util.root_pattern('package.json')
 }
 
--- lspconfig.nil_ls.setup {
---   capabilities = capabilities,
---   on_attach = on_attach,
---   settings = {
---     ['nil'] = {
---       formatting = {
---         command = { "nixpkgs-fmt" },
---       },
---     },
---   },
--- }
+-- having issues with "buffer is not modifiable" on save
+lspconfig.nil_ls.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  settings = {
+    ['nil'] = {
+      formatting = {
+        command = { "nixpkgs-fmt" },
+      },
+    },
+  },
+}
+
 lspconfig.ocamllsp.setup {
   capabilities = capabilities,
   on_attach = on_attach
 }
+
+lspconfig.purescriptls.setup {
+  capabilities = capabilities,
+  on_attach = on_attach
+}
+
 lspconfig.sourcekit.setup {
   capabilities = capabilities,
   on_attach = on_attach,
@@ -620,6 +714,7 @@ lspconfig.sourcekit.setup {
     "--completion-max-results", "100"
   }
 }
+
 lspconfig.lua_ls.setup({
   capabilities = capabilities,
   on_attach = on_attach,
@@ -707,7 +802,9 @@ require("lint").linters.swiftlint = {
 
 
 require("lint").linters_by_ft = {
-  swift = { "swiftlint", "periphery" },
+  swift = { "swiftlint" }
+  -- TODO: toggle this conditionally
+  -- swift = { "swiftlint", "periphery" },
   -- bzl = { "buildifier" },
   -- go = { "golangcilint" },
 }
@@ -727,6 +824,38 @@ require("formatter").setup {
           stdin = false
         }
       end },
+    python = {
+      function()
+        return {
+          exe = "black",
+          args = { '-' },
+          stdin = true,
+        }
+      end
+    },
+    purescript = {
+      function()
+        return {
+          exe = "purs-tidy",
+          args = { 'format-in-place' },
+          stdin = false,
+        }
+      end
+    },
+    nim = {
+      function()
+        return {
+          exe = "nimpretty",
+          stdin = false,
+        }
+      end
+    },
+    objcpp = {
+      require("formatter.filetypes.cpp").clangformat,
+    },
+    cpp = {
+      require("formatter.filetypes.cpp").clangformat,
+    },
     swift = {
       function()
         return {
@@ -741,6 +870,7 @@ require("formatter").setup {
   }
 }
 
+
 vim.api.nvim_create_autocmd('BufWritePost', {
   pattern = '*',
   callback = function()
@@ -750,17 +880,6 @@ vim.api.nvim_create_autocmd('BufWritePost', {
   end,
 })
 
--- lspconfig.starlark_rust.setup {
---   capabilities = capabilities,
---   on_attach = on_attach,
--- }
-lspconfig.pyright.setup {}
-lspconfig.rust_analyzer.setup {
-  -- Server-specific settings. See `:help lspconfig-setup`
-  settings = {
-    ['rust-analyzer'] = {},
-  },
-}
 
 -- Global mappings.
 -- See `:help vim.diagnostic.*` for documentation on any of the below functions
@@ -794,7 +913,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, opts)
     vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, opts)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-    vim.keymap.set('n', '<space>f', function()
+    vim.keymap.set('n', '<space>d', function()
       vim.lsp.buf.format { async = true }
     end, opts)
   end,
