@@ -1,4 +1,6 @@
 vim.cmd([[
+" packadd! Ionide-vim/lua
+" set runtimepath += '/home/josephp/dev/Ionide-vim'
 set t_BE=
 "syntax on
 
@@ -61,7 +63,7 @@ set timeoutlen=1000 ttimeoutlen=0
 set scrolloff=10
 set sidescrolloff=5
 
-set spell
+" set spell
 set exrc
 
 "let g:ale_fix_on_save = 1
@@ -139,7 +141,7 @@ au BufNewFile,BufRead *.intentdefinition setf xml
 au BufNewFile,BufRead WORKSPACE.bzlmod setf bzl
 au BufNewFile,BufRead Pods.WORKSPACE setf bzl
 au BufNewFile,BufRead *.entitlements setf xml
-
+autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi set filetype=fsharp
 
 "nmap <C-s> <Plug>MarkdownPreview
 "nmap <M-s> <Plug>MarkdownPreviewStop
@@ -158,6 +160,19 @@ let g:prettier#autoformat_require_pragma = 0
 let g:prettier#exec_cmd_async = 1
 let g:prettier#quickfix_enabled = 0
 
+"#\   '--compilertool:"~/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"'
+"FSharp.fsiExtraParameters": ["--langversion:preview"]
+"let g:fsharp#fsi_extra_parameters = [ '--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
+let g:fsharp#fsi_compiler_tool_locations =
+  \ [ '/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
+let g:fsharp#fsiCompilerToolLocations =
+  \ [ '/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
+  "--   fsiCompilerToolLocations = "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+let g:fsharp#fsautocomplete_command =
+    \ [ 'dotnet',
+    \   'fsautocomplete',
+    \   '--adaptive-lsp-server-enabled',
+    \ ]
 
 if &term =~ "screen"
 	  let &t_BE = "\e[?2004h"
@@ -165,6 +180,13 @@ if &term =~ "screen"
 	  exec "set t_PS=\e[200~"
 	  exec "set t_PE=\e[201~"
 endif
+
+let g:fsharp#lsp_auto_setup = 0
+
+set runtimepath+=/home/josephp/dev/Ionide-vim/
+set packpath^=/home/josephp/dev/Ionide-vim/lua/ionide
+packloadall!
+packadd! ionide
 ]])
 
 require('nvim-web-devicons').setup()
@@ -489,6 +511,7 @@ require("lsp-format").setup(config)
 -- })
 
 local lspconfig = require('lspconfig')
+--  inlay_hints = { enabled = true }
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
@@ -513,6 +536,11 @@ capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
 local on_attach = function(client, bufnr)
   require("lsp-format").on_attach(client, bufnr)
+  if client.server_capabilities.inlayHintProvider then
+    print "has inlay"
+    --   vim.lsp.buf.inlay_hint(bufnr, true)
+  end
+  vim.lsp.codelens.refresh()
 end
 
 -- lspconfig.jsonls.setup {
@@ -685,6 +713,88 @@ lspconfig.nil_ls.setup {
 lspconfig.ocamllsp.setup {
   capabilities = capabilities,
   on_attach = on_attach
+}
+
+-- vim.lsp.set_log_level("trace")
+
+-- require 'ionide'.setup {
+--   -- require '/home/josephp/dev/Ionide-vim/lua'.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   -- init_options = {
+--   --   FSharp = {
+--   --     fsiExtraParameters = {
+--   --       "--langversion:preview",
+--   --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+--   --   },
+--   --   }
+--   -- },
+--   settings = {
+--       ["FSharp"] = {
+--         fsiExtraParameters = {
+--           "--langversion:preview",
+--           "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+--         },
+--         fsiCompilerToolLocations = {
+--           "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+--         },
+--     }
+--   },
+--   -- init_options = {
+--   --   FSharp = {
+--   --     fsiExtraParameters = {
+--   --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+--   --     },
+--   --     FSIExtraParameters = {
+--   --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+--   --     },
+--   --     fsiCompilerToolLocations = {
+--   --       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+--   --     },
+--   --     FSICompilerToolLocations = {
+--   --       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+--   --     }
+--   --   }
+--   -- }
+--   -- settings = {
+--   --   fsiCompilerToolLocations = "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+--   -- }
+-- }
+
+lspconfig.fsautocomplete.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  cmd = {
+    'dotnet',
+    'fsautocomplete',
+    '--adaptive-lsp-server-enabled'
+  },
+  settings = {
+    FSharp = {
+      Linter = true,
+      RecordStubGeneration = true,
+      InterfaceStubGeneration = true,
+      UnusedOpensAnalyzer = true,
+      -- SimplifyNameAnalyzer = true,
+      ResolveNamespaces = true,
+      EnableReferenceCodeLens = true,
+      ExternalAutocomplete = true,
+      InlayHints = {
+        typeAnnotations = true
+      },
+      -- FullNameExternalAutocomplete = true,
+      keywordsAutocomplete = true,
+      UnionCaseStubGeneration = true,
+      UnusedDeclarationsAnalyzer = true,
+      UnionCaseStubGenerationBody = "failwith \"---\"",
+      UseSdkScripts = true,
+      -- LineLens = {
+      --   enabled = true
+      -- }
+      --   fsiCompilerToolLocations = {
+      --     "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0" }
+    }
+  }
 }
 
 lspconfig.purescriptls.setup {
@@ -921,7 +1031,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
 local cmp = require 'cmp'
 
-require("fidget").setup {}
+-- notifications in the bottom right corner
+-- require("fidget").setup {}
+
 local luasnip = require 'luasnip'
 require('luasnip.loaders.from_vscode').lazy_load()
 luasnip.config.setup {}

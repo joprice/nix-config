@@ -232,7 +232,39 @@ in
   # TODO: use machines to make this relative? or other way to make dynamic?
   home.username = "josephp";
   home.homeDirectory = "/home/josephp";
-  home.stateVersion = "23.05";
+  nixpkgs.overlays = [
+    (import (builtins.fetchTarball {
+      url =
+        "https://github.com/nix-community/neovim-nightly-overlay/archive/119bbc295f56b531cb87502f5d2fff13dcc35a35.tar.gz";
+    }))
+  ];
+  # nixpkgs.overlays = [
+  #   (final: prev:
+  #     # let
+  #     #   pkgs = import
+  #     #     (builtins.fetchTarball {
+  #     #       # 0.9.5
+  #     #       url = "https://github.com/NixOS/nixpkgs/archive/cbb7b09bad82e5a7b8a1dce70948652da05276fc.tar.gz";
+  #     #     })
+  #     #     { };
+  #     # in
+  #     # in
+  #     # {
+  #     #   inherit (pkgs) neovim-unwrapped;
+  #     # })
+  #     let msgpack-c = prev.callPackage ./msgpack-c.nix { }; in
+  #     {
+  #       neovim-unwrapped = with pkgs;
+  #         with darwin.apple_sdk.frameworks;
+  #         callPackage ./neovim.nix {
+  #           inherit msgpack-c;
+  #           inherit fetchurl;
+  #           inherit CoreServices;
+  #         };
+  #     }
+  #   )
+  # ];
+  home.stateVersion = "23.11";
   # TODO: exclude df
   home.packages = with pkgs; [
     bazelisk
@@ -274,7 +306,7 @@ in
     cachix
     clang-tools
     #clojure
-    #cmake
+    cmake
     coreutils
     #cue
     #curl
@@ -323,6 +355,11 @@ in
     #niv
     tdesktop
     maven
+    dotnetCorePackages.sdk_8_0
+    #dotnetCorePackages.runtime_8_0
+    #dotnet-runtime
+    k6
+    oha
     mill
     niv
     nixpkgs-fmt
@@ -347,7 +384,7 @@ in
     fd
     rlwrap
     rmlint
-    rnix-lsp
+    #rnix-lsp
     rustup
     #rust-analyzer
     #sbt
@@ -389,7 +426,7 @@ in
     openssl.out
     moreutils
     openssl.dev
-    #pkg-config
+    pkg-config
     hound
     kitty
     #qemu
@@ -401,7 +438,6 @@ in
     postgresql
     #postgresql
     dtc
-    (add nixos tweaks)
     pgcli
     pv
     #erlang
@@ -432,8 +468,7 @@ in
     trunk
     dune_3
     #docker
-    # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current 
-    (add nixos tweaks)
+    # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
     (neovim.override
       {
@@ -508,6 +543,8 @@ in
               luasnip
               markdown-preview-nvim
               nil
+              # fsharp support
+              #Ionide-vim
               nlsp-settings-nvim
               nvim-cmp
               nvim-lightbulb
@@ -540,9 +577,9 @@ in
       })
     discord
   ];
-  #programs.opam = {
-  #  enable = true;
-  #};
+  programs.opam = {
+    enable = true;
+  };
   nixpkgs.config.allowUnfree = true;
   #  programs.neovim = with pkgs.vimPlugins; {
   #    enable = true;
@@ -685,6 +722,7 @@ in
         }
         #export NIX_LD=${pkgs.lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker"}
         #export NIX_LD_LIBRARY_PATH=${NIX_LD_LIBRARY_PATH}
+        export DOTNET_ROOT=${pkgs.dotnetCorePackages.sdk_8_0}
       '';
   };
   home.sessionVariables = {
@@ -701,6 +739,8 @@ in
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
+  home.file.".postgresql/root.crt".source = ./root.crt;
+  # (pkgs.writeTextDir "/var/empty/.postgresql/root.crt" (builtins.readFile ./nix/root.crt))
   programs.direnv = {
     enable = true;
     #enableNixDirenvIntegration = true;
