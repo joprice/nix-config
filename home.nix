@@ -70,7 +70,7 @@ let
           cp -r queries $out
         '';
     });
-  crate2nix = import (builtins.fetchTarball "https://github.com/lopsided98/crate2nix/tarball/d0b41938906c2fcaf86ae0b5b5a5d0d738ba1fff") { };
+  # crate2nix = import (builtins.fetchTarball "https://github.com/lopsided98/crate2nix/tarball/d0b41938906c2fcaf86ae0b5b5a5d0d738ba1fff") { };
   async-profiler = pkgs.callPackage ./async-profiler.nix { };
   # git checkout with skim https://github.com/lotabout/skim
   git-cof =
@@ -232,12 +232,12 @@ in
   # TODO: use machines to make this relative? or other way to make dynamic?
   home.username = "josephp";
   home.homeDirectory = "/home/josephp";
-  nixpkgs.overlays = [
-    (import (builtins.fetchTarball {
-      url =
-        "https://github.com/nix-community/neovim-nightly-overlay/archive/119bbc295f56b531cb87502f5d2fff13dcc35a35.tar.gz";
-    }))
-  ];
+  # nixpkgs.overlays = [
+  #   (import (builtins.fetchTarball {
+  #     url =
+  #       "https://github.com/nix-community/neovim-nightly-overlay/archive/119bbc295f56b531cb87502f5d2fff13dcc35a35.tar.gz";
+  #   }))
+  # ];
   # nixpkgs.overlays = [
   #   (final: prev:
   #     # let
@@ -281,11 +281,12 @@ in
     nodePackages.vscode-langservers-extracted
     nodePackages.typescript-language-server
     nodePackages."@tailwindcss/language-server"
-    nvtop
+    # this pulls in cuda
+    #nvtop
     lua-language-server
     circleci-cli
     # TODO: wrap in linux check
-    cudatoolkit
+    #cudatoolkit
     #bitcoin
     #alacritty
     #async-profiler
@@ -368,9 +369,9 @@ in
     node2nix
     #nodePackages.esy
     #nushell
-    nodePackages.node2nix
-    nodePackages.esy
-    nushell
+    #nodePackages.node2nix
+    #nodePackages.esy
+    #nushell
     nodejs
     #obelisk
     #ocaml
@@ -428,7 +429,7 @@ in
     openssl.dev
     pkg-config
     hound
-    kitty
+    #kitty
     #qemu
     #wasmer
     tokei
@@ -460,9 +461,9 @@ in
     #coursier
     metals
     # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current
-    imagemagick
+    #imagemagick
     pciutils
-    grpc_cli
+    #grpc_cli
     #protobuf
     systemfd
     trunk
@@ -711,6 +712,7 @@ in
           zlib
         ];
       in
+      #export NIX_LD=${pkgs.lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker"}
       ''
         set -o vi
         bindkey "^?" backward-delete-char
@@ -720,7 +722,6 @@ in
         nix-build-nodirenv() {
           pushd /; popd;
         }
-        #export NIX_LD=${pkgs.lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker"}
         #export NIX_LD_LIBRARY_PATH=${NIX_LD_LIBRARY_PATH}
         export DOTNET_ROOT=${pkgs.dotnetCorePackages.sdk_8_0}
       '';

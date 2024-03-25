@@ -540,7 +540,10 @@ local on_attach = function(client, bufnr)
     print "has inlay"
     --   vim.lsp.buf.inlay_hint(bufnr, true)
   end
-  vim.lsp.codelens.refresh()
+  if client.server_capabilities.codeLensProvider then
+    -- ToDO: check for support
+    vim.lsp.codelens.refresh()
+  end
 end
 
 -- lspconfig.jsonls.setup {
