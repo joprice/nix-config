@@ -536,12 +536,11 @@ capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
 local on_attach = function(client, bufnr)
   require("lsp-format").on_attach(client, bufnr)
-  if client.server_capabilities.inlayHintProvider then
-    print "has inlay"
-    --   vim.lsp.buf.inlay_hint(bufnr, true)
-  end
+  -- if client.server_capabilities.inlayHintProvider then
+  --   vim.lsp.inlay_hint.enable(bufnr, true)
+  --   --   vim.lsp.buf.inlay_hint(bufnr, true)
+  -- end
   if client.server_capabilities.codeLensProvider then
-    -- ToDO: check for support
     vim.lsp.codelens.refresh()
   end
 end

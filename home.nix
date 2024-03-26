@@ -578,9 +578,9 @@ in
       })
     discord
   ];
-  programs.opam = {
-    enable = true;
-  };
+  # programs.opam = {
+  #   enable = true;
+  # };
   nixpkgs.config.allowUnfree = true;
   #  programs.neovim = with pkgs.vimPlugins; {
   #    enable = true;
