@@ -44,6 +44,29 @@ let
       cp -r queries $out/queries
     '';
   };
+  magma-nvim = pkgs.vimUtils.buildVimPlugin {
+    pname = "magma-nvim-goose";
+    version = "2023-03-13";
+    src = pkgs.fetchFromGitHub {
+      owner = "dccsillag";
+      repo = "magma-nvim";
+      rev = "ff3deba8a879806a51c005e50782130246143d06";
+      sha256 = "sha256-IrMR57gk9iCk73esHO24KZeep9VrlkV5sOC4PzGexyo=";
+    };
+    passthru.python3Dependencies = ps:
+      with ps; [
+        pynvim
+        jupyter-client
+        ueberzug
+        pillow
+        cairosvg
+        plotly
+        ipykernel
+        pyperclip
+        pnglatex
+      ];
+    meta.homepage = "https://github.com/WhiteBlackGoose/magma-nvim-goose/";
+  };
   nvim-treesitter-reason =
     (pkgs.tree-sitter.buildGrammar
       {
@@ -224,6 +247,11 @@ let
     paths = [ pkgs.bazelisk ];
     postBuild = "ln $out/bin/bazelisk $out/bin/bazel";
   };
+  dotnetSdk = (with pkgs.dotnetCorePackages; combinePackages [
+    sdk_6_0
+    sdk_7_0
+    sdk_8_0
+  ]);
 in
 {
   programs.home-manager.enable = true;
@@ -267,6 +295,8 @@ in
   home.stateVersion = "23.11";
   # TODO: exclude df
   home.packages = with pkgs; [
+    icu
+    icu.dev
     bazelisk
     buildifier
     mosh
@@ -356,7 +386,8 @@ in
     #niv
     tdesktop
     maven
-    dotnetCorePackages.sdk_8_0
+    dotnetSdk
+    #dotnetCorePackages.sdk_7_0
     #dotnetCorePackages.runtime_8_0
     #dotnet-runtime
     k6
@@ -407,7 +438,7 @@ in
     inetutils
     tree
     #visualvm
-    vscode
+    #vscode
     yarn
     z
     zlib
@@ -511,7 +542,6 @@ in
               psc-ide-vim
               vim-airline
               vim-airline-themes
-              vim-polyglot
               vim-capnp
               vim-colorschemes
               #cabal-project-vim
@@ -559,6 +589,8 @@ in
               telescope-z-nvim
               todo-comments-nvim
               vim-prettier
+              vim-slime
+              magma-nvim
               which-key-nvim
               (nvim-lint.overrideAttrs {
                 src = pkgs.fetchFromGitHub {
@@ -571,7 +603,9 @@ in
               formatter-nvim
               #statix
             ];
-            opt = [ ];
+            opt = [
+              vim-polyglot
+            ];
           };
           # ...
         };
@@ -665,6 +699,7 @@ in
       "_esy/"
       "metals.sbt"
       "vim.log"
+      ".ipynb_checkpoints/"
     ];
   };
   programs.zsh = {
@@ -723,7 +758,8 @@ in
           pushd /; popd;
         }
         #export NIX_LD_LIBRARY_PATH=${NIX_LD_LIBRARY_PATH}
-        export DOTNET_ROOT=${pkgs.dotnetCorePackages.sdk_8_0}
+        #export DOTNET_ROOT=${pkgs.dotnetCorePackages.sdk_8_0}
+        export DOTNET_ROOT=${dotnetSdk}
       '';
   };
   home.sessionVariables = {
@@ -737,6 +773,8 @@ in
       name = "openssl-combined";
       paths = with pkgs; [ openssl openssl.out openssl.dev ];
     };
+    DOTNET_CLI_TELEMETRY_OPTOUT = 1;
+    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = 1;
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
@@ -746,6 +784,10 @@ in
     enable = true;
     #enableNixDirenvIntegration = true;
     nix-direnv.enable = true;
+  };
+  programs.vscode = {
+    enable = true;
+    package = pkgs.vscode.fhs;
   };
   #nix = {
   #  distributedBuilds = true;

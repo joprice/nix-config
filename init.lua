@@ -141,7 +141,8 @@ au BufNewFile,BufRead *.intentdefinition setf xml
 au BufNewFile,BufRead WORKSPACE.bzlmod setf bzl
 au BufNewFile,BufRead Pods.WORKSPACE setf bzl
 au BufNewFile,BufRead *.entitlements setf xml
-autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi set filetype=fsharp
+"autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi set filetype=fsharp
+"autocmd BufNewFile,BufRead *.fsproj         set filetype=fsharp_project syntax=xml
 
 "nmap <C-s> <Plug>MarkdownPreview
 "nmap <M-s> <Plug>MarkdownPreviewStop
@@ -182,9 +183,10 @@ if &term =~ "screen"
 endif
 
 let g:fsharp#lsp_auto_setup = 0
+let g:polyglot_disabled = ['markdown']
 
 set runtimepath+=/home/josephp/dev/Ionide-vim/
-set packpath^=/home/josephp/dev/Ionide-vim/lua/ionide
+set packpath^=/home/josephp/dev/Ionide-vim/
 packloadall!
 packadd! ionide
 ]])
@@ -540,9 +542,9 @@ local on_attach = function(client, bufnr)
   --   vim.lsp.inlay_hint.enable(bufnr, true)
   --   --   vim.lsp.buf.inlay_hint(bufnr, true)
   -- end
-  if client.server_capabilities.codeLensProvider then
-    vim.lsp.codelens.refresh()
-  end
+  -- if client.server_capabilities.codeLensProvider then
+  --   vim.lsp.codelens.refresh()
+  -- end
 end
 
 -- lspconfig.jsonls.setup {
@@ -719,85 +721,98 @@ lspconfig.ocamllsp.setup {
 
 -- vim.lsp.set_log_level("trace")
 
--- require 'ionide'.setup {
---   -- require '/home/josephp/dev/Ionide-vim/lua'.setup {
---   capabilities = capabilities,
---   on_attach = on_attach,
---   -- init_options = {
---   --   FSharp = {
---   --     fsiExtraParameters = {
---   --       "--langversion:preview",
---   --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
---   --   },
---   --   }
---   -- },
---   settings = {
---       ["FSharp"] = {
---         fsiExtraParameters = {
---           "--langversion:preview",
---           "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
---         },
---         fsiCompilerToolLocations = {
---           "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
---         },
---     }
---   },
---   -- init_options = {
---   --   FSharp = {
---   --     fsiExtraParameters = {
---   --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
---   --     },
---   --     FSIExtraParameters = {
---   --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
---   --     },
---   --     fsiCompilerToolLocations = {
---   --       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
---   --     },
---   --     FSICompilerToolLocations = {
---   --       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
---   --     }
---   --   }
---   -- }
---   -- settings = {
---   --   fsiCompilerToolLocations = "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
---   -- }
--- }
-
-lspconfig.fsautocomplete.setup {
+require 'ionide'.setup {
+  -- require '/home/josephp/dev/Ionide-vim/lua'.setup {
   capabilities = capabilities,
   on_attach = on_attach,
-  cmd = {
-    'dotnet',
-    'fsautocomplete',
-    '--adaptive-lsp-server-enabled'
-  },
-  settings = {
-    FSharp = {
-      Linter = true,
-      RecordStubGeneration = true,
-      InterfaceStubGeneration = true,
-      UnusedOpensAnalyzer = true,
-      -- SimplifyNameAnalyzer = true,
-      ResolveNamespaces = true,
-      EnableReferenceCodeLens = true,
-      ExternalAutocomplete = true,
-      InlayHints = {
-        typeAnnotations = true
-      },
-      -- FullNameExternalAutocomplete = true,
-      keywordsAutocomplete = true,
-      UnionCaseStubGeneration = true,
-      UnusedDeclarationsAnalyzer = true,
-      UnionCaseStubGenerationBody = "failwith \"---\"",
-      UseSdkScripts = true,
-      -- LineLens = {
-      --   enabled = true
-      -- }
-      --   fsiCompilerToolLocations = {
-      --     "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0" }
-    }
-  }
+  -- -- init_options = {
+  -- --   FSharp = {
+  -- --     fsiExtraParameters = {
+  -- --       "--langversion:preview",
+  -- --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  -- --   },
+  -- --   }
+  -- -- },
+  -- settings = {
+  --     ["FSharp"] = {
+  --       fsiExtraParameters = {
+  --         "--langversion:preview",
+  --         "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --       },
+  --       fsiCompilerToolLocations = {
+  --         "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --       },
+  --   }
+  -- },
+  -- init_options = {
+  --   FSharp = {
+  --     fsiExtraParameters = {
+  --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --     },
+  --     FSIExtraParameters = {
+  --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --     },
+  --     fsiCompilerToolLocations = {
+  --       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --     },
+  --     FSICompilerToolLocations = {
+  --       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --     }
+  --   }
+  -- }
+  -- settings = {
+  --   fsiCompilerToolLocations = "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  -- }
 }
+
+-- https://github.com/fsharp/FsAutoComplete/blob/4bc676cc1e8659d9338d31d82d6244bcfcc55cc4/src/FsAutoComplete/LspHelpers.fs#L636
+--
+-- lspconfig.fsautocomplete.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   cmd = {
+--     -- TODO: test for either
+--     -- 'dotnet',
+--     'fsautocomplete',
+--     '--adaptive-lsp-server-enabled'
+--   },
+--   -- cmd = {
+--   --   'dotnet',
+--   --   'fsautocomplete',
+--   --   '--adaptive-lsp-server-enabled'
+--   -- },
+--   settings = {
+--     FSharp = {
+--       ExcludeProjectDirectories = {
+--         ".git",
+--         "paket-files",
+--         "packages"
+--       },
+--       Linter = true,
+--       RecordStubGeneration = true,
+--       InterfaceStubGeneration = true,
+--       UnusedOpensAnalyzer = true,
+--       -- SimplifyNameAnalyzer = true,
+--       ResolveNamespaces = true,
+--       EnableReferenceCodeLens = true,
+--       ExternalAutocomplete = true,
+--       InlayHints = {
+--         typeAnnotations = true
+--       },
+--       -- FullNameExternalAutocomplete = true,
+--       keywordsAutocomplete = true,
+--       UnionCaseStubGeneration = true,
+--       UnusedDeclarationsAnalyzer = true,
+--       UnionCaseStubGenerationBody = "failwith \"---\"",
+--       UseSdkScripts = true,
+--       -- LineLens = {
+--       --   enabled = true
+--       -- }
+--       --   fsiCompilerToolLocations = {
+--       --     "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0" }
+--     }
+--   }
+-- }
 
 lspconfig.purescriptls.setup {
   capabilities = capabilities,
@@ -1000,11 +1015,36 @@ vim.keymap.set('n', '[g', vim.diagnostic.goto_prev)
 vim.keymap.set('n', ']g', vim.diagnostic.goto_next)
 vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist)
 
+local function highlight_symbol(event)
+  local id = vim.tbl_get(event, 'data', 'client_id')
+  local client = id and vim.lsp.get_client_by_id(id)
+  if client == nil or not client.supports_method('textDocument/documentHighlight') then
+    return
+  end
+
+  local group = vim.api.nvim_create_augroup('highlight_symbol', { clear = false })
+
+  vim.api.nvim_clear_autocmds({ buffer = event.buf, group = group })
+
+  vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+    group = group,
+    buffer = event.buf,
+    callback = vim.lsp.buf.document_highlight,
+  })
+
+  vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+    group = group,
+    buffer = event.buf,
+    callback = vim.lsp.buf.clear_references,
+  })
+end
+
 -- Use LspAttach autocommand to only map the following keys
 -- after the language server attaches to the current buffer
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('UserLspConfig', {}),
   callback = function(ev)
+    highlight_symbol(ev)
     -- Enable completion triggered by <c-x><c-o>
     vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
 
@@ -1099,3 +1139,24 @@ cmp.setup {
 -- -- Show line diagnostics automatically in hover window
 -- vim.o.updatetime = 250
 -- vim.cmd [[autocmd CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {focus=false})]]
+--
+
+function MagmaInitFSharp()
+  vim.cmd [[
+    :MagmaInit .net-fsharp
+    :MagmaEvaluateArgument Microsoft.DotNet.Interactive.Formatting.Formatter.SetPreferredMimeTypesFor(typeof<System.Object>,"text/plain")
+    ]]
+end
+
+function MagmaInitPython()
+  vim.cmd [[
+    :MagmaInit python3
+    :MagmaEvaluateArgument a=5
+    ]]
+end
+
+vim.cmd [[
+let g:magma_output_window_borders = v:false
+:command MagmaInitPython lua MagmaInitPython()
+:command MagmaInitFSharp lua MagmaInitFSharp()
+]]
