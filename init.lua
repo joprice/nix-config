@@ -468,6 +468,7 @@ vim.keymap.set("n", "<C-p>", builtin.find_files, {})
 
 local opts = { noremap = true, silent = true }
 vim.keymap.set('n', '<A-c>', '<Cmd>BufferClose<CR>', opts)
+vim.keymap.set('n', '<space>c', '<Cmd>BufferCloseAllButCurrent<CR>', opts)
 
 require('neodev').setup()
 
@@ -689,7 +690,8 @@ lspconfig.ocamllsp.setup {
 
 lspconfig.purescriptls.setup {
   capabilities = capabilities,
-  on_attach = on_attach
+  on_attach = on_attach,
+  cmd = { 'npx', 'purescript-language-server', '--stdio' },
 }
 
 lspconfig.sourcekit.setup {
