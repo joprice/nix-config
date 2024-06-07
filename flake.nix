@@ -31,6 +31,25 @@
         # neovim.overlay
         neovim-nightly-overlay.overlay
         # (final: prev: {
+        #   vimPlugins = prev.vimPlugins.extend (final: prev: {
+        #     nvim-treesitter = prev.nvim-treesitter.withAllGrammars;
+        #   });
+        # })
+        # (final: prev: {
+        #   neovim-unwrapped = prev.neovim-unwrapped.override {
+        #     lua = prev.neovim-unwrapped.lua.withPackages (p: with p;
+        #       [
+        #         #plenary
+        #         #luarocks
+        #         #rocks-nvim
+        #         #nvim-nio
+        #         #lua-curl
+        #         #xml2lua
+        #         mimetypes
+        #       ]);
+        #   };
+        # })
+        # (final: prev: {
         #   inherit (neovim.packages.${prev.system}) neovim;
         # })
       ];

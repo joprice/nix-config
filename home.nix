@@ -1,29 +1,6 @@
 { config, pkgs, pkgsPath, lib, ... }:
 let
   #crate2nix = import (builtins.fetchTarball "https://github.com/kolloch/crate2nix/tarball/e07af104b8e41d1cd7e41dc7ac3fdcdf4953efae") { };
-  # grammarToPlugin = grammar:
-  #   let
-  #     name = lib.pipe grammar [
-  #       lib.getName
-  #
-  #       # added in buildGrammar
-  #       (lib.removeSuffix "-grammar")
-  #
-  #       # grammars from tree-sitter.builtGrammars
-  #       (lib.removePrefix "tree-sitter-")
-  #       (lib.replaceStrings [ "-" ] [ "_" ])
-  #     ];
-  #   in
-  #   pkgs.neovimUtils.toVimPlugin (pkgs.runCommand "vimplugin-treesitter-grammar-${name}"
-  #     {
-  #       meta = {
-  #         platforms = lib.platforms.all;
-  #       } // grammar.meta;
-  #     }
-  #     ''
-  #       mkdir -p $out/parser
-  #       ln -s ${grammar}/parser $out/parser/${name}.so
-  #     '');
   tree-sitter-reason = pkgs.stdenv.mkDerivation {
     name = "tree-sitter-reason";
     #version = "0.0.0";
@@ -43,6 +20,56 @@ let
       cp -R {binding.gyp,Cargo.toml,grammar.js,bindings,src} $out/
       cp -r queries $out/queries
     '';
+  };
+  treesitter-roc-src = pkgs.fetchFromGitHub {
+    owner = "nat-418";
+    repo = "tree-sitter-roc";
+    rev = "a639cb367b0ffe95cd7d94ad5b4a26da0337180f";
+    hash = "sha256-Zdm0lPH3nnCJso+7Qyc92/xl0yLd4Ee+QZa5ix0GwJY=";
+  };
+  treesitter-roc = pkgs.tree-sitter.buildGrammar {
+    language = "roc";
+    version = "0.0.0+rev=7df2c08";
+    src = treesitter-roc-src;
+    meta.homepage = "https://github.com/nat-418/tree-sitter-roc";
+  };
+  roc-wrapped-parser = pkgs.neovimUtils.grammarToPlugin treesitter-roc;
+  nvim-treesitter-roc =
+    let
+      scripts = pkgs.runCommand "neovim-treesitter-roc-scripts" { } ''
+        mkdir -p $out/after
+        mkdir -p $out/plugin
+        cp ${treesitter-roc-src}/neovim/roc.lua $out/plugin
+        mkdir -p $out/after/queries/roc
+        cp -r ${treesitter-roc-src}/neovim/queries/* $out/after/queries/roc/
+      '';
+    in
+    pkgs.symlinkJoin {
+      name = "neovim-treesitter-roc";
+      paths = [
+        roc-wrapped-parser
+        scripts
+      ];
+    };
+  vim-dot-http = pkgs.vimUtils.buildVimPlugin {
+    pname = "vim-dot-http";
+    version = "0.0.1";
+    src = pkgs.fetchFromGitHub {
+      owner = "bayne";
+      repo = "vim-dot-http";
+      rev = "c480089b6fbfd9d4e5998348002f46da4f3a6fc1";
+      sha256 = "sha256-3ji2WFfuJII4Daq4WTx2W/y5tSuP8ak/r5K0VQdpyJ0=";
+    };
+  };
+  vim-mdx-js = pkgs.vimUtils.buildVimPlugin {
+    pname = "vim-mdx-js";
+    version = "0.0.1";
+    src = pkgs.fetchFromGitHub {
+      owner = "nake89";
+      repo = "vim-mdx-js";
+      rev = "e578775a0be4de62091b1e34719bc788e222489d";
+      sha256 = "sha256-ikGAniQ6QfZ3AjynKoxij63j+JcafazUOwmCdiGpy8c=";
+    };
   };
   magma-nvim = pkgs.vimUtils.buildVimPlugin {
     pname = "magma-nvim-goose";
@@ -171,7 +198,7 @@ let
     {
       inherit pkgs;
     };
-  vim-jack-syntax = pkgs.vimUtils.buildVimPluginFrom2Nix {
+  vim-jack-syntax = pkgs.vimUtils.buildVimPlugin {
     name = "vim-jack-syntax";
     src = pkgs.fetchFromGitHub {
       owner = "zirrostig";
@@ -180,7 +207,7 @@ let
       sha256 = "sha256-GY6wJuTjTHvMTs/JulTv90bfveH6yhP2wH9ha9q4BYU=";
     };
   };
-  coc-sourcekit = pkgs.vimUtils.buildVimPluginFrom2Nix {
+  coc-sourcekit = pkgs.vimUtils.buildVimPlugin {
     name = "coc-sourcekit";
     src = pkgs.fetchFromGitHub {
       owner = "klaaspieter";
@@ -189,7 +216,7 @@ let
       sha256 = "sha256-1rPCxLl+IxZvMeByxYYLHqH7nnIFlE+Tpmmk9ZUQL+k=";
     };
   };
-  coc-jedi = pkgs.vimUtils.buildVimPluginFrom2Nix {
+  coc-jedi = pkgs.vimUtils.buildVimPlugin {
     name = "coc-jedi";
     src = pkgs.fetchFromGitHub {
       owner = "pappasam";
@@ -254,7 +281,9 @@ let
   ]);
 in
 {
+  # For options, see https://mynixos.com/home-manager/options/programs
   programs.home-manager.enable = true;
+  programs.chromium.enable = true;
   #home.username = "josephprice";
   #home.homeDirectory = "/Users/josephp";
   # TODO: use machines to make this relative? or other way to make dynamic?
@@ -295,6 +324,13 @@ in
   home.stateVersion = "23.11";
   # TODO: exclude df
   home.packages = with pkgs; [
+    android-studio
+    #flutter
+    bun
+    flyctl
+    unzip
+    inkscape
+    gimp
     icu
     icu.dev
     bazelisk
@@ -370,6 +406,7 @@ in
     joker
     kcat
     loc
+    sccache
     #nim
     jq
     kubectl
@@ -418,7 +455,6 @@ in
     rmlint
     #rnix-lsp
     rustup
-    #rust-analyzer
     #sbt
     #scala
     #stack
@@ -426,7 +462,6 @@ in
     #rustup
     #rust-analyzer
     sbt
-    scala
     stack
     skim
     file
@@ -447,6 +482,7 @@ in
     #xcpretty
     #websocat
     watchman
+    slack
     #xquartz
     fswatch
     #upx
@@ -502,163 +538,410 @@ in
     #docker
     # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
-    (neovim.override
-      {
-        configure = {
-          #customRC = ''luafile ${./vimrc.lua}'';
-          customRC = ''luafile ~/.config/home-manager/init.lua'';
-          packages.myPlugins = with pkgs.vimPlugins; {
-            start = [
-              #telescope-coc-nvim
-              #coc-nvim
-              #coc-java
-              #coc-jedi
-              #coc-json
-              #coc-prettier
-              #coc-tsserver
-              #coc-rust-analyzer
-              #coc-sourcekit
-              #coc-kotlin
-              fidget-nvim
-              neodev-nvim
-              auto-session
-              zig-vim
-              # these don't work for some reason
-              #vim-swift
-              #vim-swift-format
-              vim-jack-syntax
-              #ale
-              # required by nvim-metals
-              nvim-dap
-              # required by nvim-metals
-              plenary-nvim
-              #nvim-metals
-              catppuccin-nvim
-              # this server crashes on start
-              comment-nvim
-              #ctrlp
-              #ghcid
-              #gitgutter
-              psc-ide-vim
-              vim-airline
-              vim-airline-themes
-              vim-capnp
-              vim-colorschemes
-              #cabal-project-vim
-              zenburn
-              # coment out with double ctrl+/ or gcc
-              tcomment_vim
-              nightfox-nvim
-              tokyonight-nvim
-              onedark-nvim
-              nvim-treesitter
-              trouble-nvim
-              (nvim-treesitter.withPlugins (p: with p; [
-                json
-                lua
-                ocaml
-                ocaml_interface
-                markdown
-                sql
-                vim
-                #nvim-treesitter-reason
-              ]))
-              #nvim-treesitter-reason
-              barbar-nvim
-              cmp-nvim-lsp
-              cmp-nvim-lsp-signature-help
-              cmp_luasnip
-              friendly-snippets
-              gitsigns-nvim
-              lsp-format-nvim
-              luasnip
-              markdown-preview-nvim
-              nil
-              # fsharp support
-              #Ionide-vim
-              nlsp-settings-nvim
-              nvim-cmp
-              nvim-lightbulb
-              nvim-lspconfig
-              nvim-web-devicons
-              telescope-file-browser-nvim
-              telescope-frecency-nvim
-              telescope-fzy-native-nvim
-              telescope-media-files-nvim
-              telescope-nvim
-              telescope-z-nvim
-              todo-comments-nvim
-              vim-prettier
-              vim-slime
-              magma-nvim
-              which-key-nvim
-              (nvim-lint.overrideAttrs {
-                src = pkgs.fetchFromGitHub {
-                  owner = "mfussenegger";
-                  repo = "nvim-lint";
-                  rev = "4f2d968a827d86bb40b7b1fad28c11f7b764fef3";
-                  sha256 = "sha256-S2m6MpYIirEX5R05xNRhtaKnmerEtzJP7P9aCL+nwEQ=";
-                };
-              })
-              formatter-nvim
-              #statix
-            ];
-            opt = [
-              vim-polyglot
-            ];
-          };
-          # ...
-        };
-      })
+    #luarocks
+    # (neovim.override
+    #   {
+    #     configure = {
+    #       # extraLuaPackages = p: [
+    #       #   p.luarocks
+    #       #   p.rocks-nvim
+    #       #   p.nvim-nio
+    #       #   p.lua-curl
+    #       #   p.xml2lua
+    #       #   p.mimetypes
+    #       #   p.x
+    #       # ];
+    #       #customRC = ''luafile ${./vimrc.lua}'';
+    #       customRC = ''luafile ~/.config/home-manager/init.lua'';
+    #       packages.myPlugins = with pkgs.vimPlugins;
+    #         let
+    #           treesitter = (nvim-treesitter.withPlugins (p: with p; [
+    #             graphql
+    #             http
+    #             json
+    #             lua
+    #             markdown
+    #             ocaml
+    #             ocaml_interface
+    #             sql
+    #             vim
+    #             xml
+    #             #nvim-treesitter-reason
+    #           ]));
+    #           # rest-nvim = callPackage
+    #           #   ({ buildLuarocksPackage, fetchurl, fetchzip, lua, luaOlder }:
+    #           #     buildLuarocksPackage {
+    #           #       pname = "rest.nvim";
+    #           #       version = "0.2-1";
+    #           #       knownRockspec = (fetchurl {
+    #           #         url = "mirror://luarocks/rest.nvim-0.2-1.rockspec";
+    #           #         sha256 = "1yq8gx585c10j8kybp20swyv9q0i3lm5k0rrv4bgsbwz3ychn0k1";
+    #           #       }).outPath;
+    #           #       src = fetchzip {
+    #           #         url = "https://github.com/rest-nvim/rest.nvim/archive/0.2.zip";
+    #           #         sha256 = "0ycjrrl37z465p71bdkas3q2ky1jmgr2cjnirnskdc6wz14wl09g";
+    #           #       };
+    #           #
+    #           #       disabled = (luaOlder "5.1");
+    #           #       propagatedBuildInputs = [ lua ];
+    #           #
+    #           #       meta = {
+    #           #         homepage = "https://github.com/rest-nvim/rest.nvim";
+    #           #         description = "A fast Neovim http client written in Lua";
+    #           #         maintainers = with lib.maintainers; [ teto ];
+    #           #         license.fullName = "MIT";
+    #           #       };
+    #           #     })
+    #           #   { };
+    #         in
+    #         {
+    #           start = [
+    #             plenary-nvim
+    #             #rocks-nvim
+    #             #nvimLua.pkgs.luarocks
+    #             #rocks-nvim
+    #             treesitter
+    #             #telescope-coc-nvim
+    #             #coc-nvim
+    #             #coc-java
+    #             #coc-jedi
+    #             #coc-json
+    #             #coc-prettier
+    #             #coc-tsserver
+    #             #coc-rust-analyzer
+    #             #coc-sourcekit
+    #             #coc-kotlin
+    #             fidget-nvim
+    #             neodev-nvim
+    #             auto-session
+    #             zig-vim
+    #             # these don't work for some reason
+    #             #vim-swift
+    #             #vim-swift-format
+    #             vim-jack-syntax
+    #             #ale
+    #             # required by nvim-metals
+    #             nvim-dap
+    #             # required by nvim-metals
+    #             plenary-nvim
+    #             #nvim-metals
+    #             catppuccin-nvim
+    #             # this server crashes on start
+    #             comment-nvim
+    #             #ctrlp
+    #             #ghcid
+    #             #gitgutter
+    #             psc-ide-vim
+    #             vim-airline
+    #             vim-airline-themes
+    #             #vim-capnp
+    #             vim-colorschemes
+    #             #cabal-project-vim
+    #             zenburn
+    #             # coment out with double ctrl+/ or gcc
+    #             tcomment_vim
+    #             nightfox-nvim
+    #             tokyonight-nvim
+    #             onedark-nvim
+    #             nvim-treesitter
+    #             trouble-nvim
+    #             #nvim-treesitter-reason
+    #             barbar-nvim
+    #             cmp-nvim-lsp
+    #             cmp-nvim-lsp-signature-help
+    #             cmp_luasnip
+    #             friendly-snippets
+    #             gitsigns-nvim
+    #             lsp-format-nvim
+    #             luasnip
+    #             markdown-preview-nvim
+    #             nil
+    #             # fsharp support
+    #             #Ionide-vim
+    #             nlsp-settings-nvim
+    #             nvim-cmp
+    #             nvim-lightbulb
+    #             nvim-lspconfig
+    #             nvim-web-devicons
+    #             telescope-file-browser-nvim
+    #             telescope-frecency-nvim
+    #             telescope-fzy-native-nvim
+    #             telescope-media-files-nvim
+    #             telescope-nvim
+    #             telescope-z-nvim
+    #             todo-comments-nvim
+    #             vim-prettier
+    #             # (rest-nvim.overrideAttrs (o: {
+    #             #   src = fetchFromGitHub {
+    #             #     owner = "rest-nvim";
+    #             #     repo = "rest.nvim";
+    #             #     rev = "a1221086cfdeb58de393f4bbae11063c6c8c075c";
+    #             #     sha256 = "sha256-kiY2CqKLa0wbqDVkFIXsTV9/qW5ZkFShmANK86Vg8ik=";
+    #             #   };
+    #             #   dependencies = o.dependencies ++ [
+    #             #     nvim-nio
+    #             #   ];
+    #             #   # dependencies = with self; [
+    #             #   #   plenary-nvim
+    #             #   #   treesitter
+    #             #   #   (nvim-treesitter.withPlugins (p: [ p.http p.json ]))
+    #             #   # ];
+    #             # }))
+    #             vim-slime
+    #             magma-nvim
+    #             which-key-nvim
+    #             (nvim-lint.overrideAttrs {
+    #               src = pkgs.fetchFromGitHub {
+    #                 owner = "mfussenegger";
+    #                 repo = "nvim-lint";
+    #                 rev = "4f2d968a827d86bb40b7b1fad28c11f7b764fef3";
+    #                 sha256 = "sha256-S2m6MpYIirEX5R05xNRhtaKnmerEtzJP7P9aCL+nwEQ=";
+    #               };
+    #             })
+    #             formatter-nvim
+    #             #statix
+    #             #sniprun
+    #           ];
+    #           opt = [
+    #             vim-polyglot
+    #           ];
+    #         };
+    #       # ...
+    #     };
+    #   })
     discord
+    luarocks
+    #lua
+    # (
+    #   lua.withPackages (p: with p;
+    #   [
+    #     luarocks
+    #     rocks-nvim
+    #     nvim-nio
+    #     lua-curl
+    #     xml2lua
+    #     mimetypes
+    #   ]))
+    # tidy
   ];
   # programs.opam = {
   #   enable = true;
   # };
   nixpkgs.config.allowUnfree = true;
-  #  programs.neovim = with pkgs.vimPlugins; {
-  #    enable = true;
-  #    viAlias = true;
-  #    vimAlias = true;
-  #    vimdiffAlias = true;
-  #    # needed by coc-nvim
-  #    withNodeJs = true;
-  #    #extraConfig = builtins.toString ./vimrc;
-  #    extraConfig = builtins.readFile ./vimrc;
-  #    #extraConfig = lib.fileContents ./vimrc;
-  #    plugins = [
-  #      zig-vim
-  #      # these don't work for some reason
-  #      vim-swift
-  #      vim-swift-format
-  #      #vim-markdown-preview
-  #      #coc-sourcekit
-  #      ale
-  #      #coc-kotlin
-  #      coc-metals
-  #      coc-nvim
-  #      # this server crashes on start
-  #      coc-java
-  #      coc-jedi
-  #      coc-json
-  #      coc-prettier
-  #      coc-tsserver
-  #      coc-rust-analyzer
-  #      ctrlp
-  #      #ghcid
-  #      #gitgutter
-  #      psc-ide-vim
-  #      vim-airline
-  #      vim-airline-themes
-  #      vim-polyglot
-  #      vim-capnp
-  #      vim-colorschemes
-  #      cabal-project-vim
-  #      zenburn
-  #      # coment out with double ctrl+/ or gcc
-  #      tcomment_vim
-  #    ];
-  #  };
+  programs.neovim = with pkgs.vimPlugins; {
+    extraLuaPackages = p: [
+      p.luarocks
+      p.rocks-nvim
+      p.nvim-nio
+      p.lua-curl
+      p.xml2lua
+      p.mimetypes
+    ];
+    extraConfig = ''luafile ~/.config/home-manager/init.lua'';
+    enable = true;
+    viAlias = true;
+    vimAlias = true;
+    vimdiffAlias = true;
+    plugins = with pkgs.vimPlugins;
+      let
+        treesitter = (nvim-treesitter.withPlugins (p: with p; [
+          graphql
+          http
+          json
+          lua
+          markdown
+          ocaml
+          ocaml_interface
+          sql
+          vim
+          xml
+          typescript
+          tsx
+          astro
+          css
+          #(pkgs.neovimUtils.grammarToPlugin roc)
+          roc-wrapped-parser
+          #nvim-treesitter-reason
+        ]));
+        # rest-nvim = callPackage
+        #   ({ buildLuarocksPackage, fetchurl, fetchzip, lua, luaOlder }:
+        #     buildLuarocksPackage {
+        #       pname = "rest.nvim";
+        #       version = "0.2-1";
+        #       knownRockspec = (fetchurl {
+        #         url = "mirror://luarocks/rest.nvim-0.2-1.rockspec";
+        #         sha256 = "1yq8gx585c10j8kybp20swyv9q0i3lm5k0rrv4bgsbwz3ychn0k1";
+        #       }).outPath;
+        #       src = fetchzip {
+        #         url = "https://github.com/rest-nvim/rest.nvim/archive/0.2.zip";
+        #         sha256 = "0ycjrrl37z465p71bdkas3q2ky1jmgr2cjnirnskdc6wz14wl09g";
+        #       };
+        #
+        #       disabled = (luaOlder "5.1");
+        #       propagatedBuildInputs = [ lua ];
+        #
+        #       meta = {
+        #         homepage = "https://github.com/rest-nvim/rest.nvim";
+        #         description = "A fast Neovim http client written in Lua";
+        #         maintainers = with lib.maintainers; [ teto ];
+        #         license.fullName = "MIT";
+        #       };
+        #     })
+        #   { };
+      in
+      [
+        nvim-treesitter-roc
+        plenary-nvim
+        #rocks-nvim
+        #nvimLua.pkgs.luarocks
+        #rocks-nvim
+        treesitter
+        #telescope-coc-nvim
+        #coc-nvim
+        #coc-java
+        #coc-jedi
+        #coc-json
+        #coc-prettier
+        #coc-tsserver
+        #coc-rust-analyzer
+        #coc-sourcekit
+        #coc-kotlin
+        fidget-nvim
+        neodev-nvim
+        auto-session
+        zig-vim
+        # these don't work for some reason
+        #vim-swift
+        #vim-swift-format
+        vim-jack-syntax
+        vim-mdx-js
+        #ale
+        # required by nvim-metals
+        nvim-dap
+        # required by nvim-metals
+        plenary-nvim
+        #nvim-metals
+        catppuccin-nvim
+        # this server crashes on start
+        comment-nvim
+        #ctrlp
+        #ghcid
+        #gitgutter
+        psc-ide-vim
+        vim-airline
+        vim-airline-themes
+        #vim-capnp
+        vim-colorschemes
+        #cabal-project-vim
+        zenburn
+        # coment out with double ctrl+/ or gcc
+        tcomment_vim
+        nightfox-nvim
+        tokyonight-nvim
+        onedark-nvim
+        #nvim-treesitter
+        trouble-nvim
+        #nvim-treesitter-reason
+        barbar-nvim
+        cmp-nvim-lsp
+        cmp-nvim-lsp-signature-help
+        cmp_luasnip
+        friendly-snippets
+        gitsigns-nvim
+        lsp-format-nvim
+        luasnip
+        markdown-preview-nvim
+        #nil
+        # fsharp support
+        #Ionide-vim
+        nlsp-settings-nvim
+        nvim-cmp
+        nvim-lightbulb
+        nvim-lspconfig
+        neoconf-nvim
+        nvim-web-devicons
+        telescope-file-browser-nvim
+        telescope-frecency-nvim
+        telescope-fzy-native-nvim
+        telescope-media-files-nvim
+        telescope-nvim
+        telescope-z-nvim
+        todo-comments-nvim
+        vim-prettier
+        vim-flutter
+        # (rest-nvim.overrideAttrs (o: {
+        #   src = pkgs.fetchFromGitHub {
+        #     owner = "rest-nvim";
+        #     repo = "rest.nvim";
+        #     rev = "a1221086cfdeb58de393f4bbae11063c6c8c075c";
+        #     sha256 = "sha256-kiY2CqKLa0wbqDVkFIXsTV9/qW5ZkFShmANK86Vg8ik=";
+        #   };
+        #   dependencies = [
+        #     plenary-nvim
+        #     #nvim-treesitter
+        #   ];
+        #   #   # dependencies = with self; [
+        #   #   #   plenary-nvim
+        #   #   #   treesitter
+        #   #   #   (nvim-treesitter.withPlugins (p: [ p.http p.json ]))
+        #   #   # ];
+        # }))
+        vim-slime
+        magma-nvim
+        which-key-nvim
+        (nvim-lint.overrideAttrs {
+          src = pkgs.fetchFromGitHub {
+            owner = "mfussenegger";
+            repo = "nvim-lint";
+            rev = "4f2d968a827d86bb40b7b1fad28c11f7b764fef3";
+            sha256 = "sha256-S2m6MpYIirEX5R05xNRhtaKnmerEtzJP7P9aCL+nwEQ=";
+          };
+        })
+        formatter-nvim
+        #statix
+        #sniprun
+      ];
+    #opt = [
+    #  vim-polyglot
+    #];
+    #    # needed by coc-nvim
+    withNodeJs = true;
+    #    #extraConfig = builtins.toString ./vimrc;
+    #    extraConfig = builtins.readFile ./vimrc;
+    #    #extraConfig = lib.fileContents ./vimrc;
+    #   plugins = [
+    #     #      zig-vim
+    #     #      # these don't work for some reason
+    #     #      vim-swift
+    #     #      vim-swift-format
+    #     #      #vim-markdown-preview
+    #     #      #coc-sourcekit
+    #     #      ale
+    #     #      #coc-kotlin
+    #     #      coc-metals
+    #     #      coc-nvim
+    #     #      # this server crashes on start
+    #     #      coc-java
+    #     #      coc-jedi
+    #     #      coc-json
+    #     #      coc-prettier
+    #     #      coc-tsserver
+    #     #      coc-rust-analyzer
+    #     #      ctrlp
+    #     #      #ghcid
+    #     #      #gitgutter
+    #     #      psc-ide-vim
+    #     #      vim-airline
+    #     #      vim-airline-themes
+    #     #      vim-polyglot
+    #     #      vim-capnp
+    #     #      vim-colorschemes
+    #     #      cabal-project-vim
+    #     #      zenburn
+    #     #      # coment out with double ctrl+/ or gcc
+    #     #      tcomment_vim
+    #   ];
+  };
   programs.git = {
     enable = true;
     lfs.enable = true;
@@ -760,9 +1043,12 @@ in
         #export NIX_LD_LIBRARY_PATH=${NIX_LD_LIBRARY_PATH}
         #export DOTNET_ROOT=${pkgs.dotnetCorePackages.sdk_8_0}
         export DOTNET_ROOT=${dotnetSdk}
+        # this loads vars that are meant to be dynamic, e.g. github tokens
+        source ~/.zinstance_vars
+        export RUSTC_WRAPPER="${pkgs.sccache}/bin/sccache"
       '';
   };
-  home.sessionVariables = {
+  home.sessionVariables = rec {
     # See https://github.com/direnv/direnv/issues/203#issuecomment-189873955
     DIRENV_LOG_FORMAT = "";
     #JAVA_HOME = "${pkgs.jdk.home}";
@@ -773,6 +1059,8 @@ in
       name = "openssl-combined";
       paths = with pkgs; [ openssl openssl.out openssl.dev ];
     };
+    # this allow rust programs to find openssl
+    OPENSSL_DIR = OPENSSL_PREFIX;
     DOTNET_CLI_TELEMETRY_OPTOUT = 1;
     DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = 1;
   };
