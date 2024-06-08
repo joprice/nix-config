@@ -432,6 +432,8 @@ in
               #ctrlp
               #ghcid
               #gitgutter
+              neoconf-nvim
+              Ionide-vim
               psc-ide-vim
               vim-airline
               vim-airline-themes
