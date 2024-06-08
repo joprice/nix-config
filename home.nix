@@ -232,7 +232,7 @@ in
   # TODO: use machines to make this relative? or other way to make dynamic?
   #home.username = "joseph";
   #home.homeDirectory = "/home/joseph";
-  home.stateVersion = "22.11";
+  home.stateVersion = "24.05";
   # TODO: exclude df
   home.packages = with pkgs; [
     bazelisk
@@ -333,7 +333,7 @@ in
     fd
     rlwrap
     rmlint
-    rnix-lsp
+    #rnix-lsp
     rustup
     #rust-analyzer
     #sbt
@@ -432,6 +432,8 @@ in
               #ctrlp
               #ghcid
               #gitgutter
+              neoconf-nvim
+              Ionide-vim
               psc-ide-vim
               vim-airline
               vim-airline-themes

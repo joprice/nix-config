@@ -1,4 +1,9 @@
+-- require("rest-nvim").setup()
+-- require("luarocks").setup({ rocks = { "fzy" } })
+
 vim.cmd([[
+" packadd! Ionide-vim/lua
+" set runtimepath += '/home/josephp/dev/Ionide-vim'
 set t_BE=
 "syntax on
 
@@ -61,7 +66,7 @@ set timeoutlen=1000 ttimeoutlen=0
 set scrolloff=10
 set sidescrolloff=5
 
-set spell
+" set spell
 set exrc
 
 "let g:ale_fix_on_save = 1
@@ -139,7 +144,8 @@ au BufNewFile,BufRead *.intentdefinition setf xml
 au BufNewFile,BufRead WORKSPACE.bzlmod setf bzl
 au BufNewFile,BufRead Pods.WORKSPACE setf bzl
 au BufNewFile,BufRead *.entitlements setf xml
-
+"autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi set filetype=fsharp
+"autocmd BufNewFile,BufRead *.fsproj         set filetype=fsharp_project syntax=xml
 
 "nmap <C-s> <Plug>MarkdownPreview
 "nmap <M-s> <Plug>MarkdownPreviewStop
@@ -153,11 +159,27 @@ let g:zenburn_high_Contrast=1
 "set shortmess+=c
 set completeopt=menuone,noinsert,noselect
 
-let g:prettier#autoformat = 1
-let g:prettier#autoformat_require_pragma = 0
-let g:prettier#exec_cmd_async = 1
-let g:prettier#quickfix_enabled = 0
+"let g:prettier#autoformat = 1
+"let g:prettier#autoformat_require_pragma = 0
+"let g:prettier#exec_cmd_async = 1
+"let g:prettier#quickfix_enabled = 0
 
+"#\   '--compilertool:"~/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"'
+"FSharp.fsiExtraParameters": ["--langversion:preview"]
+"let g:fsharp#fsi_extra_parameters = [ '--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
+let g:fsharp#fsi_compiler_tool_locations =
+  \ [ '/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
+let g:fsharp#fsiCompilerToolLocations =
+  \ [ '/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
+  "--   fsiCompilerToolLocations = "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+let g:fsharp#fsautocomplete_command =
+    \ [ 'dotnet',
+    \   'fsautocomplete',
+    \   '--adaptive-lsp-server-enabled',
+    \   '--use-fcs-transparent-compiler'
+    \ ]
+" disabling these as they cause flashing while navigating the file
+let g:fsharp#lsp_codelens = 0
 
 if &term =~ "screen"
 	  let &t_BE = "\e[?2004h"
@@ -165,7 +187,19 @@ if &term =~ "screen"
 	  exec "set t_PS=\e[200~"
 	  exec "set t_PE=\e[201~"
 endif
+
+let g:fsharp#lsp_auto_setup = 0
+let g:polyglot_disabled = ['markdown']
+
+set runtimepath+=/home/josephp/dev/Ionide-vim/
+set packpath^=/home/josephp/dev/Ionide-vim/
+"set runtimepath+=/home/josephp/dev/rest.nvim
+"set packpath^=/home/josephp/dev/rest.nvim
+packloadall!
+packadd! ionide
+"packadd! rest-nvim.lua
 ]])
+-- require('rocks')
 
 require('nvim-web-devicons').setup()
 -- require('Comment').setup()
@@ -360,6 +394,11 @@ end
 local ft = require('Comment.ft')
 ft.set('reason', ft.get('c'))
 
+-- vim.cmd [[
+-- autocmd FileType http :packadd rest-nvim
+-- ]]
+-- "require("luarocks-nvim").setup()
+
 require("tokyonight").setup({
   styles = {
     keywords = { italic = false },
@@ -388,6 +427,7 @@ require('telescope').load_extension('z')
 require('telescope').load_extension('media_files')
 require('telescope').load_extension('file_browser')
 
+-- vim.cmd.colorscheme "tokyonight-day"
 vim.cmd.colorscheme "tokyonight-night"
 
 require 'nvim-treesitter.configs'.setup {
@@ -468,6 +508,8 @@ vim.keymap.set("n", "<C-p>", builtin.find_files, {})
 
 local opts = { noremap = true, silent = true }
 vim.keymap.set('n', '<A-c>', '<Cmd>BufferClose<CR>', opts)
+vim.keymap.set('n', '<space>cc', '<Cmd>BufferCloseAllButCurrent<CR>', opts)
+vim.keymap.set('n', '<space>r', '<Cmd>FlutterHotReload<CR>', opts)
 
 require('neodev').setup()
 
@@ -487,8 +529,12 @@ require("lsp-format").setup(config)
 --   append_default_schemas = true,
 --   loader = 'json'
 -- })
+--
+require("neoconf").setup({
+})
 
 local lspconfig = require('lspconfig')
+--  inlay_hints = { enabled = true }
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
@@ -513,6 +559,13 @@ capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
 local on_attach = function(client, bufnr)
   require("lsp-format").on_attach(client, bufnr)
+  -- if client.server_capabilities.inlayHintProvider then
+  --   vim.lsp.inlay_hint.enable(bufnr, true)
+  --   --   vim.lsp.buf.inlay_hint(bufnr, true)
+  -- end
+  -- if client.server_capabilities.codeLensProvider then
+  --   vim.lsp.codelens.refresh()
+  -- end
 end
 
 -- lspconfig.jsonls.setup {
@@ -557,6 +610,12 @@ lspconfig.pyright.setup {
   on_attach = on_attach,
 }
 
+lspconfig.astro.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  cmd = { "npx", "astro-ls", "--stdio" }
+}
+
 lspconfig.metals.setup {
   capabilities = capabilities,
   on_attach = on_attach,
@@ -574,6 +633,34 @@ lspconfig.haxe_language_server.setup({
 })
 
 lspconfig.nim_langserver.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+}
+
+local lspconfigs = require('lspconfig.configs')
+if not lspconfigs.roc_ls then
+  lspconfigs.roc_ls = {
+    default_config = {
+      cmd = { 'roc_language_server' },
+      filetypes = { 'roc' },
+      root_dir = require('lspconfig.util').find_git_ancestor,
+      single_file_support = true,
+    },
+    docs = {
+      description = [[
+  https://github.com/roc-lang/roc/tree/main/crates/language_server#roc_language_server
+
+  The built-in language server for the Roc programming language.
+  [Installation](https://github.com/roc-lang/roc/tree/main/crates/language_server#installing)
+  ]],
+      default_config = {
+        root_dir = [[util.find_git_ancestor]],
+      },
+    },
+  }
+end
+
+lspconfig.roc_ls.setup {
   capabilities = capabilities,
   on_attach = on_attach,
 }
@@ -612,13 +699,21 @@ lspconfig.rust_analyzer.setup {
   on_attach = on_attach,
   -- Server-specific settings. See `:help lspconfig-setup`
   settings = {
-    ['rust-analyzer'] = {},
+    ['rust-analyzer'] = {
+      -- this is quite slow
+      -- checkOnSave = {
+      --   command = "clippy"
+      -- },
+    },
   },
 }
 
 -- lspconfig.tailwindcss.setup {
 --   capabilities = capabilities,
 --   on_attach = on_attach,
+--   cmd = {
+--     "node_modules/.bin/tailwindcss-language-server"
+--   },
 --   -- init_options = {
 --   --   userLanguages = {
 --   --     ocaml = "html"
@@ -637,9 +732,9 @@ lspconfig.rust_analyzer.setup {
 --         cssConflict = "error",
 --       },
 --       -- colorDecorators = true,
---       includeLanguages = {
---         ocaml = "html"
---       },
+--       -- includeLanguages = {
+--       --   ocaml = "html"
+--       -- },
 --       -- TODO: get project-specific config working so this isn't global
 --       -- * https://github.com/neovim/nvim-lspconfig/wiki/Project-local-settings
 --       -- examples
@@ -647,19 +742,21 @@ lspconfig.rust_analyzer.setup {
 --       -- * https://github.com/tailwindlabs/tailwindcss/issues/7553
 --       -- * https://github.com/tailwindlabs/tailwindcss/discussions/7554
 --       -- config schema https://github.com/tailwindlabs/tailwindcss-intellisense/blob/0b83e8d5fb81fe2d75835f38dfe8836e4e332c95/packages/vscode-tailwindcss/package.json#L204
---       experimental = {
---         classRegex = {
---           "~class_\\:\\s*\\(Prop.s\\s+\"([^\"]*)\"",
---         }
---       }
+--       -- experimental = {
+--       --   classRegex = {
+--       --     "~class_\\:\\s*\\(Prop.s\\s+\"([^\"]*)\"",
+--       --   }
+--       -- }
 --     }
 --   }
 -- }
--- lspconfig.flow.setup {
+
+local util = require 'lspconfig.util'
+
+-- lspconfig.eslint.setup {
 --   capabilities = capabilities,
 --   on_attach = on_attach,
 -- }
-local util = require 'lspconfig.util'
 
 lspconfig.tsserver.setup {
   capabilities = capabilities,
@@ -686,6 +783,116 @@ lspconfig.ocamllsp.setup {
   capabilities = capabilities,
   on_attach = on_attach
 }
+
+lspconfig.mdx_analyzer.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  cmd = { 'npx', 'mdx-language-server', '--stdio' },
+}
+
+-- vim.lsp.set_log_level("trace")
+
+require 'ionide'.setup {
+  -- require '/home/josephp/dev/Ionide-vim/lua'.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = util.root_pattern('global.json')
+  -- init_options = {
+  --   UnusedDeclarationsAnalyzerExclusions = {
+  --     ".*/bun/App.fs"
+  --   },
+  --   -- FSharp = {
+  --   --   UnusedDeclarationsAnalyzerExclusions = {
+  --   --     ".*/bun/App.fs"
+  --   --   }
+  --   -- }
+  -- }
+  -- --     fsiExtraParameters = {
+  -- --       "--langversion:preview",
+  -- --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  -- --   },
+  -- --   }
+  -- -- },
+  -- settings = {
+  --     ["FSharp"] = {
+  --       fsiExtraParameters = {
+  --         "--langversion:preview",
+  --         "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --       },
+  --       fsiCompilerToolLocations = {
+  --         "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --       },
+  --   }
+  -- },
+  -- init_options = {
+  --   FSharp = {
+  --     fsiExtraParameters = {
+  --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --     },
+  --     FSIExtraParameters = {
+  --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --     },
+  --     fsiCompilerToolLocations = {
+  --       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --     },
+  --     FSICompilerToolLocations = {
+  --       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  --     }
+  --   }
+  -- }
+  -- settings = {
+  --   fsiCompilerToolLocations = "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+  -- }
+}
+
+-- https://github.com/fsharp/FsAutoComplete/blob/4bc676cc1e8659d9338d31d82d6244bcfcc55cc4/src/FsAutoComplete/LspHelpers.fs#L636
+--
+-- lspconfig.fsautocomplete.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   cmd = {
+--     -- TODO: test for either
+--     -- 'dotnet',
+--     'fsautocomplete',
+--     '--adaptive-lsp-server-enabled'
+--   },
+--   -- cmd = {
+--   --   'dotnet',
+--   --   'fsautocomplete',
+--   --   '--adaptive-lsp-server-enabled'
+--   -- },
+--   settings = {
+--     FSharp = {
+--       ExcludeProjectDirectories = {
+--         ".git",
+--         "paket-files",
+--         "packages"
+--       },
+--       Linter = true,
+--       RecordStubGeneration = true,
+--       InterfaceStubGeneration = true,
+--       UnusedOpensAnalyzer = true,
+--       -- SimplifyNameAnalyzer = true,
+--       ResolveNamespaces = true,
+--       EnableReferenceCodeLens = true,
+--       ExternalAutocomplete = true,
+--       InlayHints = {
+--         typeAnnotations = true
+--       },
+--       -- FullNameExternalAutocomplete = true,
+--       keywordsAutocomplete = true,
+--       UnionCaseStubGeneration = true,
+--       UnusedDeclarationsAnalyzer = true,
+--       UnionCaseStubGenerationBody = "failwith \"---\"",
+--       UseSdkScripts = true,
+--       -- LineLens = {
+--       --   enabled = true
+--       -- }
+--       --   fsiCompilerToolLocations = {
+--       --     "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0" }
+--     }
+--   }
+-- }
 
 lspconfig.purescriptls.setup {
   capabilities = capabilities,
@@ -864,12 +1071,17 @@ require("formatter").setup {
           stdin = true
         }
       end },
-    ["*"] = {
-      require("formatter.filetypes.any").remove_trailing_whitespace
-    }
+    -- TODO: this doesn't work when an lsp is modifying the buffer
+    -- ["*"] = {
+    --   require("formatter.filetypes.any").remove_trailing_whitespace
+    -- }
   }
 }
 
+vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
+  pattern = "*.mdx",
+  command = "set filetype=markdown.mdx",
+})
 
 vim.api.nvim_create_autocmd('BufWritePost', {
   pattern = '*',
@@ -888,11 +1100,36 @@ vim.keymap.set('n', '[g', vim.diagnostic.goto_prev)
 vim.keymap.set('n', ']g', vim.diagnostic.goto_next)
 vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist)
 
+local function highlight_symbol(event)
+  local id = vim.tbl_get(event, 'data', 'client_id')
+  local client = id and vim.lsp.get_client_by_id(id)
+  if client == nil or not client.supports_method('textDocument/documentHighlight') then
+    return
+  end
+
+  local group = vim.api.nvim_create_augroup('highlight_symbol', { clear = false })
+
+  vim.api.nvim_clear_autocmds({ buffer = event.buf, group = group })
+
+  vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+    group = group,
+    buffer = event.buf,
+    callback = vim.lsp.buf.document_highlight,
+  })
+
+  vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+    group = group,
+    buffer = event.buf,
+    callback = vim.lsp.buf.clear_references,
+  })
+end
+
 -- Use LspAttach autocommand to only map the following keys
 -- after the language server attaches to the current buffer
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('UserLspConfig', {}),
   callback = function(ev)
+    highlight_symbol(ev)
     -- Enable completion triggered by <c-x><c-o>
     vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
 
@@ -921,7 +1158,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
 local cmp = require 'cmp'
 
-require("fidget").setup {}
+-- notifications in the bottom right corner
+-- require("fidget").setup {}
+
 local luasnip = require 'luasnip'
 require('luasnip.loaders.from_vscode').lazy_load()
 luasnip.config.setup {}
@@ -985,3 +1224,40 @@ cmp.setup {
 -- -- Show line diagnostics automatically in hover window
 -- vim.o.updatetime = 250
 -- vim.cmd [[autocmd CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {focus=false})]]
+--
+
+function MagmaInitFSharp()
+  vim.cmd [[
+    :MagmaInit .net-fsharp
+    :MagmaEvaluateArgument Microsoft.DotNet.Interactive.Formatting.Formatter.SetPreferredMimeTypesFor(typeof<System.Object>,"text/plain")
+    ]]
+end
+
+function MagmaInitPython()
+  vim.cmd [[
+    :MagmaInit python3
+    :MagmaEvaluateArgument a=5
+    ]]
+end
+
+vim.cmd [[
+let g:magma_output_window_borders = v:false
+:command MagmaInitPython lua MagmaInitPython()
+:command MagmaInitFSharp lua MagmaInitFSharp()
+" executes the current file, useful for interactively testing bash scripts
+:command Exec set splitright | vnew | set filetype=sh | read !sh #
+]]
+
+-- vim.cmd [[
+-- autocmd FileType fsharp :packadd sniprun
+-- ]]
+-- require 'sniprun'.setup {
+--   selected_interpreters = { 'Fsharp_fifo' },
+--   interpreter_options = {
+--     FSharp_fifo = {
+--       interpreter = "dotnet fsi --nologo"
+--     }
+--   }
+-- }
+--
+--
