@@ -167,19 +167,28 @@ set completeopt=menuone,noinsert,noselect
 "#\   '--compilertool:"~/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"'
 "FSharp.fsiExtraParameters": ["--langversion:preview"]
 "let g:fsharp#fsi_extra_parameters = [ '--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
-let g:fsharp#fsi_compiler_tool_locations =
-  \ [ '/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
-let g:fsharp#fsiCompilerToolLocations =
-  \ [ '/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
+"let g:fsharp#fsi_compiler_tool_locations =
+"  \ [ '/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
+"let g:fsharp#fsiCompilerToolLocations =
+"  \ [ '/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
   "--   fsiCompilerToolLocations = "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
 let g:fsharp#fsautocomplete_command =
-    \ [ 'dotnet',
+    \ [
     \   'fsautocomplete',
     \   '--adaptive-lsp-server-enabled',
-    \   '--use-fcs-transparent-compiler'
     \ ]
+
+"let g:fsharp#use_recommended_server_config = 0
+" disabling this temporarily since it gives false positives in fable bindings
+" see here for defaults https://github.com/ionide/Ionide-vim/blob/00099c3cf53cba28a1d8084ab8d21639c62bd747/autoload/fsharp.vim#L161
 " disabling these as they cause flashing while navigating the file
 let g:fsharp#lsp_codelens = 0
+let g:fsharp#UnusedDeclarationsAnalyzer = 0
+let g:fsharp#AddPrivateAccessModifier = 1
+let g:fsharp#SimplifyNameAnalyzer = 1
+let g:fsharp#UnnecessaryParenthesesAnalyzer = 1
+let g:fsharp#EnableReferenceCodeLens = 0
+"let g:fsharp#TooltipMode = "summary"
 
 if &term =~ "screen"
 	  let &t_BE = "\e[?2004h"
@@ -191,12 +200,12 @@ endif
 let g:fsharp#lsp_auto_setup = 0
 let g:polyglot_disabled = ['markdown']
 
-set runtimepath+=/home/josephp/dev/Ionide-vim/
-set packpath^=/home/josephp/dev/Ionide-vim/
+"set runtimepath+=/home/josephp/dev/Ionide-vim/
+"set packpath^=/home/josephp/dev/Ionide-vim/
 "set runtimepath+=/home/josephp/dev/rest.nvim
 "set packpath^=/home/josephp/dev/rest.nvim
-packloadall!
-packadd! ionide
+"packloadall!
+"packadd! ionide
 "packadd! rest-nvim.lua
 ]])
 -- require('rocks')
@@ -391,6 +400,9 @@ end
 ---- Resume latest coc list
 --keyset("n", "<space>p", ":<C-u>CocListResume<cr>", opts)
 --
+--
+require("neoconf").setup({})
+
 local ft = require('Comment.ft')
 ft.set('reason', ft.get('c'))
 
@@ -491,6 +503,7 @@ local telescope = require('telescope')
 -- See https://github.com/nvim-telescope/telescope.nvim#neovim-lsp-pickers
 vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
+vim.keymap.set('n', '<space><space>', builtin.live_grep, {})
 vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
 vim.keymap.set('n', '<leader>fm', builtin.marks, {})
@@ -502,7 +515,8 @@ vim.keymap.set('n', '<leader>ft', '<Cmd>TodoTelescope keywords=TODO,FIX<CR>', {}
 vim.keymap.set('n', '<leader>fd', builtin.git_status, {})
 vim.keymap.set('n', '<leader>fl', builtin.git_branches, {})
 vim.keymap.set('n', '<space>a', builtin.diagnostics, {})
-vim.keymap.set('n', '<space>f', builtin.buffers, {})
+-- vim.keymap.set('n', '<space>f', builtin.buffers, {})
+vim.keymap.set('n', '<space>r', builtin.buffers, {})
 
 vim.keymap.set("n", "<C-p>", builtin.find_files, {})
 
@@ -530,8 +544,6 @@ require("lsp-format").setup(config)
 --   loader = 'json'
 -- })
 --
-require("neoconf").setup({
-})
 
 local lspconfig = require('lspconfig')
 --  inlay_hints = { enabled = true }
@@ -631,6 +643,71 @@ lspconfig.haxe_language_server.setup({
   },
 
 })
+
+local null_ls = require("null-ls")
+null_ls.setup({
+  debug = true,
+})
+local helpers = require("null-ls.helpers")
+
+-- local s = "./server/SerializationTests.fs(29,3): (29,4) error FSHARP: A type parameter is missing a constraint 'when 'a: equality' (code 1)roject and references (80 source files) parsed in 119ms"
+-- for file in s:gmatch([[(.-)%(.+$]]) do 
+--  print(file)
+-- end
+
+local no_really = {
+  method = null_ls.methods.DIAGNOSTICS,
+  filetypes = { "fsharp" },
+  generator = null_ls.generator({
+    command = "dotnet",
+    args = {
+      "fable",
+      "Server.fsproj",
+      "-o", "server/js", "-e", ".fs.js", "-c", "Release"
+    },
+    to_stdin = true,
+    from_stderr = true,
+    format = "line",
+    multiple_files = true,
+    on_output = helpers.diagnostics.from_patterns({
+        -- ./server/SerializationTests.fs(29,3): (29,4) error FSHARP: A type parameter is missing a constraint 'when 'a: equality' (code 1)roject and references (80 source files) parsed in 119ms
+        {
+            -- pattern = [[:(%d+):(%d+) [%w-/]+ (.*)]],
+pattern = [[(.*)\\((\\d\u002B),(\\d\u002B),(\\d\u002B),(\\d\u002B)\\)\\s*:\\s*(warning|error) FABLE\\s*:\\s*(.*)$"]],
+            groups = { "filename", "row", "col", "message" },
+        },
+        -- {
+        --     pattern = [[:(%d+) [%w-/]+ (.*)]],
+        --     groups = { "row", "message" },
+        -- },
+    }),
+    --on_output = helpers.diagnostics.from_patterns({
+    --})
+    -- fn = function(params)
+    --   local diagnostics = {}
+    --   -- sources have access to a params object
+    --   -- containing info about the current file and editor state
+    --   for i, line in ipairs(params.content) do
+    --     local col, end_col = line:find("really")
+    --     if col and end_col then
+    --       -- null-ls fills in undefined positions
+    --       -- and converts source diagnostics into the required format
+    --       table.insert(diagnostics, {
+    --         row = i,
+    --         col = col,
+    --         end_col = end_col + 1,
+    --         source = "no-really",
+    --         message = "Don't use 'really!'",
+    --         severity = vim.diagnostic.severity.WARN,
+    --       })
+    --     end
+    --   end
+    --   return diagnostics
+    -- end,
+  }),
+}
+
+null_ls.register(no_really)
 
 lspconfig.nim_langserver.setup {
   capabilities = capabilities,
@@ -796,7 +873,14 @@ require 'ionide'.setup {
   -- require '/home/josephp/dev/Ionide-vim/lua'.setup {
   capabilities = capabilities,
   on_attach = on_attach,
-  root_dir = util.root_pattern('global.json')
+  -- root_dir = util.root_pattern('global.json')
+  root_dir = util.root_pattern('.config/dotnet-tools.json'),
+  settings = {
+    FSharp = {
+      UnusedDeclarationsAnalyzer = false,
+      unusedDeclarationsAnalyzer = false
+    }
+  }
   -- init_options = {
   --   UnusedDeclarationsAnalyzerExclusions = {
   --     ".*/bun/App.fs"

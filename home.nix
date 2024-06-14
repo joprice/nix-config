@@ -224,6 +224,7 @@ let
     paths = [ pkgs.bazelisk ];
     postBuild = "ln $out/bin/bazelisk $out/bin/bazel";
   };
+  lua = pkgs.lua.withPackages (ps: with ps; [ inspect ]);
 in
 {
   programs.home-manager.enable = true;
@@ -235,6 +236,8 @@ in
   home.stateVersion = "24.05";
   # TODO: exclude df
   home.packages = with pkgs; [
+    watchexec
+    lua
     bazelisk
     buildifier
     mosh
@@ -349,6 +352,7 @@ in
     zlib
     #nodePackages.bower
     libiconv
+    poetry
     #xcpretty
     #websocat
     watchman
@@ -402,6 +406,8 @@ in
           customRC = ''luafile ~/.config/home-manager/init.lua'';
           packages.myPlugins = with pkgs.vimPlugins; {
             start = [
+              #null-ls.nvim
+              none-ls-nvim
               #telescope-coc-nvim
               #coc-nvim
               #coc-java
@@ -457,6 +463,7 @@ in
                 markdown
                 sql
                 vim
+                fsharp
                 #nvim-treesitter-reason
               ]))
               #nvim-treesitter-reason

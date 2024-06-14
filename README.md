@@ -14,3 +14,9 @@ Nix configs for home-manager
 * manage vscode extensions https://nixos.wiki/wiki/Vscode
 * manage ~/.ghc/ghci.conf
 * manage keychain file
+
+## Testing lua locally
+
+```bash
+watchexec lua fsharp.lua
+```
