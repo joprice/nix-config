@@ -124,6 +124,31 @@ let
       sha256 = "15rn54wspy55v9lw3alhv5h9b7sv6yi6az9gzzskzyim76ka0n4g";
     };
   };
+  paket-nvim = pkgs.vimUtils.buildVimPlugin {
+    name = "paket-nvim";
+    #src = /Users/josephprice/dev/paket.vim;
+    src = pkgs.fetchFromGitHub {
+      owner = "joprice";
+      repo = "paket.vim";
+      rev = "6595b1768016bb9fcc8abd5a46f348d3e47311db";
+      sha256 = "sha256-QShKqN93MbfnxAhLt+S1Iq1zJ6n2yOqGiOlPRV8FL/8=";
+    };
+    # src = pkgs.fetchFromGitHub {
+    #   owner = "Kazark";
+    #   repo = "paket.vim";
+    #   rev = "2ffaf33eb63fa467785a20487e2109c1edc69308";
+    #   sha256 = "sha256-WZ1TyhIaaTaAjNAAjIlGAo5Sl5KWR2C7pCU8PprN7yg=";
+    # };
+  };
+  vim-marko = pkgs.vimUtils.buildVimPlugin {
+    name = "vim-marko";
+    src = pkgs.fetchFromGitHub {
+      owner = "rajasegar";
+      repo = "vim-marko";
+      rev = "31e21a32ba4980da83bc4aa5db06134299dd67cb";
+      sha256 = "sha256-o+btS/uq54DXmM8pagP4WN+PykCckNzHWcU7fGvWETY=";
+    };
+  };
   vim-capnp = pkgs.vimUtils.buildVimPlugin {
     name = "vim-capnp";
     src = pkgs.fetchFromGitHub {
@@ -236,6 +261,7 @@ in
   home.stateVersion = "24.05";
   # TODO: exclude df
   home.packages = with pkgs; [
+    protobuf
     watchexec
     lua
     bazelisk
@@ -445,6 +471,8 @@ in
               vim-airline-themes
               vim-polyglot
               vim-capnp
+              paket-nvim
+              #vim-marko
               vim-colorschemes
               #cabal-project-vim
               zenburn
@@ -655,6 +683,13 @@ in
       name = "openssl-combined";
       paths = with pkgs; [ openssl openssl.out openssl.dev ];
     };
+    DOTNET_CLI_TELEMETRY_OPTOUT = 1;
+    DOTNET_INTERACTIVE_CLI_TELEMETRY_OPTOUT = 1;
+    DOTNET_NOLOGO = 1;
+    DOTNET_REPL_DEFAULT_KERNEL = "fsharp";
+    DOTNET_WATCH_SUPPRESS_EMOJIS = 1;
+    # flake.nix:            DOTNET_INTERACTIVE_CLI_TELEMETRY_OPTOUT = 1;
+    # flake.nix:            DOTNET_REPL_DEFAULT_KERNEL = "fsharp";
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;

@@ -186,8 +186,9 @@ let g:fsharp#lsp_codelens = 0
 let g:fsharp#UnusedDeclarationsAnalyzer = 0
 let g:fsharp#AddPrivateAccessModifier = 1
 let g:fsharp#SimplifyNameAnalyzer = 1
-let g:fsharp#UnnecessaryParenthesesAnalyzer = 1
+"let g:fsharp#UnnecessaryParenthesesAnalyzer = 1
 let g:fsharp#EnableReferenceCodeLens = 0
+let g:fsharp#ExternalAutocomplete = 1
 "let g:fsharp#TooltipMode = "summary"
 
 if &term =~ "screen"
@@ -628,6 +629,28 @@ lspconfig.astro.setup {
   cmd = { "npx", "astro-ls", "--stdio" }
 }
 
+local util = require 'lspconfig.util'
+local lspconfigs = require('lspconfig.configs')
+-- TODO: narrow down to fable projects
+lspconfigs.fable = {
+  default_config = {
+    cmd = { "/Users/josephprice/dev/fable-lsp/bin/Debug/net8.0/fable-lsp" },
+    filetypes = { 'fsharp' },
+    root_dir = util.root_pattern('fable-project'),
+    -- root_dir = util.root_pattern('.config/dotnet-tools.json'),
+    single_file_support = false,
+  },
+}
+
+-- TODO: disabled until this can avoid spinning up multiple instances per project
+-- lspconfig.fable.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   -- flags = {
+--   --   exit_timeout = 10000
+--   -- },
+-- }
+
 lspconfig.metals.setup {
   capabilities = capabilities,
   on_attach = on_attach,
@@ -645,42 +668,83 @@ lspconfig.haxe_language_server.setup({
 })
 
 local null_ls = require("null-ls")
+local util = require 'lspconfig.util'
 null_ls.setup({
   debug = true,
+  root_dir = util.root_pattern('.config/dotnet-tools.json'),
 })
 local helpers = require("null-ls.helpers")
 
 -- local s = "./server/SerializationTests.fs(29,3): (29,4) error FSHARP: A type parameter is missing a constraint 'when 'a: equality' (code 1)roject and references (80 source files) parsed in 119ms"
--- for file in s:gmatch([[(.-)%(.+$]]) do 
+-- for file in s:gmatch([[(.-)%(.+$]]) do
 --  print(file)
 -- end
 
-local no_really = {
+local log = require("null-ls.logger")
+local fable = {
   method = null_ls.methods.DIAGNOSTICS,
   filetypes = { "fsharp" },
-  generator = null_ls.generator({
-    command = "dotnet",
-    args = {
-      "fable",
-      "Server.fsproj",
-      "-o", "server/js", "-e", ".fs.js", "-c", "Release"
-    },
-    to_stdin = true,
-    from_stderr = true,
-    format = "line",
-    multiple_files = true,
-    on_output = helpers.diagnostics.from_patterns({
-        -- ./server/SerializationTests.fs(29,3): (29,4) error FSHARP: A type parameter is missing a constraint 'when 'a: equality' (code 1)roject and references (80 source files) parsed in 119ms
+  --root_dir = require("null-ls.utils").root_pattern('.config/dotnet-tools.json'),
+  generator = ({
+    -- command = "dotnet",
+    -- args = {
+    --   "fable",
+    --   "watch",
+    --   "server",
+    --   "-o",
+    --   "server/js",
+    --   "-s",
+    --   "-e",
+    --   ".fs.js",
+    --   "server"
+    -- },
+    -- runtime_condition =
+    -- to_stdin = false,
+    -- use_cache = true,
+    -- from_stderr = true,
+    -- format = "line",
+    -- multiple_files = true,
+    fn = function(params)
+      log:trace(string.format("fsharp output: %s", vim.inspect(params)))
+      return {
         {
-            -- pattern = [[:(%d+):(%d+) [%w-/]+ (.*)]],
-pattern = [[(.*)\\((\\d\u002B),(\\d\u002B),(\\d\u002B),(\\d\u002B)\\)\\s*:\\s*(warning|error) FABLE\\s*:\\s*(.*)$"]],
-            groups = { "filename", "row", "col", "message" },
-        },
-        -- {
-        --     pattern = [[:(%d+) [%w-/]+ (.*)]],
-        --     groups = { "row", "message" },
-        -- },
-    }),
+          col = "3",
+          end_col = "4",
+          end_row = "29",
+          filename = "./server/SerializationTests.fs",
+          row = 29,
+          message = "A type parameter is missing a constraint 'when 'a: equality' (code 1)",
+          severity = "error"
+        }
+      }
+    end
+    -- on_output = function(line)
+    --   -- local output = params.output
+    --   log:trace(string.format("fsharp output: %s", line))
+    --   -- if not output then
+    --   --   return done()
+    --   -- end
+    -- end
+    -- on_output = helpers.diagnostics.from_patterns({
+    --   -- ./server/SerializationTests.fs(29,3): (29,4) error FSHARP: A type parameter is missing a constraint 'when 'a: equality' (code 1)roject and references (80 source files) parsed in 119ms
+    --   {
+    --     -- pattern = [[:(%d+):(%d+) [%w-/]+ (.*)]],
+    --     pattern = [[(.-)%((%d+),(%d+)%): %((%d+),(%d+)%) (.+) FSHARP: (.+)$]],
+    --     groups = {
+    --       "filename",
+    --       "line",
+    --       "col",
+    --       "end_line",
+    --       "end_col",
+    --       "message",
+    --       "severity"
+    --     }
+    --   },
+    --   -- {
+    --   --     pattern = [[:(%d+) [%w-/]+ (.*)]],
+    --   --     groups = { "row", "message" },
+    --   -- },
+    -- }),
     --on_output = helpers.diagnostics.from_patterns({
     --})
     -- fn = function(params)
@@ -707,7 +771,7 @@ pattern = [[(.*)\\((\\d\u002B),(\\d\u002B),(\\d\u002B),(\\d\u002B)\\)\\s*:\\s*(w
   }),
 }
 
-null_ls.register(no_really)
+-- null_ls.register(fable)
 
 lspconfig.nim_langserver.setup {
   capabilities = capabilities,
@@ -737,10 +801,10 @@ if not lspconfigs.roc_ls then
   }
 end
 
-lspconfig.roc_ls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
+-- lspconfig.roc_ls.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
 
 lspconfig.gopls.setup {
   capabilities = capabilities,
@@ -1345,3 +1409,4 @@ let g:magma_output_window_borders = v:false
 -- }
 --
 --
+-- vim.lsp.set_log_level('debug')
