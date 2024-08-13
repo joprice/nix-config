@@ -24,6 +24,25 @@ let
   #       mkdir -p $out/parser
   #       ln -s ${grammar}/parser $out/parser/${name}.so
   #     '');
+
+  #"https://github.com/ionide/tree-sitter-fsharp"
+  tree-sitter-fsharp-grammar = pkgs.tree-sitter.buildGrammar {
+    language = "fsharp";
+    version = "0.0.0";
+    generate = false;
+    src = pkgs.fetchFromGitHub {
+      owner = "ionide";
+      repo = "tree-sitter-fsharp";
+      rev = "d939b3a1db56820f6b810f764e9163f514cb833a";
+      hash = "sha256-MQg7cZDsSXlcmfPfwgWcY/N66iBuCQf2yjzbg10WcsA=";
+    };
+    # postInstall = ''
+    #   #head $out/queries/highlights.scm
+    #   mkdir $out/queries/fsharp/
+    #   cp -r ./queries/* $out/queries/fsharp/
+    # '';
+  };
+  tree-sitter-fsharp = pkgs.neovimUtils.grammarToPlugin tree-sitter-fsharp-grammar;
   tree-sitter-reason = pkgs.stdenv.mkDerivation {
     name = "tree-sitter-reason";
     #version = "0.0.0";
@@ -139,6 +158,15 @@ let
     #   rev = "2ffaf33eb63fa467785a20487e2109c1edc69308";
     #   sha256 = "sha256-WZ1TyhIaaTaAjNAAjIlGAo5Sl5KWR2C7pCU8PprN7yg=";
     # };
+  };
+  vim-readonly = pkgs.vimUtils.buildVimPlugin {
+    name = "vim-readonly";
+    src = pkgs.fetchFromGitHub {
+      owner = "Xvezda";
+      repo = "vim-readonly";
+      rev = "caec9e120fa3fe35eb1dcad03ee8738557e44964";
+      sha256 = "sha256-Bs93fTQGAcqux1jlRKuf5sYdVqu6xFRyGinVnil0MSM=";
+    };
   };
   vim-marko = pkgs.vimUtils.buildVimPlugin {
     name = "vim-marko";
@@ -432,6 +460,7 @@ in
           customRC = ''luafile ~/.config/home-manager/init.lua'';
           packages.myPlugins = with pkgs.vimPlugins; {
             start = [
+              vim-readonly
               #null-ls.nvim
               none-ls-nvim
               #telescope-coc-nvim
@@ -481,20 +510,31 @@ in
               nightfox-nvim
               tokyonight-nvim
               onedark-nvim
-              nvim-treesitter
+              #nvim-treesitter
               trouble-nvim
-              (nvim-treesitter.withPlugins (p: with p; [
-                json
-                lua
-                ocaml
-                ocaml_interface
-                markdown
-                sql
-                vim
-                fsharp
+              ((nvim-treesitter.withPlugins (p: with p; [
+                p.json
+                p.lua
+                p.ocaml
+                p.ocaml_interface
+                p.markdown
+                p.sql
+                (builtins.trace (lib.strings.getName p.vim) p.vim)
+                # (builtins.trace (builtins.concatStringsSep "," (builtins.attrNames p.vim)) p.vim)
+                (builtins.trace (lib.strings.getName tree-sitter-fsharp-grammar) tree-sitter-fsharp-grammar)
                 #nvim-treesitter-reason
-              ]))
+                #tree-sitter-fsharp
+              ])).overrideAttrs (o: {
+                preFixup = o.preFixup or "" + ''
+                  echo "queries"
+                  mkdir $out/queries/fsharp/
+                  cp ${tree-sitter-fsharp-grammar}/queries/* $out/queries/fsharp/
+                  ls queries
+                '';
+              }))
+              tree-sitter-fsharp-grammar
               #nvim-treesitter-reason
+              #tree-sitter-fsharp
               barbar-nvim
               cmp-nvim-lsp
               cmp-nvim-lsp-signature-help
@@ -598,6 +638,7 @@ in
       bclean = "!f() { git branch --merged master | grep -v '^\\*' | xargs -n 1 git branch -d; }; f";
     };
     extraConfig = {
+      core.autocrlf = "input";
       pull.ff = "only";
       # add fixup!
       rebase.autosquash = true;
@@ -605,9 +646,9 @@ in
         "git@github.com:" = {
           insteadOf = "https://github.com/";
         };
-        "git://" = {
-          insteadOf = "https://";
-        };
+        #"git://" = {
+        #  insteadOf = "https://";
+        #};
       };
     };
     delta.enable = true;

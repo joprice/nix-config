@@ -1,7 +1,12 @@
 -- require("rest-nvim").setup()
 -- require("luarocks").setup({ rocks = { "fzy" } })
 
+vim.g.loaded_netrwPlugin = 0
+
 vim.cmd([[
+
+let g:readonly_paths = ['server/QueriesGenerated.fs']
+" let g:readonly_paths = g:readonly_paths "+ ['server/QueriesGenerated.fs']
 " packadd! Ionide-vim/lua
 " set runtimepath += '/home/josephp/dev/Ionide-vim'
 set t_BE=
@@ -16,6 +21,8 @@ set t_BE=
 
 " disable vi backwards compatibility
 set nocompatible
+" disable automatic word wrap
+set formatoptions-=t
 set encoding=utf-8
 set autoread
 set tabstop=2     " number of visual spaces per TAB
@@ -144,6 +151,9 @@ au BufNewFile,BufRead *.intentdefinition setf xml
 au BufNewFile,BufRead WORKSPACE.bzlmod setf bzl
 au BufNewFile,BufRead Pods.WORKSPACE setf bzl
 au BufNewFile,BufRead *.entitlements setf xml
+
+au BufNewFile,BufRead *.fsl setlocal filetype=fslex syntax=fsharp
+au BufNewFile,BufRead *.fsy setlocal filetype=fsyacc syntax=fsharp
 "autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi set filetype=fsharp
 "autocmd BufNewFile,BufRead *.fsproj         set filetype=fsharp_project syntax=xml
 
@@ -182,10 +192,11 @@ let g:fsharp#fsautocomplete_command =
 " disabling this temporarily since it gives false positives in fable bindings
 " see here for defaults https://github.com/ionide/Ionide-vim/blob/00099c3cf53cba28a1d8084ab8d21639c62bd747/autoload/fsharp.vim#L161
 " disabling these as they cause flashing while navigating the file
+let g:LanguageClient_useVirtualText = 0
 let g:fsharp#lsp_codelens = 0
 let g:fsharp#UnusedDeclarationsAnalyzer = 0
 let g:fsharp#AddPrivateAccessModifier = 1
-let g:fsharp#SimplifyNameAnalyzer = 1
+let g:fsharp#SimplifyNameAnalyzer = 0
 "let g:fsharp#UnnecessaryParenthesesAnalyzer = 1
 let g:fsharp#EnableReferenceCodeLens = 0
 let g:fsharp#ExternalAutocomplete = 1
@@ -199,7 +210,7 @@ if &term =~ "screen"
 endif
 
 let g:fsharp#lsp_auto_setup = 0
-let g:polyglot_disabled = ['markdown']
+let g:polyglot_disabled = ['markdown', 'fsharp']
 
 "set runtimepath+=/home/josephp/dev/Ionide-vim/
 "set packpath^=/home/josephp/dev/Ionide-vim/
@@ -487,6 +498,7 @@ require 'nvim-treesitter.configs'.setup {
     },
   },
 }
+-- vim.treesitter.language.register("fsharp", "fsharp")
 
 vim.keymap.set("n", "]t", function()
   require("todo-comments").jump_next()
@@ -516,23 +528,24 @@ vim.keymap.set('n', '<leader>ft', '<Cmd>TodoTelescope keywords=TODO,FIX<CR>', {}
 vim.keymap.set('n', '<leader>fd', builtin.git_status, {})
 vim.keymap.set('n', '<leader>fl', builtin.git_branches, {})
 vim.keymap.set('n', '<space>a', builtin.diagnostics, {})
+vim.keymap.set('n', '<space>tt', builtin.lsp_references, {})
 -- vim.keymap.set('n', '<space>f', builtin.buffers, {})
-vim.keymap.set('n', '<space>r', builtin.buffers, {})
+vim.keymap.set('n', '<space>rr', builtin.buffers, {})
 
 vim.keymap.set("n", "<C-p>", builtin.find_files, {})
 
 local opts = { noremap = true, silent = true }
 vim.keymap.set('n', '<A-c>', '<Cmd>BufferClose<CR>', opts)
 vim.keymap.set('n', '<space>cc', '<Cmd>BufferCloseAllButCurrent<CR>', opts)
-vim.keymap.set('n', '<space>r', '<Cmd>FlutterHotReload<CR>', opts)
+-- vim.keymap.set('n', '<space>r', '<Cmd>FlutterHotReload<CR>', opts)
 
 require('neodev').setup()
 
 -- see https://github.com/lukas-reineke/lsp-format.nvim/issues/50
 local config = {}
-for _, v in pairs(vim.fn.getcompletion("", "filetype")) do
-  config[v] = { sync = true }
-end
+-- for _, v in pairs(vim.fn.getcompletion("", "filetype")) do
+--   config[v] = { sync = true }
+-- end
 require("lsp-format").setup(config)
 
 -- local nlspsettings = require("nlspsettings")
@@ -576,8 +589,10 @@ local on_attach = function(client, bufnr)
   --   vim.lsp.inlay_hint.enable(bufnr, true)
   --   --   vim.lsp.buf.inlay_hint(bufnr, true)
   -- end
+  -- client.server_capabilities.codeLensProvider = false
   -- if client.server_capabilities.codeLensProvider then
-  --   vim.lsp.codelens.refresh()
+  --   print "has lens"
+  --   -- vim.lsp.codelens.refresh()
   -- end
 end
 
@@ -894,10 +909,16 @@ lspconfig.rust_analyzer.setup {
 
 local util = require 'lspconfig.util'
 
--- lspconfig.eslint.setup {
---   capabilities = capabilities,
---   on_attach = on_attach,
--- }
+lspconfig.eslint.setup {
+  capabilities = capabilities,
+  on_attach = function(client, bufnr)
+    vim.api.nvim_create_autocmd("BufWritePre", {
+      buffer = bufnr,
+      command = "EslintFixAll",
+    })
+    on_attach(client, bufnr)
+  end,
+}
 
 lspconfig.tsserver.setup {
   capabilities = capabilities,
@@ -941,6 +962,7 @@ require 'ionide'.setup {
   root_dir = util.root_pattern('.config/dotnet-tools.json'),
   settings = {
     FSharp = {
+      EnableReferenceCodeLens = false,
       UnusedDeclarationsAnalyzer = false,
       unusedDeclarationsAnalyzer = false
     }
@@ -1374,27 +1396,27 @@ cmp.setup {
 -- vim.cmd [[autocmd CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, {focus=false})]]
 --
 
-function MagmaInitFSharp()
-  vim.cmd [[
-    :MagmaInit .net-fsharp
-    :MagmaEvaluateArgument Microsoft.DotNet.Interactive.Formatting.Formatter.SetPreferredMimeTypesFor(typeof<System.Object>,"text/plain")
-    ]]
-end
-
-function MagmaInitPython()
-  vim.cmd [[
-    :MagmaInit python3
-    :MagmaEvaluateArgument a=5
-    ]]
-end
-
-vim.cmd [[
-let g:magma_output_window_borders = v:false
-:command MagmaInitPython lua MagmaInitPython()
-:command MagmaInitFSharp lua MagmaInitFSharp()
-" executes the current file, useful for interactively testing bash scripts
-:command Exec set splitright | vnew | set filetype=sh | read !sh #
-]]
+-- function MagmaInitFSharp()
+--   vim.cmd [[
+--     :MagmaInit .net-fsharp
+--     :MagmaEvaluateArgument Microsoft.DotNet.Interactive.Formatting.Formatter.SetPreferredMimeTypesFor(typeof<System.Object>,"text/plain")
+--     ]]
+-- end
+--
+-- function MagmaInitPython()
+--   vim.cmd [[
+--     :MagmaInit python3
+--     :MagmaEvaluateArgument a=5
+--     ]]
+-- end
+--
+-- vim.cmd [[
+-- let g:magma_output_window_borders = v:false
+-- :command MagmaInitPython lua MagmaInitPython()
+-- :command MagmaInitFSharp lua MagmaInitFSharp()
+-- " executes the current file, useful for interactively testing bash scripts
+-- :command Exec set splitright | vnew | set filetype=sh | read !sh #
+-- ]]
 
 -- vim.cmd [[
 -- autocmd FileType fsharp :packadd sniprun
