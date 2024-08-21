@@ -121,6 +121,10 @@ let g:psc_ide_log_level = 3
 
 nnoremap <C-N> :bnext<CR>
 nnoremap <C-M> :bprevious<CR>
+nnoremap <C-J> <C-W><C-J>
+nnoremap <C-K> <C-W><C-K>
+nnoremap <C-L> <C-W><C-L>
+nnoremap <C-H> <C-W><C-H>
 
 "let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
 
@@ -219,6 +223,7 @@ let g:polyglot_disabled = ['markdown', 'fsharp']
 "packloadall!
 "packadd! ionide
 "packadd! rest-nvim.lua
+
 ]])
 -- require('rocks')
 
@@ -533,6 +538,7 @@ vim.keymap.set('n', '<space>tt', builtin.lsp_references, {})
 vim.keymap.set('n', '<space>rr', builtin.buffers, {})
 
 vim.keymap.set("n", "<C-p>", builtin.find_files, {})
+vim.keymap.set("n", "<space>pp", builtin.find_files, {})
 
 local opts = { noremap = true, silent = true }
 vim.keymap.set('n', '<A-c>', '<Cmd>BufferClose<CR>', opts)
@@ -633,6 +639,8 @@ local buildifier = {
 --   capabilities = capabilities,
 --   on_attach = on_attach,
 -- }
+--
+-- NOTE:many libs don't have types, so stub errors show up all over the files
 lspconfig.pyright.setup {
   capabilities = capabilities,
   on_attach = on_attach,
@@ -1432,3 +1440,10 @@ cmp.setup {
 --
 --
 -- vim.lsp.set_log_level('debug')
+
+-- disables semantic highlighting added by lsp to debug tree-sitter parsers
+for _, group in ipairs(vim.fn.getcompletion("@lsp", "highlight")) do
+  vim.api.nvim_set_hl(0, group, {})
+end
+
+require("dbee").setup()

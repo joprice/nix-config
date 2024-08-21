@@ -1,40 +1,82 @@
 { config, pkgs, pkgsPath, lib, ... }:
 let
   #crate2nix = import (builtins.fetchTarball "https://github.com/kolloch/crate2nix/tarball/e07af104b8e41d1cd7e41dc7ac3fdcdf4953efae") { };
-  # grammarToPlugin = grammar:
-  #   let
-  #     name = lib.pipe grammar [
-  #       lib.getName
-  #
-  #       # added in buildGrammar
-  #       (lib.removeSuffix "-grammar")
-  #
-  #       # grammars from tree-sitter.builtGrammars
-  #       (lib.removePrefix "tree-sitter-")
-  #       (lib.replaceStrings [ "-" ] [ "_" ])
-  #     ];
-  #   in
-  #   pkgs.neovimUtils.toVimPlugin (pkgs.runCommand "vimplugin-treesitter-grammar-${name}"
-  #     {
-  #       meta = {
-  #         platforms = lib.platforms.all;
-  #       } // grammar.meta;
-  #     }
-  #     ''
-  #       mkdir -p $out/parser
-  #       ln -s ${grammar}/parser $out/parser/${name}.so
-  #     '');
-
   #"https://github.com/ionide/tree-sitter-fsharp"
+  nvim-dbee3 = pkgs.vimUtils.buildVimPlugin {
+    pname = "nvim-dbee";
+    version = "2024-07-26";
+    src = pkgs.fetchFromGitHub {
+      owner = "kndndrj";
+      repo = "nvim-dbee";
+      rev = "21d2cc0844a16262bb6ea93ab3d0a0f20bd87853";
+      sha256 = "10xplksglyd8af8q1cl2lxcpn52b766g87gva9fd3l66idxsds00";
+    };
+    meta.homepage = "https://github.com/kndndrj/nvim-dbee/";
+  };
+  nui-nvim = pkgs.vimUtils.buildVimPlugin {
+    pname = "nui.nvim";
+    version = "2024-06-26";
+    src = pkgs.fetchFromGitHub {
+      owner = "MunifTanjim";
+      repo = "nui.nvim";
+      rev = "61574ce6e60c815b0a0c4b5655b8486ba58089a1";
+      sha256 = "1vllq6lkk7karc3n8h9wj2ax6sc99h26r96h18lbvi0nsy98ss53";
+    };
+    meta.homepage = "https://github.com/MunifTanjim/nui.nvim/";
+  };
+  nvim-dbee2 = nvim-dbee3.overrideAttrs (oa:
+    let
+      dbee-go = pkgs.buildGoModule {
+        name = "nvim-dbee";
+        src = "${oa.src}/dbee";
+        vendorHash = "sha256-U/3WZJ/+Bm0ghjeNUILsnlZnjIwk3ySaX3Rd4L9Z62A=";
+        GOOS = "darwin";
+        GOARCH = "arm64";
+        CGO_ENABLED = 1;
+        buildInputs = [
+          pkgs.arrow-cpp
+          pkgs.duckdb
+        ];
+        # duckdb causes the build to fail with  ld: warning: directory not found for option '-L/private/tmp/nix-build-nvim-dbee.drv-0/dbee/vendor/github.com/marcboeker/go-duckdb/deps/darwin_arm64'
+        postPatch = ''
+          ls 
+          rm adapters/duck.go
+          #exit 1
+        '';
+      };
+    in
+    {
+      dependencies = [ nui-nvim ];
+
+      # nvim-dbee looks for the go binary in paths returned bu M.dir() and M.bin() defined in lua/dbee/install/init.lua
+      postPatch = ''
+        substituteInPlace lua/dbee/install/init.lua \
+          --replace-fail 'return vim.fn.stdpath("data") .. "/dbee/bin"' 'return "${dbee-go}/bin"'
+      '';
+
+      preFixup = ''
+        mkdir $target/bin
+        ln -s ${dbee-go}/bin/dbee $target/bin/dbee
+      '';
+
+      #meta.platforms = lib.platforms.linux;
+    });
   tree-sitter-fsharp-grammar = pkgs.tree-sitter.buildGrammar {
     language = "fsharp";
     version = "0.0.0";
     generate = false;
+    #src = /Users/josephprice/dev/tree-sitter-fsharp;
+    # src = pkgs.fetchFromGitHub {
+    #   owner = "ionide";
+    #   repo = "tree-sitter-fsharp";
+    #   rev = "d939b3a1db56820f6b810f764e9163f514cb833a";
+    #   hash = "sha256-MQg7cZDsSXlcmfPfwgWcY/N66iBuCQf2yjzbg10WcsA=";
+    # };
     src = pkgs.fetchFromGitHub {
-      owner = "ionide";
+      owner = "joprice";
       repo = "tree-sitter-fsharp";
-      rev = "d939b3a1db56820f6b810f764e9163f514cb833a";
-      hash = "sha256-MQg7cZDsSXlcmfPfwgWcY/N66iBuCQf2yjzbg10WcsA=";
+      rev = "dc5145f1a079a87d79e3ca50de9c5171035921da";
+      hash = "sha256-zKfMfue20B8sbS1tQKZAlokRV7efMsxBk7ySQmzLo0Y=";
     };
     # postInstall = ''
     #   #head $out/queries/highlights.scm
@@ -512,6 +554,18 @@ in
               onedark-nvim
               #nvim-treesitter
               trouble-nvim
+              # (nvim-treesitter.withPlugins (p: with p; [
+              #   p.json
+              #   p.lua
+              #   p.ocaml
+              #   p.ocaml_interface
+              #   p.markdown
+              #   p.sql
+              #   p.vim
+              #   #tree-sitter-fsharp-grammar
+              #   #nvim-treesitter-reason
+              #   #tree-sitter-fsharp
+              # ]))
               ((nvim-treesitter.withPlugins (p: with p; [
                 p.json
                 p.lua
@@ -519,9 +573,8 @@ in
                 p.ocaml_interface
                 p.markdown
                 p.sql
-                (builtins.trace (lib.strings.getName p.vim) p.vim)
-                # (builtins.trace (builtins.concatStringsSep "," (builtins.attrNames p.vim)) p.vim)
-                (builtins.trace (lib.strings.getName tree-sitter-fsharp-grammar) tree-sitter-fsharp-grammar)
+                p.vim
+                #tree-sitter-fsharp-grammar
                 #nvim-treesitter-reason
                 #tree-sitter-fsharp
               ])).overrideAttrs (o: {
@@ -532,7 +585,7 @@ in
                   ls queries
                 '';
               }))
-              tree-sitter-fsharp-grammar
+              #tree-sitter-fsharp-grammar
               #nvim-treesitter-reason
               #tree-sitter-fsharp
               barbar-nvim
@@ -559,6 +612,7 @@ in
               todo-comments-nvim
               vim-prettier
               which-key-nvim
+              nvim-dbee2
               (nvim-lint.overrideAttrs {
                 src = pkgs.fetchFromGitHub {
                   owner = "mfussenegger";
