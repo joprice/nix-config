@@ -1475,29 +1475,15 @@ local log = require("plenary.log").new({
   use_console = "sync",
   use_file = true,
 })
--- local v = require('vlog')
 
--- local log = v.new { plugin = 'user', }
+local function make_parent(path)
+  -- https://github.com/torch/paths/blob/4ebe222ba12589fb9d86c1d3895d7f509df77b6a/doc/dirfunctions.md?plain=1#L11
+  local paths = require('paths')
+  paths.mkdir(paths.dirname(path))
+end
 
--- local function log(msg)
---   local outfile = "vim.log"
---   local fp = io.open(outfile, "a")
---   local nameupper = level_config.name:upper()
---   local lineinfo = info.short_src .. ":" .. info.currentline
---   local str = string.format("[%-6s%s] %s: %s\n", nameupper, os.date(), lineinfo, msg)
---   local info = debug.getinfo(2, "Sl")
---   fp:write(str)
---   fp:close()
--- end
-
--- package.path = package.path .. ";./mkdirp.lua"
-
--- local paths = require('lfs')
-local mkdirp = require('mkdirp')
 local function read_file(path)
-  assert(mkdirp('path/to/dir/to/make'))
-  -- local paths = require('paths')
-  -- assert(paths.mkdir(paths.dirname(path)))
+  make_parent(path)
   local file = io.open(path, "rb") -- r read mode and b binary mode
   if not file then return nil end
   local content = file:read "*a"   -- *a or *all reads the whole file
@@ -1505,31 +1491,56 @@ local function read_file(path)
   return content
 end
 
+
+local function copy_file(src, dest)
+  local contents = read_file(src)
+  local fp = assert(io.open(dest, "w+b"))
+  assert(fp:write(contents))
+  fp:close()
+end
+
+local function sync_file(src, dest)
+  local w = vim.uv.new_fs_event()
+
+  local watch_file
+  local function on_change(err, fname, status)
+    -- log.info("got change", src, dest)
+    copy_file(src, dest)
+    vim.api.nvim_command('checktime')
+    w:stop()
+    watch_file(src)
+  end
+
+  watch_file = function(fname)
+    -- log.info("watching", fname)
+    local fullpath = vim.api.nvim_call_function('fnamemodify', { fname, ':p' })
+    assert(w:start(fullpath, {}, vim.schedule_wrap(function(...)
+      on_change(...)
+    end)))
+  end
+
+  watch_file(src)
+
+  -- vim.api.nvim_command("command! -nargs=1 Watch call luaeval('watch_file(_A)', expand('<args>'))")
+end
+
+local watching = {}
+
 vim.api.nvim_create_autocmd({ "FileType" }, {
   desc = "On buffer enter with file type sql",
   group = vim.api.nvim_create_augroup("dbee", { clear = true }),
   pattern = { "sql" },
   callback = function(args)
     vim.keymap.set({ "n" }, "<leader>de", function()
-      -- vim.api.nvim_feedkeys("vip", "n", false)
-      -- local query = get_query()
-      -- -- local srow, scol, erow, ecol = require("dbee.utils").visual_selection()
-      -- -- local selection = vim.api.nvim_buf_get_text(0, srow, scol, erow, ecol, {})
-      -- -- local query = table.concat(selection, "\n")
-      -- local command = string.format("Dbee execute %s", query)
-      -- -- vim.print(command)
-      -- vim.api.nvim_command(command)
-      --
-      -- local location = args.file
       local dbee = require("dbee").api
       local conn = dbee.core.get_current_connection()
-      -- local dir = dbee.ui.dir(conn.id)
       local file = args.file
+      local fileName = file:gsub("/", "_")
       local notes = dbee.ui.editor_namespace_get_notes(conn.id)
       local found = nil
       for _, note in ipairs(notes) do
-        log.info("note", note.id, note)
-        if file == note.name then
+        -- log.info("note", note.id, note, file, note.name)
+        if fileName == note.name then
           found = note
           break
         end
@@ -1537,31 +1548,33 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
       local id = nil
       local noteFile = nil
       if not found then
-        log.info("create", conn.id, file)
-        id = dbee.ui.editor_namespace_create_note(conn.id, file)
+        -- log.info("create", conn.id, file)
+        id = dbee.ui.editor_namespace_create_note(conn.id, fileName)
         noteFile = dbee.ui.editor_search_note(id).file
       else
-        log.info("found", found)
+        -- log.info("found", found)
         id = found.id
         noteFile = found.file
       end
+      if file == noteFile then
+        log.error("Attempted to open dbee from scratch file")
+        return
+      end
 
-      local contents = read_file(file)
-      local fp = assert(io.open(noteFile, "w+b"))
-      fp:write(contents)
-
-      require("dbee").open()
+      if not watching[file] then
+        sync_file(noteFile, file)
+        watching[file] = true
+      else
+        make_parent(noteFile)
+        copy_file(file, noteFile)
+      end
       dbee.ui.editor_set_current_note(id)
-      -- "/Users/josephprice/.local/state/nvim/dbee/notes/fr/note_EM5OPGeL6z.sql"
-      -- print("conn", conn.id, file, notes)
-      -- local file, ns = require("dbee").api.ui.editor_search_note_with_file(
-      --   "/Users/josephprice/.local/state/nvim/dbee/notes/fr/note_EM5OPGeL6z.sql")
-      -- if not file then
-      --   require("dbee").api.ui.editor_namespace_create_note()
-      -- end
-      -- "scripts/sentences.sql"
-      -- print(file, ns, args.file)
-      -- display_note(id)
-    end, { desc = "[D]bee [e]xecute query under cursor" })
+      require("dbee").open()
+    end, {
+      desc = "[D]bee [e]xecute query under cursor",
+      buffer = args.buf,
+    })
   end,
 })
+
+vim.opt.autoread = true

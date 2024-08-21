@@ -13,6 +13,18 @@ let
     };
     meta.homepage = "https://github.com/kndndrj/nvim-dbee/";
   };
+  luaPaths = { buildLuarocksPackage }: buildLuarocksPackage {
+    rockspecFilename = "rocks/paths-scm-1.rockspec";
+    pname = "paths";
+    version = "0.0.0";
+    src = pkgs.fetchFromGitHub {
+      owner = "torch";
+      repo = "paths";
+      rev = "4ebe222ba12589fb9d86c1d3895d7f509df77b6a";
+      sha256 = "sha256-J0mTPcodQCyrvD3klRHZFxtoghFLCSWSCA2v8X8DSVo=";
+    };
+    #propagatedBuildInputs = [ bit32 lua std_normalize ];
+  };
   nui-nvim = pkgs.vimUtils.buildVimPlugin {
     pname = "nui.nvim";
     version = "2024-06-26";
@@ -507,7 +519,12 @@ in
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
     (neovim.override
       {
-        extraLuaPackages = (ps: with ps; [ inspect luafilesystem ]);
+        extraLuaPackages = (ps: with ps;
+          builtins.trace (builtins.concatStringsSep "," (builtins.attrNames ps)) [
+            inspect
+            luafilesystem
+            (luaPaths { inherit (ps) buildLuarocksPackage; })
+          ]);
         configure = {
           #customRC = ''luafile ${./vimrc.lua}'';
           customRC = ''luafile ~/.config/home-manager/init.lua'';
