@@ -4,6 +4,9 @@
 vim.g.loaded_netrwPlugin = 0
 
 vim.cmd([[
+" set runtimepath += '/home/josephp/dev/Ionide-vim'
+" set runtimepath += "/Users/josephprice/.config/home-manager/"
+set rtp+=/Users/josephprice/.config/home-manager/
 
 let g:readonly_paths = ['server/QueriesGenerated.fs']
 " let g:readonly_paths = g:readonly_paths "+ ['server/QueriesGenerated.fs']
@@ -1447,3 +1450,118 @@ for _, group in ipairs(vim.fn.getcompletion("@lsp", "highlight")) do
 end
 
 require("dbee").setup()
+
+local function get_query()
+  local ts_utils = require("nvim-treesitter.ts_utils")
+  local current_node = ts_utils.get_node_at_cursor()
+
+  local last_statement = nil
+  while current_node do
+    if current_node:type() == "statement" then last_statement = current_node end
+    if current_node:type() == "program" then break end
+    current_node = current_node:parent()
+  end
+
+  if not last_statement then return "" end
+
+  local srow, scol, erow, ecol = vim.treesitter.get_node_range(last_statement)
+  local selection = vim.api.nvim_buf_get_text(0, srow, scol, erow, ecol, {})
+  return table.concat(selection, "\n")
+end
+
+local log = require("plenary.log").new({
+  plugin = "my_plugin",
+  level = "info",
+  use_console = "sync",
+  use_file = true,
+})
+-- local v = require('vlog')
+
+-- local log = v.new { plugin = 'user', }
+
+-- local function log(msg)
+--   local outfile = "vim.log"
+--   local fp = io.open(outfile, "a")
+--   local nameupper = level_config.name:upper()
+--   local lineinfo = info.short_src .. ":" .. info.currentline
+--   local str = string.format("[%-6s%s] %s: %s\n", nameupper, os.date(), lineinfo, msg)
+--   local info = debug.getinfo(2, "Sl")
+--   fp:write(str)
+--   fp:close()
+-- end
+
+-- package.path = package.path .. ";./mkdirp.lua"
+
+-- local paths = require('lfs')
+local mkdirp = require('mkdirp')
+local function read_file(path)
+  assert(mkdirp('path/to/dir/to/make'))
+  -- local paths = require('paths')
+  -- assert(paths.mkdir(paths.dirname(path)))
+  local file = io.open(path, "rb") -- r read mode and b binary mode
+  if not file then return nil end
+  local content = file:read "*a"   -- *a or *all reads the whole file
+  file:close()
+  return content
+end
+
+vim.api.nvim_create_autocmd({ "FileType" }, {
+  desc = "On buffer enter with file type sql",
+  group = vim.api.nvim_create_augroup("dbee", { clear = true }),
+  pattern = { "sql" },
+  callback = function(args)
+    vim.keymap.set({ "n" }, "<leader>de", function()
+      -- vim.api.nvim_feedkeys("vip", "n", false)
+      -- local query = get_query()
+      -- -- local srow, scol, erow, ecol = require("dbee.utils").visual_selection()
+      -- -- local selection = vim.api.nvim_buf_get_text(0, srow, scol, erow, ecol, {})
+      -- -- local query = table.concat(selection, "\n")
+      -- local command = string.format("Dbee execute %s", query)
+      -- -- vim.print(command)
+      -- vim.api.nvim_command(command)
+      --
+      -- local location = args.file
+      local dbee = require("dbee").api
+      local conn = dbee.core.get_current_connection()
+      -- local dir = dbee.ui.dir(conn.id)
+      local file = args.file
+      local notes = dbee.ui.editor_namespace_get_notes(conn.id)
+      local found = nil
+      for _, note in ipairs(notes) do
+        log.info("note", note.id, note)
+        if file == note.name then
+          found = note
+          break
+        end
+      end
+      local id = nil
+      local noteFile = nil
+      if not found then
+        log.info("create", conn.id, file)
+        id = dbee.ui.editor_namespace_create_note(conn.id, file)
+        noteFile = dbee.ui.editor_search_note(id).file
+      else
+        log.info("found", found)
+        id = found.id
+        noteFile = found.file
+      end
+
+      local contents = read_file(file)
+      local fp = assert(io.open(noteFile, "w+b"))
+      fp:write(contents)
+
+      require("dbee").open()
+      dbee.ui.editor_set_current_note(id)
+      -- "/Users/josephprice/.local/state/nvim/dbee/notes/fr/note_EM5OPGeL6z.sql"
+      -- print("conn", conn.id, file, notes)
+      -- local file, ns = require("dbee").api.ui.editor_search_note_with_file(
+      --   "/Users/josephprice/.local/state/nvim/dbee/notes/fr/note_EM5OPGeL6z.sql")
+      -- if not file then
+      --   require("dbee").api.ui.editor_namespace_create_note()
+      -- end
+      -- "scripts/sentences.sql"
+      -- print(file, ns, args.file)
+      -- display_note(id)
+    end, { desc = "[D]bee [e]xecute query under cursor" })
+  end,
+})

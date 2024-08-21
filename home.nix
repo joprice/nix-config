@@ -24,6 +24,16 @@ let
     };
     meta.homepage = "https://github.com/MunifTanjim/nui.nvim/";
   };
+  vlog-nvim = pkgs.vimUtils.buildVimPlugin {
+    pname = "vlog.nvim";
+    version = "0.0.0";
+    src = pkgs.fetchFromGitHub {
+      owner = "ckipp01";
+      repo = "vlog.nvim";
+      rev = "8184928c371249d00e148586a7e50273db2b7358";
+      sha256 = "sha256-DeJXUIKMi0hxYHFffg2gwoYJbT7z+stu2ElaeRbcImA=";
+    };
+  };
   nvim-dbee2 = nvim-dbee3.overrideAttrs (oa:
     let
       dbee-go = pkgs.buildGoModule {
@@ -319,7 +329,7 @@ let
     paths = [ pkgs.bazelisk ];
     postBuild = "ln $out/bin/bazelisk $out/bin/bazel";
   };
-  lua = pkgs.lua.withPackages (ps: with ps; [ inspect ]);
+  lua = pkgs.lua.withPackages (ps: with ps; [ inspect luafilesystem ]);
 in
 {
   programs.home-manager.enable = true;
@@ -497,6 +507,7 @@ in
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
     (neovim.override
       {
+        extraLuaPackages = (ps: with ps; [ inspect luafilesystem ]);
         configure = {
           #customRC = ''luafile ${./vimrc.lua}'';
           customRC = ''luafile ~/.config/home-manager/init.lua'';
@@ -613,6 +624,7 @@ in
               vim-prettier
               which-key-nvim
               nvim-dbee2
+              vlog-nvim
               (nvim-lint.overrideAttrs {
                 src = pkgs.fetchFromGitHub {
                   owner = "mfussenegger";
