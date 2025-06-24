@@ -71,7 +71,7 @@ endif
 "autocmd FileType netrw setl bufhidden=delete
 set hidden
 " make exiting insert mode fast
-set timeoutlen=1000 ttimeoutlen=0
+"set timeoutlen=1000 ttimeoutlen=0
 " keep extra lines/columns around cursor to see past while scrolling
 set scrolloff=10
 set sidescrolloff=5
@@ -149,6 +149,10 @@ nnoremap <Leader>e :set keymap=<CR>
 inoremap <Leader>r <ESC>:set keymap=russian-jcuken<CR>a
 inoremap <Leader>e <ESC>:set keymap=<CR>a
 
+" attempt to fix paste breaking vim
+inoremap <C-V> <C-R>*
+inoremap <C-C> <C-V>
+
 " overrides auto-detection, which falls back to nroff when the first 10 lines
 " don't contain an import
 au BufNewFile,BufRead *.mm set filetype=objcpp
@@ -162,7 +166,17 @@ au BufNewFile,BufRead *.entitlements setf xml
 au BufNewFile,BufRead *.fsl setlocal filetype=fslex syntax=fsharp
 au BufNewFile,BufRead *.fsy setlocal filetype=fsyacc syntax=fsharp
 "autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi set filetype=fsharp
-"autocmd BufNewFile,BufRead *.fsproj         set filetype=fsharp_project syntax=xml
+autocmd BufNewFile,BufRead *.fsproj         set filetype=fsharp_project syntax=xml
+
+" fastlane
+au BufNewFile,BufRead Appfile set ft=ruby
+au BufNewFile,BufRead Deliverfile set ft=ruby
+au BufNewFile,BufRead Fastfile set ft=ruby
+au BufNewFile,BufRead Gymfile set ft=ruby
+au BufNewFile,BufRead Matchfile set ft=ruby
+au BufNewFile,BufRead Snapfile set ft=ruby
+au BufNewFile,BufRead Scanfile set ft=ruby
+au BufRead,BufNewFile *.tsp set filetype=typespec
 
 "nmap <C-s> <Plug>MarkdownPreview
 "nmap <M-s> <Plug>MarkdownPreviewStop
@@ -189,24 +203,50 @@ set completeopt=menuone,noinsert,noselect
 "let g:fsharp#fsiCompilerToolLocations =
 "  \ [ '/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0' ]
   "--   fsiCompilerToolLocations = "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+let language = system('dotnet tool list | grep fsautocomplete || true')
+if len(language) == 0
 let g:fsharp#fsautocomplete_command =
     \ [
     \   'fsautocomplete',
-    \   '--adaptive-lsp-server-enabled',
+    \   '--adaptive-lsp-server-enabled'
     \ ]
+else
+let g:fsharp#fsautocomplete_command =
+    \ [
+    \   'dotnet',
+    \   'fsautocomplete',
+    \   '--adaptive-lsp-server-enabled'
+    \ ]
+endif
 
 "let g:fsharp#use_recommended_server_config = 0
 " disabling this temporarily since it gives false positives in fable bindings
 " see here for defaults https://github.com/ionide/Ionide-vim/blob/00099c3cf53cba28a1d8084ab8d21639c62bd747/autoload/fsharp.vim#L161
 " disabling these as they cause flashing while navigating the file
-let g:LanguageClient_useVirtualText = 0
-let g:fsharp#lsp_codelens = 0
+"let g:LanguageClient_useVirtualText = 0
+" let g:fsharp#lsp_codelens = 0
 let g:fsharp#UnusedDeclarationsAnalyzer = 0
 let g:fsharp#AddPrivateAccessModifier = 1
 let g:fsharp#SimplifyNameAnalyzer = 0
 "let g:fsharp#UnnecessaryParenthesesAnalyzer = 1
-let g:fsharp#EnableReferenceCodeLens = 0
+" let g:fsharp#EnableReferenceCodeLens = 0
+let g:fsharp#linter = 1
 let g:fsharp#ExternalAutocomplete = 1
+let g:fsharp#EnableAnalyzers = 1
+let g:fsharp#lsp_auto_setup = 0
+let g:polyglot_disabled = ['markdown', 'fsharp']
+"let g:fsharp#AnalyzersPath =
+"   \ [
+"   \ 'packages/analyzers/G-Research.FSharp.Analyzers/analyzers',
+"   \ 'packages/analyzers/Ionide.Analyzers/analyzers',
+"   \ ]
+"let g:fsharp#AnalyzersPath =
+"   \ [
+"   \ 'packages/analyzers'
+"   \ ]
+"'packages/analyzers']
+"\ 'packages/analyzers/NpgsqlFSharpAnalyzer'
+
 "let g:fsharp#TooltipMode = "summary"
 
 if &term =~ "screen"
@@ -216,8 +256,6 @@ if &term =~ "screen"
 	  exec "set t_PE=\e[201~"
 endif
 
-let g:fsharp#lsp_auto_setup = 0
-let g:polyglot_disabled = ['markdown', 'fsharp']
 
 "set runtimepath+=/home/josephp/dev/Ionide-vim/
 "set packpath^=/home/josephp/dev/Ionide-vim/
@@ -229,6 +267,10 @@ let g:polyglot_disabled = ['markdown', 'fsharp']
 
 ]])
 -- require('rocks')
+
+vim.opt.termguicolors = true
+
+require('nvim-highlight-colors').setup({})
 
 require('nvim-web-devicons').setup()
 -- require('Comment').setup()
@@ -422,9 +464,15 @@ end
 --
 --
 require("neoconf").setup({})
+require 'lspconfig'.dartls.setup {}
+require 'lspconfig'.ruby_lsp.setup {}
 
-local ft = require('Comment.ft')
-ft.set('reason', ft.get('c'))
+require('Comment').setup({
+  pre_hook = require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook(),
+})
+
+-- local ft = require('Comment.ft')
+-- ft.set('reason', ft.get('c'))
 
 -- vim.cmd [[
 -- autocmd FileType http :packadd rest-nvim
@@ -461,6 +509,7 @@ require('telescope').load_extension('file_browser')
 
 -- vim.cmd.colorscheme "tokyonight-day"
 vim.cmd.colorscheme "tokyonight-night"
+
 
 require 'nvim-treesitter.configs'.setup {
   -- A list of parser names, or "all" (the five listed parsers should always be installed)
@@ -525,7 +574,7 @@ local telescope = require('telescope')
 vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
 vim.keymap.set('n', '<space><space>', builtin.live_grep, {})
-vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
+vim.keymap.set("n", "<space>fa", ":Telescope file_browser path=%:p:h select_buffer=true<CR>")
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
 vim.keymap.set('n', '<leader>fm', builtin.marks, {})
 vim.keymap.set('n', '<leader>fr', builtin.resume, {})
@@ -551,11 +600,19 @@ vim.keymap.set('n', '<space>cc', '<Cmd>BufferCloseAllButCurrent<CR>', opts)
 require('neodev').setup()
 
 -- see https://github.com/lukas-reineke/lsp-format.nvim/issues/50
-local config = {}
--- for _, v in pairs(vim.fn.getcompletion("", "filetype")) do
---   config[v] = { sync = true }
--- end
-require("lsp-format").setup(config)
+local config = {
+  fsharp = { sync = true }
+}
+for _, v in pairs(vim.fn.getcompletion("", "filetype")) do
+  local c = config[v] or {}
+  -- print(v)
+  -- print(vim.inspect(c))
+  config[v] = vim.tbl_extend("force", c, { sync = true, exclude = { "ts_ls" } })
+  -- config[v].exclude = { "ts_ls" }
+  -- config[v] = { sync = true, exclude = { "ts_ls" } }
+end
+-- print(vim.inspect(config.fsharp))
+require("lsp-format").setup({})
 
 -- local nlspsettings = require("nlspsettings")
 --
@@ -610,14 +667,79 @@ end
 --   on_attach = on_attach,
 -- }
 --
-local swift_format = {
-  formatCommand = [[swift-format]],
-  formatStdin = true,
+-- local swift_format = {
+--   formatCommand = [[swift-format]],
+--   formatStdin = true,
+-- }
+-- local buildifier = {
+--   formatCommand = [[buildifier -lint=fix]],
+--   formatStdin = true,
+-- }
+
+-- local prettier = {
+--   formatCommand = "npx prettier --stdin-filepath ${INPUT}",
+--   formatStdin = true,
+-- }
+
+local efm_tools = {
+  prettierd = {
+    formatCommand = "prettierd '${INPUT}' ${--range-start=charStart} ${--range-end=charEnd}",
+    formatStdin = true,
+    formatCanRange = true,
+  },
+  eslint_d = {
+    lintSource = 'efm/eslint_d',
+    lintCommand = 'eslint_d --no-color --format visualstudio --stdin-filename "${INPUT}" --stdin',
+    lintIgnoreExitCode = true,
+    lintStdin = true,
+    lintFormats = {
+      '%f(%l,%c): %trror %m',
+      '%f(%l,%c): %tarning %m'
+    },
+    rootMarkers = {
+      'eslint.config.js',
+      'eslint.config.mjs',
+      'eslint.config.cjs',
+      'package.json',
+    },
+  }
 }
-local buildifier = {
-  formatCommand = [[buildifier -lint=fix]],
-  formatStdin = true,
-}
+
+require 'lspconfig'.yamlls.setup {}
+
+require('lspconfig').efm.setup({
+  init_options = {
+    documentFormatting = true,
+    documentRangeFormatting = true,
+  },
+  on_attach = on_attach,
+  settings = {
+    rootMarkers = { '.git/' },
+    languages = {
+      javascript = {
+        -- efm_tools.eslint_d,
+        efm_tools.prettierd,
+      },
+      typescript = {
+        -- efm_tools.eslint_d,
+        efm_tools.prettierd,
+      },
+      typescriptreact = {
+        -- efm_tools.eslint_d,
+        efm_tools.prettierd,
+      },
+    },
+  },
+  filetypes = {
+    'javascript',
+    'javascriptreact',
+    'javascript.jsx',
+    'typescript',
+    'typescriptreact',
+    'typescript.jsx',
+  },
+})
+
 -- lspconfig.efm.setup {
 --   on_attach = on_attach,
 --   init_options = { documentFormatting = true },
@@ -647,6 +769,13 @@ local buildifier = {
 lspconfig.pyright.setup {
   capabilities = capabilities,
   on_attach = on_attach,
+  cmd = { "poetry", "run", "pyright-langserver", "--stdio" },
+}
+
+lspconfig.tsp_server.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  cmd = { "npx", "tsp-server", 'tsp-server', '--stdio' },
 }
 
 lspconfig.astro.setup {
@@ -680,6 +809,7 @@ lspconfigs.fable = {
 lspconfig.metals.setup {
   capabilities = capabilities,
   on_attach = on_attach,
+  root_dir = util.root_pattern('build.sbt', 'build.sc', 'build.gradle', 'pom.xml', 'build.scala'),
 }
 
 lspconfig.haxe_language_server.setup({
@@ -693,109 +823,109 @@ lspconfig.haxe_language_server.setup({
 
 })
 
-local null_ls = require("null-ls")
-local util = require 'lspconfig.util'
-null_ls.setup({
-  debug = true,
-  root_dir = util.root_pattern('.config/dotnet-tools.json'),
-})
-local helpers = require("null-ls.helpers")
+-- local null_ls = require("null-ls")
+-- local util = require 'lspconfig.util'
+-- null_ls.setup({
+--   debug = true,
+--   root_dir = util.root_pattern('.config/dotnet-tools.json'),
+-- })
+-- local helpers = require("null-ls.helpers")
 
 -- local s = "./server/SerializationTests.fs(29,3): (29,4) error FSHARP: A type parameter is missing a constraint 'when 'a: equality' (code 1)roject and references (80 source files) parsed in 119ms"
 -- for file in s:gmatch([[(.-)%(.+$]]) do
 --  print(file)
 -- end
 
-local log = require("null-ls.logger")
-local fable = {
-  method = null_ls.methods.DIAGNOSTICS,
-  filetypes = { "fsharp" },
-  --root_dir = require("null-ls.utils").root_pattern('.config/dotnet-tools.json'),
-  generator = ({
-    -- command = "dotnet",
-    -- args = {
-    --   "fable",
-    --   "watch",
-    --   "server",
-    --   "-o",
-    --   "server/js",
-    --   "-s",
-    --   "-e",
-    --   ".fs.js",
-    --   "server"
-    -- },
-    -- runtime_condition =
-    -- to_stdin = false,
-    -- use_cache = true,
-    -- from_stderr = true,
-    -- format = "line",
-    -- multiple_files = true,
-    fn = function(params)
-      log:trace(string.format("fsharp output: %s", vim.inspect(params)))
-      return {
-        {
-          col = "3",
-          end_col = "4",
-          end_row = "29",
-          filename = "./server/SerializationTests.fs",
-          row = 29,
-          message = "A type parameter is missing a constraint 'when 'a: equality' (code 1)",
-          severity = "error"
-        }
-      }
-    end
-    -- on_output = function(line)
-    --   -- local output = params.output
-    --   log:trace(string.format("fsharp output: %s", line))
-    --   -- if not output then
-    --   --   return done()
-    --   -- end
-    -- end
-    -- on_output = helpers.diagnostics.from_patterns({
-    --   -- ./server/SerializationTests.fs(29,3): (29,4) error FSHARP: A type parameter is missing a constraint 'when 'a: equality' (code 1)roject and references (80 source files) parsed in 119ms
-    --   {
-    --     -- pattern = [[:(%d+):(%d+) [%w-/]+ (.*)]],
-    --     pattern = [[(.-)%((%d+),(%d+)%): %((%d+),(%d+)%) (.+) FSHARP: (.+)$]],
-    --     groups = {
-    --       "filename",
-    --       "line",
-    --       "col",
-    --       "end_line",
-    --       "end_col",
-    --       "message",
-    --       "severity"
-    --     }
-    --   },
-    --   -- {
-    --   --     pattern = [[:(%d+) [%w-/]+ (.*)]],
-    --   --     groups = { "row", "message" },
-    --   -- },
-    -- }),
-    --on_output = helpers.diagnostics.from_patterns({
-    --})
-    -- fn = function(params)
-    --   local diagnostics = {}
-    --   -- sources have access to a params object
-    --   -- containing info about the current file and editor state
-    --   for i, line in ipairs(params.content) do
-    --     local col, end_col = line:find("really")
-    --     if col and end_col then
-    --       -- null-ls fills in undefined positions
-    --       -- and converts source diagnostics into the required format
-    --       table.insert(diagnostics, {
-    --         row = i,
-    --         col = col,
-    --         end_col = end_col + 1,
-    --         source = "no-really",
-    --         message = "Don't use 'really!'",
-    --         severity = vim.diagnostic.severity.WARN,
-    --       })
-    --     end
-    --   end
-    --   return diagnostics
-    -- end,
-  }),
-}
+-- local log = require("null-ls.logger")
+-- local fable = {
+--   method = null_ls.methods.DIAGNOSTICS,
+--   filetypes = { "fsharp" },
+--   --root_dir = require("null-ls.utils").root_pattern('.config/dotnet-tools.json'),
+--   generator = ({
+--     -- command = "dotnet",
+--     -- args = {
+--     --   "fable",
+--     --   "watch",
+--     --   "server",
+--     --   "-o",
+--     --   "server/js",
+--     --   "-s",
+--     --   "-e",
+--     --   ".fs.js",
+--     --   "server"
+--     -- },
+--     -- runtime_condition =
+--     -- to_stdin = false,
+--     -- use_cache = true,
+--     -- from_stderr = true,
+--     -- format = "line",
+--     -- multiple_files = true,
+--     fn = function(params)
+--       log:trace(string.format("fsharp output: %s", vim.inspect(params)))
+--       return {
+--         {
+--           col = "3",
+--           end_col = "4",
+--           end_row = "29",
+--           filename = "./server/SerializationTests.fs",
+--           row = 29,
+--           message = "A type parameter is missing a constraint 'when 'a: equality' (code 1)",
+--           severity = "error"
+--         }
+--       }
+--     end
+--     -- on_output = function(line)
+--     --   -- local output = params.output
+--     --   log:trace(string.format("fsharp output: %s", line))
+--     --   -- if not output then
+--     --   --   return done()
+--     --   -- end
+--     -- end
+--     -- on_output = helpers.diagnostics.from_patterns({
+--     --   -- ./server/SerializationTests.fs(29,3): (29,4) error FSHARP: A type parameter is missing a constraint 'when 'a: equality' (code 1)roject and references (80 source files) parsed in 119ms
+--     --   {
+--     --     -- pattern = [[:(%d+):(%d+) [%w-/]+ (.*)]],
+--     --     pattern = [[(.-)%((%d+),(%d+)%): %((%d+),(%d+)%) (.+) FSHARP: (.+)$]],
+--     --     groups = {
+--     --       "filename",
+--     --       "line",
+--     --       "col",
+--     --       "end_line",
+--     --       "end_col",
+--     --       "message",
+--     --       "severity"
+--     --     }
+--     --   },
+--     --   -- {
+--     --   --     pattern = [[:(%d+) [%w-/]+ (.*)]],
+--     --   --     groups = { "row", "message" },
+--     --   -- },
+--     -- }),
+--     --on_output = helpers.diagnostics.from_patterns({
+--     --})
+--     -- fn = function(params)
+--     --   local diagnostics = {}
+--     --   -- sources have access to a params object
+--     --   -- containing info about the current file and editor state
+--     --   for i, line in ipairs(params.content) do
+--     --     local col, end_col = line:find("really")
+--     --     if col and end_col then
+--     --       -- null-ls fills in undefined positions
+--     --       -- and converts source diagnostics into the required format
+--     --       table.insert(diagnostics, {
+--     --         row = i,
+--     --         col = col,
+--     --         end_col = end_col + 1,
+--     --         source = "no-really",
+--     --         message = "Don't use 'really!'",
+--     --         severity = vim.diagnostic.severity.WARN,
+--     --       })
+--     --     end
+--     --   end
+--     --   return diagnostics
+--     -- end,
+--   }),
+-- }
 
 -- null_ls.register(fable)
 
@@ -867,10 +997,15 @@ lspconfig.rust_analyzer.setup {
   -- Server-specific settings. See `:help lspconfig-setup`
   settings = {
     ['rust-analyzer'] = {
+      -- see https://github.com/rust-lang/rust-analyzer/blob/fc18d263aa95f7d6de8174bd4c6663dfe865e6d5/docs/user/generated_config.adoc#L172
+      cargo = { buildScripts = { enable = true } }
       -- this is quite slow
       -- checkOnSave = {
       --   command = "clippy"
       -- },
+      -- diagnostics = {
+      --   enable = false;
+      -- }
     },
   },
 }
@@ -878,6 +1013,7 @@ lspconfig.rust_analyzer.setup {
 -- lspconfig.tailwindcss.setup {
 --   capabilities = capabilities,
 --   on_attach = on_attach,
+-- }
 --   cmd = {
 --     "node_modules/.bin/tailwindcss-language-server"
 --   },
@@ -920,20 +1056,34 @@ lspconfig.rust_analyzer.setup {
 
 local util = require 'lspconfig.util'
 
-lspconfig.eslint.setup {
-  capabilities = capabilities,
+if os.getenv("ESLINT_ENABLE") then
+  lspconfig.eslint.setup {
+    settings = {
+      workingDirectories = { mode = "auto" },
+      options = {
+        cache = true
+      }
+    },
+    flags = {
+      allow_incremental_sync = true,
+      debounce_text_changes = 800,
+    },
+    capabilities = capabilities,
+  }
+
   on_attach = function(client, bufnr)
     vim.api.nvim_create_autocmd("BufWritePre", {
       buffer = bufnr,
       command = "EslintFixAll",
     })
     on_attach(client, bufnr)
-  end,
-}
+  end
+end
 
-lspconfig.tsserver.setup {
+--
+lspconfig.ts_ls.setup {
   capabilities = capabilities,
-  on_attach = on_attach,
+  -- on_attach = on_attach,
   -- root_dir = util.root_pattern(".git"),
   single_file_support = false,
   root_dir = util.root_pattern('package.json')
@@ -970,13 +1120,23 @@ require 'ionide'.setup {
   capabilities = capabilities,
   on_attach = on_attach,
   -- root_dir = util.root_pattern('global.json')
-  root_dir = util.root_pattern('.config/dotnet-tools.json'),
+  root_dir = util.root_pattern('.config/dotnet-tools.json', '*.sln'),
   settings = {
     FSharp = {
-      EnableReferenceCodeLens = false,
-      UnusedDeclarationsAnalyzer = false,
-      unusedDeclarationsAnalyzer = false
-    }
+      -- EnableReferenceCodeLens = false,
+      -- UnusedDeclarationsAnalyzer = false,
+      -- unusedDeclarationsAnalyzer = false,
+      -- lineLens = { enabled = "replaceCodeLens", prefix = '' },
+      codeLenses = {
+        references = {
+          enabled = false
+        },
+        signature = {
+          enabled = false
+        }
+      },
+      fsac = { gc = { useDatas = true } }
+    },
   }
   -- init_options = {
   --   UnusedDeclarationsAnalyzerExclusions = {
@@ -1089,8 +1249,8 @@ lspconfig.sourcekit.setup {
     "--toolchain",
     "swift",
     "sourcekit-lsp",
-    "--log-level",
-    "warning",
+    -- "--log-level",
+    -- "warning",
     -- "-Xswiftc",
     -- "-sdk",
     -- "-Xswiftc",
@@ -1169,7 +1329,7 @@ require("lint").linters.swiftlint = {
   ignore_exitcode = true,
   env = nil,
   parser = function(output, bufnr)
-    print(output)
+    -- print(output)
     local offenses = vim.json.decode(output)
     if vim.tbl_isempty(offenses) then
       return {}
@@ -1215,8 +1375,8 @@ require("formatter").setup {
     python = {
       function()
         return {
-          exe = "black",
-          args = { '-' },
+          exe = "poetry",
+          args = { "run", "black", "-" },
           stdin = true,
         }
       end
@@ -1317,8 +1477,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
     -- Buffer local mappings.
     -- See `:help vim.lsp.*` for documentation on any of the below functions
     local opts = { buffer = ev.buf }
-    vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
-    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+    vim.keymap.set('n', 'gu', vim.lsp.buf.declaration, opts)
+    vim.keymap.set('n', 'gd', "<cmd>Telescope lsp_definitions<cr>", opts)
+    --vim.lsp.buf.definition, opts)
     vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
     vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
     vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
@@ -1332,7 +1493,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, opts)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
     vim.keymap.set('n', '<space>d', function()
-      vim.lsp.buf.format { async = true }
+      vim.lsp.buf.format { async = false }
     end, opts)
   end,
 })
@@ -1449,7 +1610,7 @@ for _, group in ipairs(vim.fn.getcompletion("@lsp", "highlight")) do
   vim.api.nvim_set_hl(0, group, {})
 end
 
-require("dbee").setup()
+-- require("dbee").setup()
 
 local function get_query()
   local ts_utils = require("nvim-treesitter.ts_utils")

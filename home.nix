@@ -43,7 +43,7 @@ let
       owner = "ckipp01";
       repo = "vlog.nvim";
       rev = "8184928c371249d00e148586a7e50273db2b7358";
-      sha256 = "sha256-DeJXUIKMi0hxYHFffg2gwoYJbT7z+stu2ElaeRbcImA=";
+      sha256 = "sha256-YGqBced8oZOLDb9rrve2jE+tAHbYbXGz1ARQ7bTSP7c=";
     };
   };
   nvim-dbee2 = nvim-dbee3.overrideAttrs (oa:
@@ -83,10 +83,17 @@ let
 
       #meta.platforms = lib.platforms.linux;
     });
+  tree-sitter-fsharp-grammar-src = pkgs.fetchFromGitHub {
+    owner = "ionide";
+    repo = "tree-sitter-fsharp";
+    rev = "5202637c203fcf8876affbd18b04ff43256d4c4a";
+    hash = "sha256-OjCwEhTACaVcnR/NyfUGZN/juLUHgqY6h+3DSrqUuiQ=";
+  };
   tree-sitter-fsharp-grammar = pkgs.tree-sitter.buildGrammar {
     language = "fsharp";
     version = "0.0.0";
     generate = false;
+    location = "fsharp";
     #src = /Users/josephprice/dev/tree-sitter-fsharp;
     # src = pkgs.fetchFromGitHub {
     #   owner = "ionide";
@@ -94,12 +101,7 @@ let
     #   rev = "d939b3a1db56820f6b810f764e9163f514cb833a";
     #   hash = "sha256-MQg7cZDsSXlcmfPfwgWcY/N66iBuCQf2yjzbg10WcsA=";
     # };
-    src = pkgs.fetchFromGitHub {
-      owner = "joprice";
-      repo = "tree-sitter-fsharp";
-      rev = "dc5145f1a079a87d79e3ca50de9c5171035921da";
-      hash = "sha256-zKfMfue20B8sbS1tQKZAlokRV7efMsxBk7ySQmzLo0Y=";
-    };
+    src = tree-sitter-fsharp-grammar-src;
     # postInstall = ''
     #   #head $out/queries/highlights.scm
     #   mkdir $out/queries/fsharp/
@@ -353,12 +355,14 @@ in
   home.stateVersion = "24.05";
   # TODO: exclude df
   home.packages = with pkgs; [
+    #ruby-lsp
+    yaml-language-server
     protobuf
     watchexec
     lua
     bazelisk
     buildifier
-    mosh
+    #mosh
     #ollama
     efm-langserver
     #swift-format
@@ -422,7 +426,7 @@ in
     #jdk
     joker
     kcat
-    loc
+    #loc
     #nim
     jq
     kubectl
@@ -431,7 +435,6 @@ in
     # unixtools.netstat
     #leiningen
     #libbitcoin-explorer
-    loc
     #maven
     #mill
     #niv
@@ -441,7 +444,7 @@ in
     node2nix
     #nodePackages.esy
     #nushell
-    nodejs
+    #nodejs
     #obelisk
     #ocaml
     #ocaml-lsp.ocaml-lsp-server
@@ -465,7 +468,7 @@ in
     tree
     #visualvm
     #vscode
-    yarn
+    #yarn
     z
     zlib
     #nodePackages.bower
@@ -473,7 +476,7 @@ in
     poetry
     #xcpretty
     #websocat
-    watchman
+    #watchman
     #xquartz
     fswatch
     #upx
@@ -500,21 +503,22 @@ in
     pcre
     #SDL2
     #SDL2.dev
-    imagemagick
+    #imagemagick
     #protobuf
-    systemfd
+    #systemfd
     trunk
     ffmpeg
     ffmpeg.dev
     pcre
     gource
     #nerdfonts
-    (nerdfonts.override {
-      fonts = [ "FiraCode" ];
-    })
+    pkgs.nerd-fonts.fira-code
+    # (nerdfonts.override {
+    #   fonts = [ "FiraCode" ];
+    # })
     gnused
     #coursier
-    metals
+    #metals
     # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
     (neovim.override
@@ -560,16 +564,19 @@ in
               catppuccin-nvim
               # this server crashes on start
               comment-nvim
+              nvim-ts-context-commentstring
               #ctrlp
               #ghcid
               #gitgutter
               neoconf-nvim
+              nvim-highlight-colors
               Ionide-vim
-              psc-ide-vim
+              vim-indent-guides
+              #psc-ide-vim
               vim-airline
               vim-airline-themes
               vim-polyglot
-              vim-capnp
+              #vim-capnp
               paket-nvim
               #vim-marko
               vim-colorschemes
@@ -594,25 +601,39 @@ in
               #   #nvim-treesitter-reason
               #   #tree-sitter-fsharp
               # ]))
-              ((nvim-treesitter.withPlugins (p: with p; [
-                p.json
-                p.lua
-                p.ocaml
-                p.ocaml_interface
-                p.markdown
-                p.sql
-                p.vim
-                #tree-sitter-fsharp-grammar
-                #nvim-treesitter-reason
-                #tree-sitter-fsharp
-              ])).overrideAttrs (o: {
-                preFixup = o.preFixup or "" + ''
-                  echo "queries"
-                  mkdir $out/queries/fsharp/
-                  cp ${tree-sitter-fsharp-grammar}/queries/* $out/queries/fsharp/
-                  ls queries
-                '';
-              }))
+              (
+                (nvim-treesitter.withPlugins (p: with p; [
+                  p.json
+                  p.lua
+                  p.ocaml
+                  p.ocaml_interface
+                  p.markdown
+                  p.sql
+                  p.vim
+                  p.typespec
+                  p.c_sharp
+                  p.fsharp
+                  p.rust
+                  p.typescript
+                  p.swift
+                  p.python
+                  p.toml
+                  p.tsx
+                  p.xml
+                  #tree-sitter-fsharp-grammar
+                  #nvim-treesitter-reason
+                  #tree-sitter-fsharp
+                ]))
+                # .overrideAttrs (o: {
+                #   preFixup = o.preFixup or "" + ''
+                #     echo "queries"
+                #     ls ${tree-sitter-fsharp-grammar-src}
+                #     ls ${tree-sitter-fsharp-grammar-src}/queries/
+                #     mkdir $out/queries/fsharp/
+                #     cp ${tree-sitter-fsharp-grammar-src}/queries/* $out/queries/fsharp/
+                #   '';
+                # })
+              )
               #tree-sitter-fsharp-grammar
               #nvim-treesitter-reason
               #tree-sitter-fsharp
@@ -628,10 +649,12 @@ in
               nil
               nlsp-settings-nvim
               nvim-cmp
+              vim-yaml
               nvim-lightbulb
               nvim-lspconfig
               nvim-web-devicons
               telescope-file-browser-nvim
+              vim-jsx-pretty
               telescope-frecency-nvim
               telescope-fzy-native-nvim
               telescope-media-files-nvim
@@ -640,7 +663,10 @@ in
               todo-comments-nvim
               vim-prettier
               which-key-nvim
-              nvim-dbee2
+              vim-flutter
+              dart-vim-plugin
+              # codecompanion-nvim
+              #nvim-dbee2
               vlog-nvim
               (nvim-lint.overrideAttrs {
                 src = pkgs.fetchFromGitHub {
@@ -712,6 +738,8 @@ in
     userName = "Joseph Price";
     userEmail = "pricejosephd@gmail.com";
     aliases = {
+      b = "branch";
+      c = "diff --cached";
       s = "status";
       co = "checkout";
       d = "diff";
@@ -721,6 +749,7 @@ in
       bclean = "!f() { git branch --merged master | grep -v '^\\*' | xargs -n 1 git branch -d; }; f";
     };
     extraConfig = {
+      init.defaultBranch = "master";
       core.autocrlf = "input";
       pull.ff = "only";
       # add fixup!
@@ -790,7 +819,9 @@ in
       bindkey "^?" backward-delete-char
       . ${z}/bin/z.sh
       unsetopt AUTO_CD
-      export PATH=$HOME/.local/bin:$PATH
+      #export PATH=$HOME/.local/bin:$PATH
+      #export PATH=$HOME/.asdf/bin:$PATH
+      #export PATH=$HOME/.asdf/shims:$PATH
       nix-build-nodirenv() {
         pushd /; popd;
       }
@@ -833,4 +864,5 @@ in
   #    mandatoryFeatures = [ ];
   #  }];
   #};
+  home.enableNixpkgsReleaseCheck = false;
 }
