@@ -175,6 +175,9 @@ let
   # Find and delete branches that were squash-merged
   git-delete-squashed =
     pkgs.writeShellScriptBin "git-delete-squashed" (lib.fileContents ./delete-squashed.sh);
+  # Report reclaimable temp/cache disk space
+  disk-cleanup =
+    pkgs.writeShellScriptBin "disk-cleanup" (lib.fileContents ./disk-cleanup.sh);
   haskell = with pkgs; haskellPackages.ghcWithPackages (
     pkgs: [
       haskellPackages.pretty-simple
@@ -412,6 +415,7 @@ in
     #flow
     git-cof
     git-delete-squashed
+    disk-cleanup
     github-cli
     #gnupg
     go
