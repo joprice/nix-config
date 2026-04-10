@@ -156,6 +156,7 @@ inoremap <C-C> <C-V>
 " overrides auto-detection, which falls back to nroff when the first 10 lines
 " don't contain an import
 au BufNewFile,BufRead *.mm set filetype=objcpp
+au BufNewFile,BufRead *.env.* set filetype=sh
 "au BufNewFile,BufRead Cakefile set filetype=ruby
 au BufNewFile,BufRead *.plist setf xml
 au BufNewFile,BufRead *.intentdefinition setf xml
@@ -163,6 +164,7 @@ au BufNewFile,BufRead WORKSPACE.bzlmod setf bzl
 au BufNewFile,BufRead Pods.WORKSPACE setf bzl
 au BufNewFile,BufRead *.entitlements setf xml
 
+au BufNewFile,BufRead *.mill setlocal filetype=scala
 au BufNewFile,BufRead *.fsl setlocal filetype=fslex syntax=fsharp
 au BufNewFile,BufRead *.fsy setlocal filetype=fsyacc syntax=fsharp
 "autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi set filetype=fsharp
@@ -250,10 +252,10 @@ let g:polyglot_disabled = ['markdown', 'fsharp']
 "let g:fsharp#TooltipMode = "summary"
 
 if &term =~ "screen"
-	  let &t_BE = "\e[?2004h"
-	  let &t_BD = "\e[?2004l"
-	  exec "set t_PS=\e[200~"
-	  exec "set t_PE=\e[201~"
+  let &t_BE = "\e[?2004h"
+  let &t_BD = "\e[?2004l"
+  exec "set t_PS=\e[200~"
+  exec "set t_PE=\e[201~"
 endif
 
 
@@ -270,11 +272,11 @@ endif
 
 vim.opt.termguicolors = true
 
-require('nvim-highlight-colors').setup({})
+require("nvim-highlight-colors").setup({})
 
-require('nvim-web-devicons').setup()
+require("nvim-web-devicons").setup()
 -- require('Comment').setup()
-require('todo-comments').setup()
+require("todo-comments").setup()
 require("auto-session").setup()
 
 -- Some servers have issues with backup files, see #649
@@ -292,8 +294,8 @@ vim.opt.signcolumn = "yes"
 local keyset = vim.keymap.set
 -- Autocomplete
 function _G.check_back_space()
-  local col = vim.fn.col('.') - 1
-  return col == 0 or vim.fn.getline('.'):sub(col, col):match('%s') ~= nil
+	local col = vim.fn.col(".") - 1
+	return col == 0 or vim.fn.getline("."):sub(col, col):match("%s") ~= nil
 end
 
 -- Use Tab for trigger completion with characters ahead and navigate
@@ -464,15 +466,63 @@ end
 --
 --
 require("neoconf").setup({})
-require 'lspconfig'.dartls.setup {}
-require 'lspconfig'.ruby_lsp.setup {}
+-- require 'lspconfig'.dartls.setup {}
+-- require 'lspconfig'.ruby_lsp.setup {}
+-- require 'lspconfig'.dockerls.setup {
+--   cmd = { "npx", "docker-langserver", '--stdio' },
+-- }
 
-require('Comment').setup({
-  pre_hook = require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook(),
+local lspconfig = require("lspconfig")
+local configs = require("lspconfig.configs")
+if not configs.tombi then
+	configs.tombi = {
+		default_config = {
+			cmd = { "tombi", "lsp" },
+			filetypes = { "toml" },
+			root_dir = { "Cargo.toml", "tombi.toml", "pyproject.toml", ".git" },
+		},
+	}
+end
+
+local util = require("lspconfig.util")
+lspconfig.tombi.setup({
+	root_dir = util.root_pattern("Cargo.toml"),
 })
 
+if not configs.moonbit then
+	configs.moonbit = {
+		default_config = {
+			cmd = { "moonbit-lsp" },
+			filetypes = { "moonbit" },
+			root_dir = util.root_pattern("moon.mod.json"),
+		},
+		docs = {
+			description = [[
+The moonbit language server.
+]],
+		},
+	}
+end
+lspconfig.moonbit.setup({})
+
+-- if not configs.sqruff then
+--   configs.sqruff = {
+--     default_config = {
+--       cmd = { 'sqruff', 'lsp' },
+--       filetypes = { 'sql' },
+--       root_dir = { '.sqruff', '.git' },
+--     }
+--   }
+-- end
+
 -- local ft = require('Comment.ft')
--- ft.set('reason', ft.get('c'))
+-- ft.set('typespec', ft.get('c'))
+-- ft.set('fsharp_project', ft.get('xml'))
+--
+-- pre_hook = require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook()
+-- require('Comment').setup({
+--   pre_hook
+-- })
 
 -- vim.cmd [[
 -- autocmd FileType http :packadd rest-nvim
@@ -480,136 +530,144 @@ require('Comment').setup({
 -- "require("luarocks-nvim").setup()
 
 require("tokyonight").setup({
-  styles = {
-    keywords = { italic = false },
-    floats = "normal"
-  }
+	styles = {
+		keywords = { italic = false },
+		floats = "normal",
+	},
 })
 
 -- https://github.com/fannheyward/telescope-coc.nvim
 require("telescope").setup({
-  defaults = {
-    layout_strategy = 'vertical'
-  },
-  extensions = {
-    coc = {
-      -- theme = 'ivy',
-      prefer_locations = true, -- always use Telescope locations to preview definitions/declarations/implementations etc
-    }
-  },
+	defaults = {
+		layout_strategy = "vertical",
+	},
+	extensions = {
+		coc = {
+			-- theme = 'ivy',
+			prefer_locations = true, -- always use Telescope locations to preview definitions/declarations/implementations etc
+		},
+	},
 })
 -- require('telescope').load_extension('coc')
-require('telescope').load_extension('fzy_native')
-require('telescope').load_extension('frecency')
-require('telescope').load_extension('z')
+require("telescope").load_extension("fzy_native")
+require("telescope").load_extension("frecency")
+require("telescope").load_extension("z")
 -- TODO: get this into vim
 -- require("telescope").load_extension('smart_history')
-require('telescope').load_extension('media_files')
-require('telescope').load_extension('file_browser')
+require("telescope").load_extension("media_files")
+require("telescope").load_extension("file_browser")
 
--- vim.cmd.colorscheme "tokyonight-day"
-vim.cmd.colorscheme "tokyonight-night"
+vim.cmd.colorscheme("tokyonight-night")
+-- vim.cmd.colorscheme "kanagawa"
+-- vim.cmd.colorscheme "iceberg"
+-- vim.cmd.colorscheme "spacevim"
+-- vim.cmd.colorscheme "kanagawa-paper"
+-- vim.cmd.colorscheme "tokyonight-night"
 
+require("nvim-treesitter.configs").setup({
+	-- A list of parser names, or "all" (the five listed parsers should always be installed)
+	-- ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "ocaml" },
+	-- Install parsers synchronously (only applied to `ensure_installed`)
+	ensure_installed = {},
+	sync_install = false,
+	auto_install = false,
+	-- List of parsers to ignore installing (or "all")
+	ignore_install = { "all" },
+	---- If you need to change the installation directory of the parsers (see -> Advanced Setup)
+	-- parser_install_dir = "/some/path/to/store/parsers", -- Remember to run vim.opt.runtimepath:append("/some/path/to/store/parsers")!
 
-require 'nvim-treesitter.configs'.setup {
-  -- A list of parser names, or "all" (the five listed parsers should always be installed)
-  -- ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "ocaml" },
-  -- Install parsers synchronously (only applied to `ensure_installed`)
-  ensure_installed = {},
-  sync_install = false,
-  auto_install = false,
-  -- List of parsers to ignore installing (or "all")
-  ignore_install = { "all" },
-  ---- If you need to change the installation directory of the parsers (see -> Advanced Setup)
-  -- parser_install_dir = "/some/path/to/store/parsers", -- Remember to run vim.opt.runtimepath:append("/some/path/to/store/parsers")!
+	highlight = {
+		enable = true,
+		-- NOTE: these are the names of the parsers and not the filetype. (for example if you want to
+		-- disable highlighting for the `tex` filetype, you need to include `latex` in this list as this is
+		-- the name of the parser)
+		-- list of language that will be disabled
+		-- disable = { "c", "rust" },
+		-- Or use a function for more flexibility, e.g. to disable slow treesitter highlight for large files
+		-- disable = function(lang, buf)
+		--    local max_filesize = 100 * 1024 -- 100 KB
+		--    local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
+		--    if ok and stats and stats.size > max_filesize then
+		--        return true
+		--    end
+		-- end,
 
-  highlight = {
-    enable = true,
-    -- NOTE: these are the names of the parsers and not the filetype. (for example if you want to
-    -- disable highlighting for the `tex` filetype, you need to include `latex` in this list as this is
-    -- the name of the parser)
-    -- list of language that will be disabled
-    -- disable = { "c", "rust" },
-    -- Or use a function for more flexibility, e.g. to disable slow treesitter highlight for large files
-    -- disable = function(lang, buf)
-    --    local max_filesize = 100 * 1024 -- 100 KB
-    --    local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
-    --    if ok and stats and stats.size > max_filesize then
-    --        return true
-    --    end
-    -- end,
-
-    -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-    -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
-    -- Using this option may slow down your editor, and you may see some duplicate highlights.
-    -- Instead of true it can also be a list of languages
-    additional_vim_regex_highlighting = false,
-  },
-  incremental_selection = {
-    enable = true,
-    keymaps = {
-      init_selection = "gnn", -- set to `false` to disable one of the mappings
-      node_incremental = "grn",
-      scope_incremental = "grc",
-      node_decremental = "grm",
-    },
-  },
-}
+		-- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+		-- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
+		-- Using this option may slow down your editor, and you may see some duplicate highlights.
+		-- Instead of true it can also be a list of languages
+		additional_vim_regex_highlighting = false,
+	},
+	incremental_selection = {
+		enable = true,
+		keymaps = {
+			init_selection = "gnn", -- set to `false` to disable one of the mappings
+			node_incremental = "grn",
+			scope_incremental = "grc",
+			node_decremental = "grm",
+		},
+	},
+})
 -- vim.treesitter.language.register("fsharp", "fsharp")
 
 vim.keymap.set("n", "]t", function()
-  require("todo-comments").jump_next()
+	require("todo-comments").jump_next()
 end, { desc = "Next todo comment" })
 
 vim.keymap.set("n", "[t", function()
-  require("todo-comments").jump_prev()
+	require("todo-comments").jump_prev()
 end, { desc = "Previous todo comment" })
 
 vim.opt.guifont = "FiraMono Nerd Font Mono:h15"
 
-local builtin = require('telescope.builtin')
-local telescope = require('telescope')
+local builtin = require("telescope.builtin")
+local telescope = require("telescope")
 
+vim.keymap.set("n", "<space>wc", builtin.commands, {})
+vim.keymap.set("n", "<space>we", builtin.lsp_workspace_symbols, {})
+vim.keymap.set("n", "<space>ws", builtin.lsp_document_symbols, {})
+vim.keymap.set("n", "<space>wt", builtin.treesitter, {})
+vim.keymap.set("n", "<leader>cl", vim.lsp.codelens.run, { desc = "Run CodeLens" })
 -- See https://github.com/nvim-telescope/telescope.nvim#neovim-lsp-pickers
-vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
-vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
-vim.keymap.set('n', '<space><space>', builtin.live_grep, {})
+vim.keymap.set("n", "<leader>ff", builtin.find_files, {})
+vim.keymap.set("n", "<leader>fg", builtin.live_grep, {})
+vim.keymap.set("n", "<space><space>", builtin.live_grep, {})
 vim.keymap.set("n", "<space>fa", ":Telescope file_browser path=%:p:h select_buffer=true<CR>")
-vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
-vim.keymap.set('n', '<leader>fm', builtin.marks, {})
-vim.keymap.set('n', '<leader>fr', builtin.resume, {})
-vim.keymap.set('n', '<leader>fi', builtin.current_buffer_fuzzy_find, {})
+vim.keymap.set("n", "<leader>fh", builtin.help_tags, {})
+vim.keymap.set("n", "<leader>fm", builtin.marks, {})
+vim.keymap.set("n", "<leader>fr", builtin.resume, {})
+vim.keymap.set("n", "<leader>fi", builtin.current_buffer_fuzzy_find, {})
 -- local coc = telescope.extensions.coc
 -- vim.keymap.set('n', '<leader>fo', function() coc.document_symbols {} end, {})
-vim.keymap.set('n', '<leader>ft', '<Cmd>TodoTelescope keywords=TODO,FIX<CR>', {})
-vim.keymap.set('n', '<leader>fd', builtin.git_status, {})
-vim.keymap.set('n', '<leader>fl', builtin.git_branches, {})
-vim.keymap.set('n', '<space>a', builtin.diagnostics, {})
-vim.keymap.set('n', '<space>tt', builtin.lsp_references, {})
+vim.keymap.set("n", "<leader>ft", "<Cmd>TodoTelescope keywords=TODO,FIX<CR>", {})
+vim.keymap.set("n", "<leader>fd", builtin.git_status, {})
+vim.keymap.set("n", "<leader>fl", builtin.git_branches, {})
+vim.keymap.set("n", "<space>a", builtin.diagnostics, {})
+vim.keymap.set("n", "<space>tt", builtin.lsp_references, {})
 -- vim.keymap.set('n', '<space>f', builtin.buffers, {})
-vim.keymap.set('n', '<space>rr', builtin.buffers, {})
+vim.keymap.set("n", "<space>rr", builtin.buffers, {})
 
 vim.keymap.set("n", "<C-p>", builtin.find_files, {})
 vim.keymap.set("n", "<space>pp", builtin.find_files, {})
 
 local opts = { noremap = true, silent = true }
-vim.keymap.set('n', '<A-c>', '<Cmd>BufferClose<CR>', opts)
-vim.keymap.set('n', '<space>cc', '<Cmd>BufferCloseAllButCurrent<CR>', opts)
+vim.keymap.set("n", "<A-c>", "<Cmd>BufferClose<CR>", opts)
+vim.keymap.set("n", "<space>cc", "<Cmd>BufferCloseAllButCurrent<CR>", opts)
 -- vim.keymap.set('n', '<space>r', '<Cmd>FlutterHotReload<CR>', opts)
 
-require('neodev').setup()
+require("neodev").setup()
 
 -- see https://github.com/lukas-reineke/lsp-format.nvim/issues/50
 local config = {
-  fsharp = { sync = true }
+	fsharp = { sync = true },
 }
 for _, v in pairs(vim.fn.getcompletion("", "filetype")) do
-  local c = config[v] or {}
-  -- print(v)
-  -- print(vim.inspect(c))
-  config[v] = vim.tbl_extend("force", c, { sync = true, exclude = { "ts_ls" } })
-  -- config[v].exclude = { "ts_ls" }
-  -- config[v] = { sync = true, exclude = { "ts_ls" } }
+	local c = config[v] or {}
+	-- print(v)
+	-- print(vim.inspect(c))
+	config[v] = vim.tbl_extend("force", c, { sync = true, exclude = { "ts_ls" } })
+	-- config[v].exclude = { "ts_ls" }
+	-- config[v] = { sync = true, exclude = { "ts_ls" } }
 end
 -- print(vim.inspect(config.fsharp))
 require("lsp-format").setup({})
@@ -625,11 +683,19 @@ require("lsp-format").setup({})
 -- })
 --
 
-local lspconfig = require('lspconfig')
---  inlay_hints = { enabled = true }
+local lspconfig = require("lspconfig")
+-- inlay_hints = { enabled = true }
 local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
-
+capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)
+-- capabilities.offsetEncoding = { "utf-16" }
+-- capabilities.offset_encoding = { "utf-16" }
+-- capabilities.general.positionEncodings = { "utf-16" }
+capabilities = vim.tbl_deep_extend("force", capabilities, {
+	offsetEncoding = { "utf-16" },
+	general = {
+		positionEncodings = { "utf-16" },
+	},
+})
 
 -- function on_attach(client, bufnr)
 --   local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
@@ -650,17 +716,46 @@ capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 -- end)
 
 local on_attach = function(client, bufnr)
-  require("lsp-format").on_attach(client, bufnr)
-  -- if client.server_capabilities.inlayHintProvider then
-  --   vim.lsp.inlay_hint.enable(bufnr, true)
-  --   --   vim.lsp.buf.inlay_hint(bufnr, true)
-  -- end
-  -- client.server_capabilities.codeLensProvider = false
-  -- if client.server_capabilities.codeLensProvider then
-  --   print "has lens"
-  --   -- vim.lsp.codelens.refresh()
-  -- end
+	require("lsp-format").on_attach(client, bufnr)
+	-- vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+	-- if client.server_capabilities.inlayHintProvider then
+	-- vim.lsp.inlay_hint.enable(true) -- , { bufnr = bufnr })
+	-- if client.server_capabilities.codeLensProvider then
+	-- vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "InsertLeave" }, {
+	--   buffer = bufnr,
+	--   callback = vim.lsp.codelens.refresh,
+	-- })
+	-- end
+	--   vim.lsp.buf.inlay_hint(bufnr, true)
+	-- end
+	-- client.server_capabilities.codeLensProvider = false
+	-- if client.server_capabilities.codeLensProvider then
+	--   print "has lens"
+	--   -- vim.lsp.codelens.refresh()
+	-- end
 end
+
+-- lspconfig.sqls.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   -- NOTE: these don't seem to work - config is global https://github.com/sqls-server/sqls/issues/59
+--   -- settings = {
+--   --   sqls = {
+--   --     connections = {
+--   --       {
+--   --         alias = 'psql',
+--   --         driver = 'postgresql',
+--   --         dataSourceName = 'host=127.0.0.1 port=5433 user=postgres password=litterat dbname=postgres sslmode=disable'
+--   --       },
+--   --     },
+--   --   },
+--   -- },
+-- }
+--
+-- lspconfig.sqruff.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
 
 -- lspconfig.jsonls.setup {
 --   capabilities = capabilities,
@@ -682,62 +777,62 @@ end
 -- }
 
 local efm_tools = {
-  prettierd = {
-    formatCommand = "prettierd '${INPUT}' ${--range-start=charStart} ${--range-end=charEnd}",
-    formatStdin = true,
-    formatCanRange = true,
-  },
-  eslint_d = {
-    lintSource = 'efm/eslint_d',
-    lintCommand = 'eslint_d --no-color --format visualstudio --stdin-filename "${INPUT}" --stdin',
-    lintIgnoreExitCode = true,
-    lintStdin = true,
-    lintFormats = {
-      '%f(%l,%c): %trror %m',
-      '%f(%l,%c): %tarning %m'
-    },
-    rootMarkers = {
-      'eslint.config.js',
-      'eslint.config.mjs',
-      'eslint.config.cjs',
-      'package.json',
-    },
-  }
+	prettierd = {
+		formatCommand = "prettierd '${INPUT}' ${--range-start=charStart} ${--range-end=charEnd}",
+		formatStdin = true,
+		formatCanRange = true,
+	},
+	eslint_d = {
+		lintSource = "efm/eslint_d",
+		lintCommand = 'eslint_d --no-color --format visualstudio --stdin-filename "${INPUT}" --stdin',
+		lintIgnoreExitCode = true,
+		lintStdin = true,
+		lintFormats = {
+			"%f(%l,%c): %trror %m",
+			"%f(%l,%c): %tarning %m",
+		},
+		rootMarkers = {
+			"eslint.config.js",
+			"eslint.config.mjs",
+			"eslint.config.cjs",
+			"package.json",
+		},
+	},
 }
 
-require 'lspconfig'.yamlls.setup {}
+require("lspconfig").yamlls.setup({})
 
-require('lspconfig').efm.setup({
-  init_options = {
-    documentFormatting = true,
-    documentRangeFormatting = true,
-  },
-  on_attach = on_attach,
-  settings = {
-    rootMarkers = { '.git/' },
-    languages = {
-      javascript = {
-        -- efm_tools.eslint_d,
-        efm_tools.prettierd,
-      },
-      typescript = {
-        -- efm_tools.eslint_d,
-        efm_tools.prettierd,
-      },
-      typescriptreact = {
-        -- efm_tools.eslint_d,
-        efm_tools.prettierd,
-      },
-    },
-  },
-  filetypes = {
-    'javascript',
-    'javascriptreact',
-    'javascript.jsx',
-    'typescript',
-    'typescriptreact',
-    'typescript.jsx',
-  },
+require("lspconfig").efm.setup({
+	init_options = {
+		documentFormatting = true,
+		documentRangeFormatting = true,
+	},
+	on_attach = on_attach,
+	settings = {
+		rootMarkers = { ".git/" },
+		languages = {
+			javascript = {
+				-- efm_tools.eslint_d,
+				efm_tools.prettierd,
+			},
+			typescript = {
+				-- efm_tools.eslint_d,
+				efm_tools.prettierd,
+			},
+			typescriptreact = {
+				-- efm_tools.eslint_d,
+				efm_tools.prettierd,
+			},
+		},
+	},
+	filetypes = {
+		"javascript",
+		"javascriptreact",
+		"javascript.jsx",
+		"typescript",
+		"typescriptreact",
+		"typescript.jsx",
+	},
 })
 
 -- lspconfig.efm.setup {
@@ -766,35 +861,41 @@ require('lspconfig').efm.setup({
 -- }
 --
 -- NOTE:many libs don't have types, so stub errors show up all over the files
-lspconfig.pyright.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  cmd = { "poetry", "run", "pyright-langserver", "--stdio" },
-}
+lspconfig.pyright.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+	cmd = { "poetry", "run", "pyright-langserver", "--stdio" },
+})
 
-lspconfig.tsp_server.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  cmd = { "npx", "tsp-server", 'tsp-server', '--stdio' },
-}
+-- lspconfig.ltex.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   cmd = { "ltex-ls-plus" }
+-- }
 
-lspconfig.astro.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  cmd = { "npx", "astro-ls", "--stdio" }
-}
+lspconfig.tsp_server.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+	cmd = { "npx", "tsp-server", "tsp-server", "--stdio" },
+})
 
-local util = require 'lspconfig.util'
-local lspconfigs = require('lspconfig.configs')
+-- lspconfig.astro.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   cmd = { "npx", "astro-ls", "--stdio" }
+-- }
+
+local util = require("lspconfig.util")
+local lspconfigs = require("lspconfig.configs")
 -- TODO: narrow down to fable projects
 lspconfigs.fable = {
-  default_config = {
-    cmd = { "/Users/josephprice/dev/fable-lsp/bin/Debug/net8.0/fable-lsp" },
-    filetypes = { 'fsharp' },
-    root_dir = util.root_pattern('fable-project'),
-    -- root_dir = util.root_pattern('.config/dotnet-tools.json'),
-    single_file_support = false,
-  },
+	default_config = {
+		cmd = { "/Users/josephprice/dev/fable-lsp/bin/Debug/net8.0/fable-lsp" },
+		filetypes = { "fsharp" },
+		root_dir = util.root_pattern("fable-project"),
+		-- root_dir = util.root_pattern('.config/dotnet-tools.json'),
+		single_file_support = false,
+	},
 }
 
 -- TODO: disabled until this can avoid spinning up multiple instances per project
@@ -806,22 +907,72 @@ lspconfigs.fable = {
 --   -- },
 -- }
 
-lspconfig.metals.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  root_dir = util.root_pattern('build.sbt', 'build.sc', 'build.gradle', 'pom.xml', 'build.scala'),
-}
+-- lspconfig.metals.setup {
+--   -- message_level = vim.lsp.protocol.MessageType.Debug,
+--   root_dir = util.root_pattern('build.mill', 'build.sbt', 'build.sc', 'build.gradle', 'pom.xml', 'build.scala'),
+--   -- capabilities = capabilities,
+--   capabilities = {
+--     workspace = {
+--       configuration = false,
+--     },
+--   },
+--   on_init = config.on_init,
+--   filetypes = { 'scala' },
+--   on_attach = on_attach,
+--   inlay_hints = { enabled = true },
+--   settings = {
+--     automaticImportBuild = 'initial',
+--     autoImportBuild = 'initial',
+--     showInferredType = true,
+--     showImplicitArguments = true,
+--     inlayHints = {
+--       byNameParameters = { enable = true },
+--       closingLabels = { enable = true },
+--       hintsInPatternMatch = { enable = true },
+--       hintsXRayMode = { enable = true },
+--       implicitArguments = { enable = true },
+--       implicitConversions = { enable = true },
+--       inferredTypes = { enable = true },
+--       namedParameters = { enable = true },
+--       typeParameters = { enable = true },
+--     },
+--     metals = {
+--       verboseCompilation = true,
+--       showImplicitArguments = true,
+--       automaticImportBuild = 'initial',
+--       autoImportBuild = 'initial',
+--       inlayHints = {
+--         byNameParameters = { enable = true },
+--         closingLabels = { enable = true },
+--         hintsInPatternMatch = { enable = true },
+--         hintsXRayMode = { enable = true },
+--         implicitArguments = { enable = true },
+--         implicitConversions = { enable = true },
+--         inferredTypes = { enable = true },
+--         namedParameters = { enable = true },
+--         typeParameters = { enable = true },
+--       },
+--     }
+--   },
+--   init_options = {
+--     statusBarProvider = 'off',
+--     isHttpEnabled = true,
+--     compilerOptions = {
+--       snippetAutoIndent = false,
+--     },
+--   }
+-- }
 
-lspconfig.haxe_language_server.setup({
-  capabilities = capabilities,
-  on_attach = on_attach,
-  cmd = { "node", "/Users/josephprice/dev/haxe-language-server/bin/server.js" },
-  init_options = {
-    displayArguments = { 'build.hxml' },
-    -- displayArguments = { 'html5.hxml' },
-  },
-
-})
+-- lspconfig.haxe_language_server.setup({
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   cmd = { "node", "/Users/josephprice/dev/haxe-language-server/bin/server.js" },
+--   init_options = {
+--     displayArguments = { 'build.hxml' },
+--     -- displayArguments = { 'html5.hxml' },
+--   },
+--
+-- })
 
 -- local null_ls = require("null-ls")
 -- local util = require 'lspconfig.util'
@@ -929,91 +1080,172 @@ lspconfig.haxe_language_server.setup({
 
 -- null_ls.register(fable)
 
-lspconfig.nim_langserver.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
+-- lspconfig.nim_langserver.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
 
-local lspconfigs = require('lspconfig.configs')
-if not lspconfigs.roc_ls then
-  lspconfigs.roc_ls = {
-    default_config = {
-      cmd = { 'roc_language_server' },
-      filetypes = { 'roc' },
-      root_dir = require('lspconfig.util').find_git_ancestor,
-      single_file_support = true,
-    },
-    docs = {
-      description = [[
-  https://github.com/roc-lang/roc/tree/main/crates/language_server#roc_language_server
-
-  The built-in language server for the Roc programming language.
-  [Installation](https://github.com/roc-lang/roc/tree/main/crates/language_server#installing)
-  ]],
-      default_config = {
-        root_dir = [[util.find_git_ancestor]],
-      },
-    },
-  }
-end
+local lspconfigs = require("lspconfig.configs")
+-- if not lspconfigs.roc_ls then
+--   lspconfigs.roc_ls = {
+--     default_config = {
+--       cmd = { 'roc_language_server' },
+--       filetypes = { 'roc' },
+--       root_dir = require('lspconfig.util').find_git_ancestor,
+--       single_file_support = true,
+--     },
+--     docs = {
+--       description = [[
+--   https://github.com/roc-lang/roc/tree/main/crates/language_server#roc_language_server
+--
+--   The built-in language server for the Roc programming language.
+--   [Installation](https://github.com/roc-lang/roc/tree/main/crates/language_server#installing)
+--   ]],
+--       default_config = {
+--         root_dir = [[util.find_git_ancestor]],
+--       },
+--     },
+--   }
+-- end
 
 -- lspconfig.roc_ls.setup {
 --   capabilities = capabilities,
 --   on_attach = on_attach,
 -- }
 
-lspconfig.gopls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  settings = {
-    gopls = {
-      analyses = {
-        unusedparams = true,
-        unusedvariable = true,
-        unusedwrite = true,
-      }
-    }
-  }
-}
+lspconfig.gopls.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+	settings = {
+		gopls = {
+			analyses = {
+				unusedparams = true,
+				unusedvariable = true,
+				unusedwrite = true,
+			},
+		},
+	},
+})
 
-lspconfig.hls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
+-- lspconfig.hls.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
 
-lspconfig.elmls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
+-- lspconfig.elmls.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- }
 
 -- lspconfig.java_language_server.setup {
 --   capabilities = capabilities,
 --   on_attach = on_attach,
 -- }
 
-lspconfig.rust_analyzer.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  -- Server-specific settings. See `:help lspconfig-setup`
-  settings = {
-    ['rust-analyzer'] = {
-      -- see https://github.com/rust-lang/rust-analyzer/blob/fc18d263aa95f7d6de8174bd4c6663dfe865e6d5/docs/user/generated_config.adoc#L172
-      cargo = { buildScripts = { enable = true } }
-      -- this is quite slow
-      -- checkOnSave = {
-      --   command = "clippy"
-      -- },
-      -- diagnostics = {
-      --   enable = false;
-      -- }
-    },
-  },
-}
+-- vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "InsertLeave" }, {
+--   callback = function()
+--     vim.lsp.codelens.refresh()
+--   end,
+-- })
 
--- lspconfig.tailwindcss.setup {
---   capabilities = capabilities,
---   on_attach = on_attach,
--- }
+vim.diagnostic.config({
+	update_in_insert = true,
+})
+
+lspconfig.bacon_ls.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+	init_options = {
+		updateOnSave = true,
+		updateOnSaveWaitMillis = 500,
+		runBaconInBackground = false,
+		synchronizeAllOpenFilesWaitMillis = 1000,
+	},
+	-- settings = { runBaconInBackground = true },
+	root_markers = { "Cargo.toml" },
+	root_dir = lspconfig.util.root_pattern("Cargo.lock"),
+})
+
+lspconfig.rust_analyzer.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+	root_dir = lspconfig.util.root_pattern("rust-toolchain.toml", "Cargo.toml"),
+	-- Server-specific settings. See `:help lspconfig-setup`
+	-- cmd = {
+	--   "/Users/josephprice/Downloads/rust-analyzer-aarch64-apple-darwin"
+	-- },
+	settings = {
+		["rust-analyzer"] = {
+			-- codeLens = {
+			--   enable = true,
+			-- },
+			-- completion = {
+			--   fullFunctionSignatures = {
+			--     enable = true
+			--   }
+			-- },
+			-- hover = {
+			--   actions = {
+			--     references = {
+			--       enable = true
+			--     }
+			--   }
+			-- },
+			-- lens = {
+			--   enable = true,
+			--   references = {
+			--     adt = {
+			--       enable = true
+			--     }
+			--   }
+			-- },
+			-- inlayHints = {
+			--   bindingModeHints = {
+			--     enable = true
+			--   }
+			-- },
+			diagnostics = {
+				enable = false,
+				disabled = { "inactive-code" },
+				styleLints = {
+					enable = true,
+				},
+			},
+			-- server = {
+			--   path = "/Users/josephprice/Downloads/rust-analyzer-aarch64-apple-darwin"
+			-- },
+			-- assist = {
+			--   preferSelf = true
+			-- },
+			-- procMacro = {
+			--   enable = true
+			-- },
+			-- -- see https://github.com/rust-lang/rust-analyzer/blob/fc18d263aa95f7d6de8174bd4c6663dfe865e6d5/docs/user/generated_config.adoc#L172
+			-- cargo = {
+			--   -- features = {
+			--   --   "diesel/postgres"
+			--   -- },
+			--   -- targetDir = true,
+			--   buildScripts = { enable = true }
+			-- },
+			checkOnSave = {
+				enable = false,
+			},
+			-- check = {
+			--   -- this is quite slow
+			--   command = "clippy"
+			-- }
+			-- diagnostics = {
+			--   enable = false;
+			-- }
+		},
+	},
+})
+
+lspconfig.tailwindcss.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+})
 --   cmd = {
 --     "node_modules/.bin/tailwindcss-language-server"
 --   },
@@ -1054,137 +1286,141 @@ lspconfig.rust_analyzer.setup {
 --   }
 -- }
 
-local util = require 'lspconfig.util'
+local util = require("lspconfig.util")
 
 if os.getenv("ESLINT_ENABLE") then
-  lspconfig.eslint.setup {
-    settings = {
-      workingDirectories = { mode = "auto" },
-      options = {
-        cache = true
-      }
-    },
-    flags = {
-      allow_incremental_sync = true,
-      debounce_text_changes = 800,
-    },
-    capabilities = capabilities,
-  }
-
-  on_attach = function(client, bufnr)
-    vim.api.nvim_create_autocmd("BufWritePre", {
-      buffer = bufnr,
-      command = "EslintFixAll",
-    })
-    on_attach(client, bufnr)
-  end
+	lspconfig.eslint.setup({
+		settings = {
+			workingDirectories = { mode = "auto" },
+			options = {
+				cache = true,
+			},
+		},
+		flags = {
+			allow_incremental_sync = false,
+			debounce_text_changes = 800,
+		},
+		capabilities = capabilities,
+		on_attach = function(client, bufnr)
+			vim.api.nvim_create_autocmd("BufWritePre", {
+				buffer = bufnr,
+				command = "EslintFixAll",
+			})
+			on_attach(client, bufnr)
+		end,
+	})
 end
 
 --
-lspconfig.ts_ls.setup {
-  capabilities = capabilities,
-  -- on_attach = on_attach,
-  -- root_dir = util.root_pattern(".git"),
-  single_file_support = false,
-  root_dir = util.root_pattern('package.json')
-}
+lspconfig.ts_ls.setup({
+	capabilities = capabilities,
+	-- on_attach = lspconfig.ts_ls.on_attach,
+	-- root_dir = util.root_pattern(".git"),
+	single_file_support = false,
+	-- root_markers = { 'pnpm-workspace.yaml', 'package.json' },
+	root_dir = util.root_pattern("pnpm-workspace.yaml", "package.json"),
+	-- cmd_env = {
+	-- TSS_LOG = "-level verbose -file /tmp/tsserver.log -logToFile true",
+	--   -- NODE_OPTIONS = "--max-old-space-size=4096",
+	-- }
+})
 
 -- having issues with "buffer is not modifiable" on save
-lspconfig.nil_ls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  settings = {
-    ['nil'] = {
-      formatting = {
-        command = { "nixpkgs-fmt" },
-      },
-    },
-  },
-}
+-- lspconfig.nil_ls.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   settings = {
+--     ['nil'] = {
+--       formatting = {
+--         command = { "nixpkgs-fmt" },
+--       },
+--     },
+--   },
+-- }
 
-lspconfig.ocamllsp.setup {
-  capabilities = capabilities,
-  on_attach = on_attach
-}
+-- lspconfig.ocamllsp.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach
+-- }
 
-lspconfig.mdx_analyzer.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  cmd = { 'npx', 'mdx-language-server', '--stdio' },
-}
+lspconfig.mdx_analyzer.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+	cmd = { "npx", "mdx-language-server", "--stdio" },
+})
 
 -- vim.lsp.set_log_level("trace")
 
-require 'ionide'.setup {
-  -- require '/home/josephp/dev/Ionide-vim/lua'.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  -- root_dir = util.root_pattern('global.json')
-  root_dir = util.root_pattern('.config/dotnet-tools.json', '*.sln'),
-  settings = {
-    FSharp = {
-      -- EnableReferenceCodeLens = false,
-      -- UnusedDeclarationsAnalyzer = false,
-      -- unusedDeclarationsAnalyzer = false,
-      -- lineLens = { enabled = "replaceCodeLens", prefix = '' },
-      codeLenses = {
-        references = {
-          enabled = false
-        },
-        signature = {
-          enabled = false
-        }
-      },
-      fsac = { gc = { useDatas = true } }
-    },
-  }
-  -- init_options = {
-  --   UnusedDeclarationsAnalyzerExclusions = {
-  --     ".*/bun/App.fs"
-  --   },
-  --   -- FSharp = {
-  --   --   UnusedDeclarationsAnalyzerExclusions = {
-  --   --     ".*/bun/App.fs"
-  --   --   }
-  --   -- }
-  -- }
-  -- --     fsiExtraParameters = {
-  -- --       "--langversion:preview",
-  -- --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
-  -- --   },
-  -- --   }
-  -- -- },
-  -- settings = {
-  --     ["FSharp"] = {
-  --       fsiExtraParameters = {
-  --         "--langversion:preview",
-  --         "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
-  --       },
-  --       fsiCompilerToolLocations = {
-  --         "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
-  --       },
-  --   }
-  -- },
-  -- init_options = {
-  --   FSharp = {
-  --     fsiExtraParameters = {
-  --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
-  --     },
-  --     FSIExtraParameters = {
-  --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
-  --     },
-  --     fsiCompilerToolLocations = {
-  --       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
-  --     },
-  --     FSICompilerToolLocations = {
-  --       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
-  --     }
-  --   }
-  -- }
-  -- settings = {
-  --   fsiCompilerToolLocations = "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
-  -- }
-}
+require("ionide").setup({
+	-- require '/home/josephp/dev/Ionide-vim/lua'.setup {
+	capabilities = capabilities,
+	on_attach = on_attach,
+	-- root_dir = util.root_pattern('global.json')
+	root_dir = util.root_pattern(".config/dotnet-tools.json", "*.sln"),
+	settings = {
+		FSharp = {
+			-- EnableReferenceCodeLens = false,
+			-- UnusedDeclarationsAnalyzer = false,
+			-- unusedDeclarationsAnalyzer = false,
+			-- lineLens = { enabled = "replaceCodeLens", prefix = '' },
+			codeLenses = {
+				references = {
+					enabled = false,
+				},
+				signature = {
+					enabled = false,
+				},
+			},
+			fsac = { gc = { useDatas = true } },
+		},
+	},
+	-- init_options = {
+	--   UnusedDeclarationsAnalyzerExclusions = {
+	--     ".*/bun/App.fs"
+	--   },
+	--   -- FSharp = {
+	--   --   UnusedDeclarationsAnalyzerExclusions = {
+	--   --     ".*/bun/App.fs"
+	--   --   }
+	--   -- }
+	-- }
+	-- --     fsiExtraParameters = {
+	-- --       "--langversion:preview",
+	-- --       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+	-- --   },
+	-- --   }
+	-- -- },
+	-- settings = {
+	--     ["FSharp"] = {
+	--       fsiExtraParameters = {
+	--         "--langversion:preview",
+	--         "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+	--       },
+	--       fsiCompilerToolLocations = {
+	--         "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+	--       },
+	--   }
+	-- },
+	-- init_options = {
+	--   FSharp = {
+	--     fsiExtraParameters = {
+	--       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+	--     },
+	--     FSIExtraParameters = {
+	--       "--compilertool:/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+	--     },
+	--     fsiCompilerToolLocations = {
+	--       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+	--     },
+	--     FSICompilerToolLocations = {
+	--       "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+	--     }
+	--   }
+	-- }
+	-- settings = {
+	--   fsiCompilerToolLocations = "/home/josephp/.nuget/packages/fsharp.dependencymanager.paket/7.0.0/lib/netstandard2.0"
+	-- }
+})
 
 -- https://github.com/fsharp/FsAutoComplete/blob/4bc676cc1e8659d9338d31d82d6244bcfcc55cc4/src/FsAutoComplete/LspHelpers.fs#L636
 --
@@ -1235,319 +1471,346 @@ require 'ionide'.setup {
 --   }
 -- }
 
-lspconfig.purescriptls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach
-}
+-- lspconfig.purescriptls.setup {
+--   capabilities = capabilities,
+--   on_attach = on_attach
+-- }
 
-lspconfig.sourcekit.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  cmd = {
-    -- "xcrun",
-    "xcrun",
-    "--toolchain",
-    "swift",
-    "sourcekit-lsp",
-    -- "--log-level",
-    -- "warning",
-    -- "-Xswiftc",
-    -- "-sdk",
-    -- "-Xswiftc",
-    -- "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk",
-    -- "-Xswiftc",
-    -- "-target",
-    -- "-Xswiftc",
-    -- "x86_64-apple-ios17.0-simulator",
-    "--completion-max-results", "100"
-  }
-}
+lspconfig.just.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+})
+
+lspconfig.sourcekit.setup({
+	capabilities = capabilities,
+	on_attach = on_attach,
+	cmd = {
+		-- "xcrun",
+		"xcrun",
+		"--toolchain",
+		"swift",
+		"sourcekit-lsp",
+		-- "--log-level",
+		-- "warning",
+		-- "-Xswiftc",
+		-- "-sdk",
+		-- "-Xswiftc",
+		-- "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk",
+		-- "-Xswiftc",
+		-- "-target",
+		-- "-Xswiftc",
+		-- "x86_64-apple-ios17.0-simulator",
+		"--completion-max-results",
+		"100",
+	},
+})
 
 lspconfig.lua_ls.setup({
-  capabilities = capabilities,
-  on_attach = on_attach,
-  settings = {
-    Lua = {
-      completion = {
-        callSnippet = "Replace"
-      },
-      diagnostics = {
-        globals = { 'vim' }
-      }
-    }
-  }
+	capabilities = capabilities,
+	on_attach = on_attach,
+	settings = {
+		Lua = {
+			completion = {
+				callSnippet = "Replace",
+			},
+			diagnostics = {
+				globals = { "vim" },
+			},
+		},
+	},
 })
 
 local function get_file_name()
-  return vim.api.nvim_buf_get_name(0)
+	return vim.api.nvim_buf_get_name(0)
 end
 
 local swiftlint_severities = {
-  -- info = vim.diagnostic.severity.INFO,
-  -- refactor = vim.diagnostic.severity.HINT,
-  -- convention = vim.diagnostic.severity.WARN,
-  Warning = vim.diagnostic.severity.WARN,
-  Error = vim.diagnostic.severity.ERROR,
-  -- fatal = vim.diagnostic.severity.ERROR,
+	-- info = vim.diagnostic.severity.INFO,
+	-- refactor = vim.diagnostic.severity.HINT,
+	-- convention = vim.diagnostic.severity.WARN,
+	Warning = vim.diagnostic.severity.WARN,
+	Error = vim.diagnostic.severity.ERROR,
+	-- fatal = vim.diagnostic.severity.ERROR,
 }
 
 -- See https://github.com/peripheryapp/periphery
 require("lint").linters.periphery = {
-  cmd = "./scripts/lint.sh",
-  stdin = false,
-  stream = "stdout",
-  ignore_exitcode = false,
-  parser = function(output, _)
-    local offenses = vim.json.decode(output)
-    if vim.tbl_isempty(offenses) then
-      return {}
-    end
-    local diagnostics = {}
-    for _, offense in pairs(offenses) do
-      table.insert(diagnostics, {
-        lnum = offense.line - 1,
-        col = offense.column - 1,
-        message = offense.reason,
-        severity = swiftlint_severities[offense.severity],
-        source = "periphery",
-      })
-    end
-    return diagnostics
-  end,
+	cmd = "./scripts/lint.sh",
+	stdin = false,
+	stream = "stdout",
+	ignore_exitcode = false,
+	parser = function(output, _)
+		local offenses = vim.json.decode(output)
+		if vim.tbl_isempty(offenses) then
+			return {}
+		end
+		local diagnostics = {}
+		for _, offense in pairs(offenses) do
+			table.insert(diagnostics, {
+				lnum = offense.line - 1,
+				col = offense.column - 1,
+				message = offense.reason,
+				severity = swiftlint_severities[offense.severity],
+				source = "periphery",
+			})
+		end
+		return diagnostics
+	end,
 }
 
 require("lint").linters.swiftlint = {
-  -- cmd = "bazelisk",
-  cmd = "swiftlint",
-  stdin = true,
-  args = {
-    -- "run",
-    -- "@SwiftLint//:swiftlint", "-c", "opt",
-    -- "--",
-    "lint", "--use-stdin", "--reporter", "json", "--quiet", get_file_name },
-  stream = "stdout",
-  ignore_exitcode = true,
-  env = nil,
-  parser = function(output, bufnr)
-    -- print(output)
-    local offenses = vim.json.decode(output)
-    if vim.tbl_isempty(offenses) then
-      return {}
-    end
-    local diagnostics = {}
-    for _, offense in pairs(offenses) do
-      table.insert(diagnostics, {
-        lnum = offense.line - 1,
-        col = 0,
-        message = offense.reason,
-        severity = swiftlint_severities[offense.severity],
-        source = "swiftlint",
-      })
-    end
-    return diagnostics
-  end,
+	-- cmd = "bazelisk",
+	cmd = "swiftlint",
+	stdin = true,
+	args = {
+		-- "run",
+		-- "@SwiftLint//:swiftlint", "-c", "opt",
+		-- "--",
+		"lint",
+		"--use-stdin",
+		"--reporter",
+		"json",
+		"--quiet",
+		get_file_name,
+	},
+	stream = "stdout",
+	ignore_exitcode = true,
+	env = nil,
+	parser = function(output, bufnr)
+		-- print(output)
+		local offenses = vim.json.decode(output)
+		if vim.tbl_isempty(offenses) then
+			return {}
+		end
+		local diagnostics = {}
+		for _, offense in pairs(offenses) do
+			table.insert(diagnostics, {
+				lnum = offense.line - 1,
+				col = 0,
+				message = offense.reason,
+				severity = swiftlint_severities[offense.severity],
+				source = "swiftlint",
+			})
+		end
+		return diagnostics
+	end,
 }
-
 
 require("lint").linters_by_ft = {
-  swift = { "swiftlint" }
-  -- TODO: toggle this conditionally
-  -- swift = { "swiftlint", "periphery" },
-  -- bzl = { "buildifier" },
-  -- go = { "golangcilint" },
+	swift = { "swiftlint" },
+	-- TODO: toggle this conditionally
+	-- swift = { "swiftlint", "periphery" },
+	-- bzl = { "buildifier" },
+	-- go = { "golangcilint" },
 }
 
-local util = require "formatter.util"
+local util = require("formatter.util")
 
 -- Provides the Format, FormatWrite, FormatLock, and FormatWriteLock commands
-require("formatter").setup {
-  logging = true,
-  log_level = vim.log.levels.WARN,
-  filetype = {
-    bzl = {
-      function()
-        return {
-          exe = "buildifier",
-          -- args = { vim.api.nvim_buf_get_name(0) },
-          stdin = false
-        }
-      end },
-    python = {
-      function()
-        return {
-          exe = "poetry",
-          args = { "run", "black", "-" },
-          stdin = true,
-        }
-      end
-    },
-    purescript = {
-      function()
-        return {
-          exe = "purs-tidy",
-          args = { 'format-in-place' },
-          stdin = false,
-        }
-      end
-    },
-    nim = {
-      function()
-        return {
-          exe = "nimpretty",
-          stdin = false,
-        }
-      end
-    },
-    objcpp = {
-      require("formatter.filetypes.cpp").clangformat,
-    },
-    cpp = {
-      require("formatter.filetypes.cpp").clangformat,
-    },
-    swift = {
-      function()
-        return {
-          exe = "swift-format",
-          args = { vim.api.nvim_buf_get_name(0) },
-          stdin = true
-        }
-      end },
-    -- TODO: this doesn't work when an lsp is modifying the buffer
-    -- ["*"] = {
-    --   require("formatter.filetypes.any").remove_trailing_whitespace
-    -- }
-  }
-}
+require("formatter").setup({
+	logging = true,
+	log_level = vim.log.levels.WARN,
+	filetype = {
+		bzl = {
+			function()
+				return {
+					exe = "buildifier",
+					-- args = { vim.api.nvim_buf_get_name(0) },
+					stdin = false,
+				}
+			end,
+		},
+		python = {
+			function()
+				return {
+					exe = "poetry",
+					args = { "run", "black", "-" },
+					stdin = true,
+				}
+			end,
+		},
+		purescript = {
+			function()
+				return {
+					exe = "purs-tidy",
+					args = { "format-in-place" },
+					stdin = false,
+				}
+			end,
+		},
+		nim = {
+			function()
+				return {
+					exe = "nimpretty",
+					stdin = false,
+				}
+			end,
+		},
+		objcpp = {
+			require("formatter.filetypes.cpp").clangformat,
+		},
+		cpp = {
+			require("formatter.filetypes.cpp").clangformat,
+		},
+		swift = {
+			function()
+				return {
+					exe = "swift-format",
+					args = { vim.api.nvim_buf_get_name(0) },
+					stdin = true,
+				}
+			end,
+		},
+		-- TODO: this doesn't work when an lsp is modifying the buffer
+		-- ["*"] = {
+		--   require("formatter.filetypes.any").remove_trailing_whitespace
+		-- }
+	},
+})
 
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
-  pattern = "*.mdx",
-  command = "set filetype=markdown.mdx",
+	pattern = "*.mdx",
+	command = "set filetype=markdown.mdx",
 })
-
-vim.api.nvim_create_autocmd('BufWritePost', {
-  pattern = '*',
-  callback = function()
-    require("lint").try_lint()
-    vim.cmd('FormatWriteLock')
-    -- vim.cmd('FormatLock')
-  end,
-})
-
+--
+-- vim.api.nvim_create_autocmd('BufWritePost', {
+--   pattern = '*',
+--   callback = function()
+--     require("lint").try_lint()
+--     vim.cmd('FormatWriteLock')
+--     -- vim.cmd('FormatLock')
+--   end,
+-- })
 
 -- Global mappings.
 -- See `:help vim.diagnostic.*` for documentation on any of the below functions
-vim.keymap.set('n', '<space>e', vim.diagnostic.open_float)
-vim.keymap.set('n', '[g', vim.diagnostic.goto_prev)
-vim.keymap.set('n', ']g', vim.diagnostic.goto_next)
-vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist)
+vim.keymap.set("n", "<space>e", vim.diagnostic.open_float)
+vim.keymap.set("n", "[g", vim.diagnostic.goto_prev)
+vim.keymap.set("n", "]g", vim.diagnostic.goto_next)
+vim.keymap.set("n", "<space>q", vim.diagnostic.setloclist)
 
 local function highlight_symbol(event)
-  local id = vim.tbl_get(event, 'data', 'client_id')
-  local client = id and vim.lsp.get_client_by_id(id)
-  if client == nil or not client.supports_method('textDocument/documentHighlight') then
-    return
-  end
+	local id = vim.tbl_get(event, "data", "client_id")
+	local client = id and vim.lsp.get_client_by_id(id)
+	if client == nil or not client.supports_method("textDocument/documentHighlight") then
+		return
+	end
 
-  local group = vim.api.nvim_create_augroup('highlight_symbol', { clear = false })
+	local group = vim.api.nvim_create_augroup("highlight_symbol", { clear = false })
 
-  vim.api.nvim_clear_autocmds({ buffer = event.buf, group = group })
+	vim.api.nvim_clear_autocmds({ buffer = event.buf, group = group })
 
-  vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
-    group = group,
-    buffer = event.buf,
-    callback = vim.lsp.buf.document_highlight,
-  })
+	vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+		group = group,
+		buffer = event.buf,
+		callback = vim.lsp.buf.document_highlight,
+	})
 
-  vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-    group = group,
-    buffer = event.buf,
-    callback = vim.lsp.buf.clear_references,
-  })
+	vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+		group = group,
+		buffer = event.buf,
+		callback = vim.lsp.buf.clear_references,
+	})
 end
+
+local format_group = vim.api.nvim_create_augroup("LspFormatOnSave", { clear = true })
 
 -- Use LspAttach autocommand to only map the following keys
 -- after the language server attaches to the current buffer
-vim.api.nvim_create_autocmd('LspAttach', {
-  group = vim.api.nvim_create_augroup('UserLspConfig', {}),
-  callback = function(ev)
-    highlight_symbol(ev)
-    -- Enable completion triggered by <c-x><c-o>
-    vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
+vim.api.nvim_create_autocmd("LspAttach", {
+	group = vim.api.nvim_create_augroup("UserLspConfig", {}),
+	callback = function(ev)
+		highlight_symbol(ev)
+		-- Enable completion triggered by <c-x><c-o>
+		vim.bo[ev.buf].omnifunc = "v:lua.vim.lsp.omnifunc"
 
-    -- Buffer local mappings.
-    -- See `:help vim.lsp.*` for documentation on any of the below functions
-    local opts = { buffer = ev.buf }
-    vim.keymap.set('n', 'gu', vim.lsp.buf.declaration, opts)
-    vim.keymap.set('n', 'gd', "<cmd>Telescope lsp_definitions<cr>", opts)
-    --vim.lsp.buf.definition, opts)
-    vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-    vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
-    vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
-    vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, opts)
-    vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, opts)
-    vim.keymap.set('n', '<space>wl', function()
-      print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-    end, opts)
-    vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, opts)
-    vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, opts)
-    vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, opts)
-    vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-    vim.keymap.set('n', '<space>d', function()
-      vim.lsp.buf.format { async = false }
-    end, opts)
-  end,
+		-- Buffer local mappings.
+		-- See `:help vim.lsp.*` for documentation on any of the below functions
+		local opts = { buffer = ev.buf }
+		vim.keymap.set("n", "gu", vim.lsp.buf.declaration, opts)
+		vim.keymap.set("n", "gd", "<cmd>Telescope lsp_definitions<cr>", opts)
+		--vim.lsp.buf.definition, opts)
+		vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+		vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
+		vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
+		vim.keymap.set("n", "<space>wa", vim.lsp.buf.add_workspace_folder, opts)
+		vim.keymap.set("n", "<space>wr", vim.lsp.buf.remove_workspace_folder, opts)
+		vim.keymap.set("n", "<space>wl", function()
+			print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+		end, opts)
+		vim.keymap.set("n", "<space>D", vim.lsp.buf.type_definition, opts)
+		vim.keymap.set("n", "<space>rn", vim.lsp.buf.rename, opts)
+		vim.keymap.set({ "n", "v" }, "<space>ca", vim.lsp.buf.code_action, opts)
+		vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
+		vim.keymap.set("n", "<space>d", function()
+			vim.lsp.buf.format({ async = false })
+		end, opts)
+
+		local client = vim.lsp.get_client_by_id(ev.data.client_id)
+		local bufnr = ev.buf
+
+		-- if client.supports_method("textDocument/formatting", bufnr) then
+		--   vim.api.nvim_create_autocmd("BufWritePre", {
+		--     group = format_group,
+		--     buffer = bufnr,
+		--     callback = function()
+		--       vim.lsp.buf.format({ bufnr = bufnr })
+		--     end,
+		--   })
+		-- end
+	end,
 })
 
-local cmp = require 'cmp'
+local cmp = require("cmp")
 
 -- notifications in the bottom right corner
--- require("fidget").setup {}
+require("fidget").setup({})
 
-local luasnip = require 'luasnip'
-require('luasnip.loaders.from_vscode').lazy_load()
-luasnip.config.setup {}
+local luasnip = require("luasnip")
+require("luasnip.loaders.from_vscode").lazy_load()
+luasnip.config.setup({})
 
-cmp.setup {
-  snippet = {
-    expand = function(args)
-      luasnip.lsp_expand(args.body)
-    end,
-  },
-  mapping = cmp.mapping.preset.insert {
-    ['<C-n>'] = cmp.mapping.select_next_item(),
-    ['<C-p>'] = cmp.mapping.select_prev_item(),
-    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-f>'] = cmp.mapping.scroll_docs(4),
-    ['<C-Space>'] = cmp.mapping.complete {},
-    ['<CR>'] = cmp.mapping.confirm {
-      behavior = cmp.ConfirmBehavior.Replace,
-      select = true,
-    },
-    ['<Tab>'] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_next_item()
-        -- elseif luasnip.expand_or_locally_jumpable() then
-        --   luasnip.expand_or_jump()
-      else
-        fallback()
-      end
-    end, { 'i', 's' }),
-    ['<S-Tab>'] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_prev_item()
-        -- elseif luasnip.locally_jumpable(-1) then
-        --   luasnip.jump(-1)
-      else
-        fallback()
-      end
-    end, { 'i', 's' }),
-  },
-  sources = {
-    { name = 'nvim_lsp' },
-    { name = 'nvim_lsp_signature_help' },
-    -- { name = 'luasnip' },
-  },
-}
+cmp.setup({
+	snippet = {
+		expand = function(args)
+			luasnip.lsp_expand(args.body)
+		end,
+	},
+	mapping = cmp.mapping.preset.insert({
+		["<C-n>"] = cmp.mapping.select_next_item(),
+		["<C-p>"] = cmp.mapping.select_prev_item(),
+		["<C-d>"] = cmp.mapping.scroll_docs(-4),
+		["<C-f>"] = cmp.mapping.scroll_docs(4),
+		["<C-Space>"] = cmp.mapping.complete({}),
+		["<CR>"] = cmp.mapping.confirm({
+			behavior = cmp.ConfirmBehavior.Replace,
+			select = true,
+		}),
+		["<Tab>"] = cmp.mapping(function(fallback)
+			if cmp.visible() then
+				cmp.select_next_item()
+			-- elseif luasnip.expand_or_locally_jumpable() then
+			--   luasnip.expand_or_jump()
+			else
+				fallback()
+			end
+		end, { "i", "s" }),
+		["<S-Tab>"] = cmp.mapping(function(fallback)
+			if cmp.visible() then
+				cmp.select_prev_item()
+			-- elseif luasnip.locally_jumpable(-1) then
+			--   luasnip.jump(-1)
+			else
+				fallback()
+			end
+		end, { "i", "s" }),
+	}),
+	sources = {
+		{ name = "nvim_lsp" },
+		{ name = "nvim_lsp_signature_help" },
+		-- { name = 'luasnip' },
+	},
+})
 
 -- lsp_installer.on_server_ready(function(server)
 --   server:setup({
@@ -1555,9 +1818,9 @@ cmp.setup {
 --   })
 -- end)
 --
--- require("nvim-lightbulb").setup({
---   autocmd = { enabled = true }
--- })
+require("nvim-lightbulb").setup({
+	autocmd = { enabled = true },
+})
 --
 -- vim.diagnostic.config({
 --   virtual_text = false
@@ -1605,137 +1868,162 @@ cmp.setup {
 --
 -- vim.lsp.set_log_level('debug')
 
+-- vim.lsp.enable('biome')
+-- vim.lsp.config("biome", {
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   cmd = { "pnpm", "biome", "lsp-proxy" },
+-- })
+
 -- disables semantic highlighting added by lsp to debug tree-sitter parsers
 for _, group in ipairs(vim.fn.getcompletion("@lsp", "highlight")) do
-  vim.api.nvim_set_hl(0, group, {})
+	vim.api.nvim_set_hl(0, group, {})
 end
 
 -- require("dbee").setup()
 
 local function get_query()
-  local ts_utils = require("nvim-treesitter.ts_utils")
-  local current_node = ts_utils.get_node_at_cursor()
+	local ts_utils = require("nvim-treesitter.ts_utils")
+	local current_node = ts_utils.get_node_at_cursor()
 
-  local last_statement = nil
-  while current_node do
-    if current_node:type() == "statement" then last_statement = current_node end
-    if current_node:type() == "program" then break end
-    current_node = current_node:parent()
-  end
+	local last_statement = nil
+	while current_node do
+		if current_node:type() == "statement" then
+			last_statement = current_node
+		end
+		if current_node:type() == "program" then
+			break
+		end
+		current_node = current_node:parent()
+	end
 
-  if not last_statement then return "" end
+	if not last_statement then
+		return ""
+	end
 
-  local srow, scol, erow, ecol = vim.treesitter.get_node_range(last_statement)
-  local selection = vim.api.nvim_buf_get_text(0, srow, scol, erow, ecol, {})
-  return table.concat(selection, "\n")
+	local srow, scol, erow, ecol = vim.treesitter.get_node_range(last_statement)
+	local selection = vim.api.nvim_buf_get_text(0, srow, scol, erow, ecol, {})
+	return table.concat(selection, "\n")
 end
 
 local log = require("plenary.log").new({
-  plugin = "my_plugin",
-  level = "info",
-  use_console = "sync",
-  use_file = true,
+	plugin = "my_plugin",
+	level = "info",
+	use_console = "sync",
+	use_file = true,
 })
 
 local function make_parent(path)
-  -- https://github.com/torch/paths/blob/4ebe222ba12589fb9d86c1d3895d7f509df77b6a/doc/dirfunctions.md?plain=1#L11
-  local paths = require('paths')
-  paths.mkdir(paths.dirname(path))
+	-- https://github.com/torch/paths/blob/4ebe222ba12589fb9d86c1d3895d7f509df77b6a/doc/dirfunctions.md?plain=1#L11
+	local paths = require("paths")
+	paths.mkdir(paths.dirname(path))
 end
 
 local function read_file(path)
-  make_parent(path)
-  local file = io.open(path, "rb") -- r read mode and b binary mode
-  if not file then return nil end
-  local content = file:read "*a"   -- *a or *all reads the whole file
-  file:close()
-  return content
+	make_parent(path)
+	local file = io.open(path, "rb") -- r read mode and b binary mode
+	if not file then
+		return nil
+	end
+	local content = file:read("*a") -- *a or *all reads the whole file
+	file:close()
+	return content
 end
 
-
 local function copy_file(src, dest)
-  local contents = read_file(src)
-  local fp = assert(io.open(dest, "w+b"))
-  assert(fp:write(contents))
-  fp:close()
+	local contents = read_file(src)
+	local fp = assert(io.open(dest, "w+b"))
+	assert(fp:write(contents))
+	fp:close()
 end
 
 local function sync_file(src, dest)
-  local w = vim.uv.new_fs_event()
+	local w = vim.uv.new_fs_event()
 
-  local watch_file
-  local function on_change(err, fname, status)
-    -- log.info("got change", src, dest)
-    copy_file(src, dest)
-    vim.api.nvim_command('checktime')
-    w:stop()
-    watch_file(src)
-  end
+	local watch_file
+	local function on_change(err, fname, status)
+		-- log.info("got change", src, dest)
+		copy_file(src, dest)
+		vim.api.nvim_command("checktime")
+		w:stop()
+		watch_file(src)
+	end
 
-  watch_file = function(fname)
-    -- log.info("watching", fname)
-    local fullpath = vim.api.nvim_call_function('fnamemodify', { fname, ':p' })
-    assert(w:start(fullpath, {}, vim.schedule_wrap(function(...)
-      on_change(...)
-    end)))
-  end
+	watch_file = function(fname)
+		-- log.info("watching", fname)
+		local fullpath = vim.api.nvim_call_function("fnamemodify", { fname, ":p" })
+		assert(w:start(
+			fullpath,
+			{},
+			vim.schedule_wrap(function(...)
+				on_change(...)
+			end)
+		))
+	end
 
-  watch_file(src)
+	watch_file(src)
 
-  -- vim.api.nvim_command("command! -nargs=1 Watch call luaeval('watch_file(_A)', expand('<args>'))")
+	-- vim.api.nvim_command("command! -nargs=1 Watch call luaeval('watch_file(_A)', expand('<args>'))")
 end
 
 local watching = {}
 
 vim.api.nvim_create_autocmd({ "FileType" }, {
-  desc = "On buffer enter with file type sql",
-  group = vim.api.nvim_create_augroup("dbee", { clear = true }),
-  pattern = { "sql" },
-  callback = function(args)
-    vim.keymap.set({ "n" }, "<leader>de", function()
-      local dbee = require("dbee").api
-      local conn = dbee.core.get_current_connection()
-      local file = args.file
-      local fileName = file:gsub("/", "_")
-      local notes = dbee.ui.editor_namespace_get_notes(conn.id)
-      local found = nil
-      for _, note in ipairs(notes) do
-        -- log.info("note", note.id, note, file, note.name)
-        if fileName == note.name then
-          found = note
-          break
-        end
-      end
-      local id = nil
-      local noteFile = nil
-      if not found then
-        -- log.info("create", conn.id, file)
-        id = dbee.ui.editor_namespace_create_note(conn.id, fileName)
-        noteFile = dbee.ui.editor_search_note(id).file
-      else
-        -- log.info("found", found)
-        id = found.id
-        noteFile = found.file
-      end
-      if file == noteFile then
-        log.error("Attempted to open dbee from scratch file")
-        return
-      end
+	desc = "On buffer enter with file type sql",
+	group = vim.api.nvim_create_augroup("dbee", { clear = true }),
+	pattern = { "sql" },
+	callback = function(args)
+		vim.keymap.set({ "n" }, "<leader>de", function()
+			local dbee = require("dbee").api
+			local conn = dbee.core.get_current_connection()
+			local file = args.file
+			local fileName = file:gsub("/", "_")
+			local notes = dbee.ui.editor_namespace_get_notes(conn.id)
+			local found = nil
+			for _, note in ipairs(notes) do
+				-- log.info("note", note.id, note, file, note.name)
+				if fileName == note.name then
+					found = note
+					break
+				end
+			end
+			local id = nil
+			local noteFile = nil
+			if not found then
+				-- log.info("create", conn.id, file)
+				id = dbee.ui.editor_namespace_create_note(conn.id, fileName)
+				noteFile = dbee.ui.editor_search_note(id).file
+			else
+				-- log.info("found", found)
+				id = found.id
+				noteFile = found.file
+			end
+			if file == noteFile then
+				log.error("Attempted to open dbee from scratch file")
+				return
+			end
 
-      if not watching[file] then
-        sync_file(noteFile, file)
-        watching[file] = true
-      else
-        make_parent(noteFile)
-        copy_file(file, noteFile)
-      end
-      dbee.ui.editor_set_current_note(id)
-      require("dbee").open()
-    end, {
-      desc = "[D]bee [e]xecute query under cursor",
-      buffer = args.buf,
-    })
-  end,
+			if not watching[file] then
+				sync_file(noteFile, file)
+				watching[file] = true
+			else
+				make_parent(noteFile)
+				copy_file(file, noteFile)
+			end
+			dbee.ui.editor_set_current_note(id)
+			require("dbee").open()
+		end, {
+			desc = "[D]bee [e]xecute query under cursor",
+			buffer = args.buf,
+		})
+	end,
 })
 
 vim.opt.autoread = true
+
+local function jq_format()
+	vim.cmd("%!jq .")
+end
+
+-- Map it to a key, e.g. <leader>j
+vim.keymap.set("n", "<leader>j", jq_format, { desc = "Format JSON with jq" })

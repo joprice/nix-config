@@ -352,7 +352,7 @@ in
   # TODO: use machines to make this relative? or other way to make dynamic?
   #home.username = "joseph";
   #home.homeDirectory = "/home/joseph";
-  home.stateVersion = "24.05";
+  home.stateVersion = "25.05";
   # TODO: exclude df
   home.packages = with pkgs; [
     #ruby-lsp
@@ -400,7 +400,7 @@ in
     coreutils
     #cue
     #curl
-    gitAndTools.delta
+    #gitAndTools.delta
     #dhall
     #dhall-json
     #easy-ps.purs
@@ -426,6 +426,7 @@ in
     #jdk
     joker
     kcat
+    ltex-ls-plus
     #loc
     #nim
     jq
@@ -521,169 +522,184 @@ in
     #metals
     # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current
     # nixpkgs and 21.11 and unstable channels are broken for darwin due to libcxx issues
-    (neovim.override
-      {
-        extraLuaPackages = (ps: with ps;
-          builtins.trace (builtins.concatStringsSep "," (builtins.attrNames ps)) [
-            inspect
-            luafilesystem
-            (luaPaths { inherit (ps) buildLuarocksPackage; })
-          ]);
-        configure = {
-          #customRC = ''luafile ${./vimrc.lua}'';
-          customRC = ''luafile ~/.config/home-manager/init.lua'';
-          packages.myPlugins = with pkgs.vimPlugins; {
-            start = [
-              vim-readonly
-              #null-ls.nvim
-              none-ls-nvim
-              #telescope-coc-nvim
-              #coc-nvim
-              #coc-java
-              #coc-jedi
-              #coc-json
-              #coc-prettier
-              #coc-tsserver
-              #coc-rust-analyzer
-              #coc-sourcekit
-              #coc-kotlin
-              fidget-nvim
-              neodev-nvim
-              auto-session
-              zig-vim
-              # these don't work for some reason
-              #vim-swift
-              #vim-swift-format
-              vim-jack-syntax
-              #ale
-              # required by nvim-metals
-              nvim-dap
-              # required by nvim-metals
-              plenary-nvim
-              #nvim-metals
-              catppuccin-nvim
-              # this server crashes on start
-              comment-nvim
-              nvim-ts-context-commentstring
-              #ctrlp
-              #ghcid
-              #gitgutter
-              neoconf-nvim
-              nvim-highlight-colors
-              Ionide-vim
-              vim-indent-guides
-              #psc-ide-vim
-              vim-airline
-              vim-airline-themes
-              vim-polyglot
-              #vim-capnp
-              paket-nvim
-              #vim-marko
-              vim-colorschemes
-              #cabal-project-vim
-              zenburn
-              # coment out with double ctrl+/ or gcc
-              tcomment_vim
-              nightfox-nvim
-              tokyonight-nvim
-              onedark-nvim
-              #nvim-treesitter
-              trouble-nvim
-              # (nvim-treesitter.withPlugins (p: with p; [
-              #   p.json
-              #   p.lua
-              #   p.ocaml
-              #   p.ocaml_interface
-              #   p.markdown
-              #   p.sql
-              #   p.vim
-              #   #tree-sitter-fsharp-grammar
-              #   #nvim-treesitter-reason
-              #   #tree-sitter-fsharp
-              # ]))
-              (
-                (nvim-treesitter.withPlugins (p: with p; [
-                  p.json
-                  p.lua
-                  p.ocaml
-                  p.ocaml_interface
-                  p.markdown
-                  p.sql
-                  p.vim
-                  p.typespec
-                  p.c_sharp
-                  p.fsharp
-                  p.rust
-                  p.typescript
-                  p.swift
-                  p.python
-                  p.toml
-                  p.tsx
-                  p.xml
-                  #tree-sitter-fsharp-grammar
-                  #nvim-treesitter-reason
-                  #tree-sitter-fsharp
-                ]))
-                # .overrideAttrs (o: {
-                #   preFixup = o.preFixup or "" + ''
-                #     echo "queries"
-                #     ls ${tree-sitter-fsharp-grammar-src}
-                #     ls ${tree-sitter-fsharp-grammar-src}/queries/
-                #     mkdir $out/queries/fsharp/
-                #     cp ${tree-sitter-fsharp-grammar-src}/queries/* $out/queries/fsharp/
-                #   '';
-                # })
-              )
-              #tree-sitter-fsharp-grammar
-              #nvim-treesitter-reason
-              #tree-sitter-fsharp
-              barbar-nvim
-              cmp-nvim-lsp
-              cmp-nvim-lsp-signature-help
-              cmp_luasnip
-              friendly-snippets
-              gitsigns-nvim
-              lsp-format-nvim
-              luasnip
-              markdown-preview-nvim
-              nil
-              nlsp-settings-nvim
-              nvim-cmp
-              vim-yaml
-              nvim-lightbulb
-              nvim-lspconfig
-              nvim-web-devicons
-              telescope-file-browser-nvim
-              vim-jsx-pretty
-              telescope-frecency-nvim
-              telescope-fzy-native-nvim
-              telescope-media-files-nvim
-              telescope-nvim
-              telescope-z-nvim
-              todo-comments-nvim
-              vim-prettier
-              which-key-nvim
-              vim-flutter
-              dart-vim-plugin
-              # codecompanion-nvim
-              #nvim-dbee2
-              vlog-nvim
-              (nvim-lint.overrideAttrs {
-                src = pkgs.fetchFromGitHub {
-                  owner = "mfussenegger";
-                  repo = "nvim-lint";
-                  rev = "4f2d968a827d86bb40b7b1fad28c11f7b764fef3";
-                  sha256 = "sha256-S2m6MpYIirEX5R05xNRhtaKnmerEtzJP7P9aCL+nwEQ=";
-                };
-              })
-              formatter-nvim
-              #statix
-            ];
-            opt = [ ];
-          };
-          # ...
-        };
-      })
+    # (neovim.override
+    #   {
+    #     extraLuaPackages = (ps: with ps;
+    #       builtins.trace (builtins.concatStringsSep "," (builtins.attrNames ps)) [
+    #         inspect
+    #         luafilesystem
+    #         (luaPaths { inherit (ps) buildLuarocksPackage; })
+    #       ]);
+    #     configure = {
+    #       #customRC = ''luafile ${./vimrc.lua}'';
+    #       customRC = ''luafile ~/.config/home-manager/init.lua'';
+    #       packages.myPlugins = with pkgs.vimPlugins; {
+    #         start = [
+    #           vim-readonly
+    #           earthly-vim
+    #           #null-ls.nvim
+    #           none-ls-nvim
+    #           vim-fugitive
+    #           vim-rhubarb
+    #           #telescope-coc-nvim
+    #           #coc-nvim
+    #           #coc-java
+    #           #coc-jedi
+    #           #coc-json
+    #           #coc-prettier
+    #           #coc-tsserver
+    #           #coc-rust-analyzer
+    #           #coc-sourcekit
+    #           #coc-kotlin
+    #           fidget-nvim
+    #           neodev-nvim
+    #           auto-session
+    #           zig-vim
+    #           # these don't work for some reason
+    #           #vim-swift
+    #           #vim-swift-format
+    #           vim-jack-syntax
+    #           #ale
+    #           # required by nvim-metals
+    #           nvim-dap
+    #           # required by nvim-metals
+    #           plenary-nvim
+    #           nvim-metals
+    #           catppuccin-nvim
+    #           # this server crashes on start
+    #           comment-nvim
+    #           nvim-ts-context-commentstring
+    #           #ctrlp
+    #           #ghcid
+    #           #gitgutter
+    #           neoconf-nvim
+    #           nvim-highlight-colors
+    #           Ionide-vim
+    #           vim-indent-guides
+    #           #psc-ide-vim
+    #           vim-airline
+    #           vim-airline-themes
+    #           vim-polyglot
+    #           #vim-capnp
+    #           paket-nvim
+    #           #vim-marko
+    #           vim-colorschemes
+    #           #cabal-project-vim
+    #           zenburn
+    #           # coment out with double ctrl+/ or gcc
+    #           #tcomment_vim
+    #           nightfox-nvim
+    #           kanagawa-nvim
+    #           kanagawa-paper-nvim
+    #           iceberg-vim
+    #           zenbones-nvim
+    #           tokyonight-nvim
+    #           onedark-nvim
+    #           onedark-nvim
+    #           space-vim
+    #           lush-nvim
+    #           #nvim-treesitter
+    #           trouble-nvim
+    #           # (nvim-treesitter.withPlugins (p: with p; [
+    #           #   p.json
+    #           #   p.lua
+    #           #   p.ocaml
+    #           #   p.ocaml_interface
+    #           #   p.markdown
+    #           #   p.sql
+    #           #   p.vim
+    #           #   #tree-sitter-fsharp-grammar
+    #           #   #nvim-treesitter-reason
+    #           #   #tree-sitter-fsharp
+    #           # ]))
+    #           (
+    #             (nvim-treesitter.withPlugins (p: with p; [
+    #               p.just
+    #               p.json
+    #               p.lua
+    #               p.ocaml
+    #               p.ocaml_interface
+    #               #p.markdown
+    #               p.sql
+    #               p.vim
+    #               p.typespec
+    #               p.c_sharp
+    #               # p.fsharp
+    #               p.rust
+    #               p.javascript
+    #               p.typescript
+    #               p.swift
+    #               p.python
+    #               p.toml
+    #               p.tsx
+    #               p.xml
+    #               p.yaml
+    #               #p.earthly
+    #               #tree-sitter-fsharp-grammar
+    #               #nvim-treesitter-reason
+    #               #tree-sitter-fsharp
+    #             ]))
+    #             # .overrideAttrs (o: {
+    #             #   preFixup = o.preFixup or "" + ''
+    #             #     echo "queries"
+    #             #     ls ${tree-sitter-fsharp-grammar-src}
+    #             #     ls ${tree-sitter-fsharp-grammar-src}/queries/
+    #             #     mkdir $out/queries/fsharp/
+    #             #     cp ${tree-sitter-fsharp-grammar-src}/queries/* $out/queries/fsharp/
+    #             #   '';
+    #             # })
+    #           )
+    #           #tree-sitter-fsharp-grammar
+    #           #nvim-treesitter-reason
+    #           #tree-sitter-fsharp
+    #           barbar-nvim
+    #           cmp-nvim-lsp
+    #           cmp-nvim-lsp-signature-help
+    #           cmp_luasnip
+    #           friendly-snippets
+    #           gitsigns-nvim
+    #           lsp-format-nvim
+    #           luasnip
+    #           markdown-preview-nvim
+    #           nil
+    #           nlsp-settings-nvim
+    #           nvim-cmp
+    #           vim-yaml
+    #           nvim-lightbulb
+    #           nvim-lspconfig
+    #           nvim-web-devicons
+    #           telescope-file-browser-nvim
+    #           vim-jsx-pretty
+    #           telescope-frecency-nvim
+    #           telescope-fzy-native-nvim
+    #           telescope-media-files-nvim
+    #           telescope-nvim
+    #           telescope-z-nvim
+    #           todo-comments-nvim
+    #           vim-prettier
+    #           which-key-nvim
+    #           vim-flutter
+    #           dart-vim-plugin
+    #           telescope-live-grep-args-nvim
+    #           # codecompanion-nvim
+    #           #nvim-dbee2
+    #           vlog-nvim
+    #           (nvim-lint.overrideAttrs {
+    #             src = pkgs.fetchFromGitHub {
+    #               owner = "mfussenegger";
+    #               repo = "nvim-lint";
+    #               rev = "4f2d968a827d86bb40b7b1fad28c11f7b764fef3";
+    #               sha256 = "sha256-S2m6MpYIirEX5R05xNRhtaKnmerEtzJP7P9aCL+nwEQ=";
+    #             };
+    #           })
+    #           formatter-nvim
+    #           #statix
+    #         ];
+    #         opt = [ ];
+    #       };
+    #       # ...
+    #     };
+    #   })
   ];
   #programs.opam = {
   #  enable = true;
@@ -749,25 +765,34 @@ in
       bclean = "!f() { git branch --merged master | grep -v '^\\*' | xargs -n 1 git branch -d; }; f";
     };
     extraConfig = {
+      difftool = {
+          prompt = false;
+      };
+      diff = {
+          tool = "difft";
+      };
       init.defaultBranch = "master";
       core.autocrlf = "input";
+      core.ignorecase = "false";
       pull.ff = "only";
       # add fixup!
       rebase.autosquash = true;
-      url = {
-        "git@github.com:" = {
-          insteadOf = "https://github.com/";
-        };
-        #"git://" = {
-        #  insteadOf = "https://";
-        #};
-      };
+      # url = {
+      #   "git@github.com:" = {
+      #     insteadOf = "https://github.com/";
+      #   };
+      #   #"git://" = {
+      #   #  insteadOf = "https://";
+      #   #};
+      # };
     };
     delta.enable = true;
     ignores = [
+      ".claude/settings.local.json"
       "*.swo"
       "*.swp"
       ".DS_Store"
+      ".bacon-locations"
       ".bloop/"
       ".idea/"
       ".metals/"
@@ -780,6 +805,7 @@ in
   };
   programs.zsh = {
     enable = true;
+    enableCompletion = true;
     enableAutosuggestions = true;
     history.extended = true;
     shellAliases = {
@@ -805,12 +831,18 @@ in
     oh-my-zsh = {
       enable = true;
       plugins = [
+        # "command-not-found"
         "timer"
         "git-extras"
         #"git"
         "gitfast"
         "github"
-        "web-search"
+        #"web-search"
+        "copypath"
+        "copyfile"
+        "copybuffer"
+        "bun"
+        #"flutter"
       ];
       theme = "robbyrussell";
     };
@@ -847,7 +879,7 @@ in
     # flake.nix:            DOTNET_REPL_DEFAULT_KERNEL = "fsharp";
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
-  home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
+  # home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
   programs.direnv = {
     enable = true;
     #enableNixDirenvIntegration = true;
