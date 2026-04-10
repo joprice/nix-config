@@ -34,6 +34,17 @@ dir_bytes ~/Library/Caches/CocoaPods > "$tmp/pods" &
 dir_bytes ~/Library/Caches/Google > "$tmp/google" &
 dir_bytes ~/.cache/nix > "$tmp/nix" &
 dir_bytes ~/Library/Logs > "$tmp/logs" &
+dir_bytes ~/.gradle/caches > "$tmp/gradle" &
+dir_bytes ~/.pyenv/versions > "$tmp/pyenv" &
+dir_bytes ~/.cargo/registry/src > "$tmp/cargo_src" &
+dir_bytes "$TMPDIR" > "$tmp/tmpdir" &
+dir_bytes ~/Library/Caches/org.swift.swiftpm > "$tmp/swiftpm" &
+dir_bytes ~/Library/Caches/go-build > "$tmp/go_build" &
+dir_bytes ~/go/pkg/mod > "$tmp/go_mod" &
+dir_bytes ~/Library/Caches/ms-playwright > "$tmp/playwright" &
+dir_bytes ~/Library/Caches/maestro-studio-updater > "$tmp/maestro" &
+dir_bytes ~/Library/Caches/ledger-live-desktop-updater > "$tmp/ledger" &
+dir_bytes ~/Library/Application\ Support/Code/CachedExtensionVSIXs > "$tmp/vscode_vsix" &
 
 # Simulator runtimes (xcrun is fast, but run in bg anyway)
 (
@@ -141,6 +152,17 @@ while IFS='|' read -r kind count size; do
 done < "$tmp/docker"
 
 row "$(cat "$tmp/google")" "Google Chrome cache" "rm -rf ~/Library/Caches/Google"
+row "$(cat "$tmp/gradle")" "Gradle caches" "rm -rf ~/.gradle/caches"
+row "$(cat "$tmp/pyenv")" "pyenv Python versions" "pyenv versions  # then uninstall unused"
+row "$(cat "$tmp/cargo_src")" "Cargo registry sources" "rm -rf ~/.cargo/registry/src"
+row "$(cat "$tmp/tmpdir")" "User temp files (\$TMPDIR)" "rm -rf \$TMPDIR/*"
+row "$(cat "$tmp/swiftpm")" "Swift Package Manager cache" "rm -rf ~/Library/Caches/org.swift.swiftpm"
+row "$(cat "$tmp/go_build")" "Go build cache" "go clean -cache"
+row "$(cat "$tmp/go_mod")" "Go module cache" "go clean -modcache"
+row "$(cat "$tmp/playwright")" "Playwright browsers" "rm -rf ~/Library/Caches/ms-playwright"
+row "$(cat "$tmp/maestro")" "Maestro updater cache" "rm -rf ~/Library/Caches/maestro-studio-updater"
+row "$(cat "$tmp/ledger")" "Ledger Live updater cache" "rm -rf ~/Library/Caches/ledger-live-desktop-updater"
+row "$(cat "$tmp/vscode_vsix")" "VS Code cached extensions" "rm -rf ~/Library/Application\ Support/Code/CachedExtensionVSIXs"
 row "$(cat "$tmp/nix")" "Nix cache" "rm -rf ~/.cache/nix"
 row "$(cat "$tmp/logs")" "macOS app logs" "sudo rm -rf ~/Library/Logs/*"
 
