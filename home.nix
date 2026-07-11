@@ -178,6 +178,9 @@ let
   # Report reclaimable temp/cache disk space
   disk-cleanup =
     pkgs.writeShellScriptBin "disk-cleanup" (lib.fileContents ./disk-cleanup.sh);
+  # List top CPU-consuming processes right now
+  cpu-hogs =
+    pkgs.writeShellScriptBin "cpu-hogs" (lib.fileContents ./cpu-hogs.sh);
   haskell = with pkgs; haskellPackages.ghcWithPackages (
     pkgs: [
       haskellPackages.pretty-simple
@@ -416,6 +419,7 @@ in
     git-cof
     git-delete-squashed
     disk-cleanup
+    cpu-hogs
     github-cli
     #gnupg
     go
@@ -430,7 +434,7 @@ in
     #jdk
     joker
     kcat
-    ltex-ls-plus
+    #ltex-ls-plus
     #loc
     #nim
     jq
@@ -463,7 +467,7 @@ in
     rlwrap
     rmlint
     #rnix-lsp
-    rustup
+    #rustup
     #rust-analyzer
     #sbt
     #scala
@@ -778,6 +782,11 @@ in
       init.defaultBranch = "master";
       core.autocrlf = "input";
       core.ignorecase = "false";
+      # Fast `git status` in large repos (polli): fsmonitor daemon avoids
+      # rescanning the worktree; untrackedCache memoizes untracked dirs.
+      # Kills the oh-my-zsh per-prompt dirty-check lag.
+      core.fsmonitor = true;
+      core.untrackedCache = true;
       pull.ff = "only";
       # add fixup!
       rebase.autosquash = true;
@@ -837,15 +846,15 @@ in
       plugins = [
         # "command-not-found"
         "timer"
-        "git-extras"
+        #"git-extras"   # dropped: unused, heavy compinit
         #"git"
         "gitfast"
-        "github"
+        #"github"       # dropped: aliased git=hub (dead tool, +1s spikes)
         #"web-search"
         "copypath"
         "copyfile"
         "copybuffer"
-        "bun"
+        #"bun"          # dropped: unused, compinit cost
         #"flutter"
       ];
       theme = "robbyrussell";
