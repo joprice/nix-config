@@ -274,11 +274,18 @@ let
     paths = [ pkgs.bazelisk ];
     postBuild = "ln $out/bin/bazelisk $out/bin/bazel";
   };
-  dotnetSdk = (with pkgs.dotnetCorePackages; combinePackages [
-    sdk_6_0
-    sdk_7_0
-    sdk_8_0
-  ]);
+  # dotnetSdk = (with pkgs.dotnetCorePackages; combinePackages [
+  #   sdk_6_0
+  #   sdk_7_0
+  #   sdk_8_0
+  # ]);
+  # Launch the manually-downloaded Android Studio (in ~/android-studio) via an
+  # FHS sandbox, since a raw Linux binary can't run on NixOS. To update, replace
+  # ~/android-studio with a newer tarball extract — no config change needed.
+  # Full rationale + update/rollback steps: ./ANDROID_STUDIO.md
+  studio = pkgs.writeShellScriptBin "studio" ''
+    exec ${pkgs.steam-run}/bin/steam-run "$HOME/android-studio/bin/studio" "$@"
+  '';
 in
 {
   # For options, see https://mynixos.com/home-manager/options/programs
@@ -324,12 +331,17 @@ in
   home.stateVersion = "23.11";
   # TODO: exclude df
   home.packages = with pkgs; [
-    android-studio
+    dust
+    asdf-vm
+    # Manually-downloaded Android Studio wrapped for NixOS (see `studio` in the
+    # let-block above). Replaces the nixpkgs `android-studio` which lags behind.
+    studio
+    steam-run
     #flutter
     bun
     flyctl
     unzip
-    inkscape
+    #inkscape
     gimp
     icu
     icu.dev
@@ -344,13 +356,13 @@ in
     tailspin
     nil
     statix
-    nodePackages.vscode-langservers-extracted
-    nodePackages.typescript-language-server
-    nodePackages."@tailwindcss/language-server"
+    vscode-langservers-extracted
+    typescript-language-server
+    tailwindcss-language-server
     # this pulls in cuda
     #nvtop
     lua-language-server
-    circleci-cli
+    #circleci-cli
     # TODO: wrap in linux check
     #cudatoolkit
     #bitcoin
@@ -379,7 +391,7 @@ in
     #curl
     #screen
     curl
-    gitAndTools.delta
+    delta
     #dhall
     #dhall-json
     #easy-ps.purs
@@ -401,11 +413,10 @@ in
     htop
     hub
     #idea
-    istioctl
+    #istioctl
     #jdk
     joker
     kcat
-    loc
     sccache
     #nim
     jq
@@ -417,24 +428,21 @@ in
     # unixtools.netstat
     #leiningen
     #libbitcoin-explorer
-    loc
     #maven
     #mill
     #niv
-    tdesktop
+    #tdesktop
     maven
-    dotnetSdk
+    #dotnetSdk
     #dotnetCorePackages.sdk_7_0
     #dotnetCorePackages.runtime_8_0
     #dotnet-runtime
     k6
     oha
-    mill
     niv
     nixpkgs-fmt
     icu
     nix-index
-    node2nix
     #nodePackages.esy
     #nushell
     #nodePackages.node2nix
@@ -461,15 +469,14 @@ in
     #zld
     #rustup
     #rust-analyzer
-    sbt
-    stack
+    #stack
     skim
     file
     dig
     gnumake
     xclip
     nmap
-    rpi-imager
+    #rpi-imager
     inetutils
     tree
     #visualvm
@@ -482,7 +489,7 @@ in
     #xcpretty
     #websocat
     watchman
-    slack
+    #slack
     #xquartz
     fswatch
     #upx
@@ -521,12 +528,10 @@ in
     pcre
     gource
     #nerdfonts
-    (nerdfonts.override {
-      fonts = [ "FiraCode" ];
-    })
+    nerd-fonts.fira-code
     gnused
     #coursier
-    metals
+    #metals
     # TODO: temporarily using this instead of programs.neovim since extraConfig is broken in current
     #imagemagick
     pciutils
@@ -709,7 +714,7 @@ in
     #       # ...
     #     };
     #   })
-    discord
+    #discord
     luarocks
     #lua
     # (
@@ -1037,12 +1042,14 @@ in
         . ${z}/bin/z.sh
         unsetopt AUTO_CD
         export PATH=$HOME/.local/bin:$PATH
+        # asdf shell integration: put ~/.asdf/shims on PATH so installed
+        # tools (pnpm, node, etc.) are actually found. asdf 0.16+ (Go rewrite)
+        # dropped asdf.sh; the shims-on-PATH export below is all that's needed.
+        export PATH="''${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
         nix-build-nodirenv() {
           pushd /; popd;
         }
         #export NIX_LD_LIBRARY_PATH=${NIX_LD_LIBRARY_PATH}
-        #export DOTNET_ROOT=${pkgs.dotnetCorePackages.sdk_8_0}
-        export DOTNET_ROOT=${dotnetSdk}
         # this loads vars that are meant to be dynamic, e.g. github tokens
         source ~/.zinstance_vars
         export RUSTC_WRAPPER="${pkgs.sccache}/bin/sccache"
