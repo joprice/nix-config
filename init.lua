@@ -430,50 +430,20 @@ require('telescope').load_extension('file_browser')
 -- vim.cmd.colorscheme "tokyonight-day"
 vim.cmd.colorscheme "tokyonight-night"
 
-require 'nvim-treesitter.configs'.setup {
-  -- A list of parser names, or "all" (the five listed parsers should always be installed)
-  -- ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "ocaml" },
-  -- Install parsers synchronously (only applied to `ensure_installed`)
-  ensure_installed = {},
-  sync_install = false,
-  auto_install = false,
-  -- List of parsers to ignore installing (or "all")
-  ignore_install = { "all" },
-  ---- If you need to change the installation directory of the parsers (see -> Advanced Setup)
-  -- parser_install_dir = "/some/path/to/store/parsers", -- Remember to run vim.opt.runtimepath:append("/some/path/to/store/parsers")!
-
-  highlight = {
-    enable = true,
-    -- NOTE: these are the names of the parsers and not the filetype. (for example if you want to
-    -- disable highlighting for the `tex` filetype, you need to include `latex` in this list as this is
-    -- the name of the parser)
-    -- list of language that will be disabled
-    -- disable = { "c", "rust" },
-    -- Or use a function for more flexibility, e.g. to disable slow treesitter highlight for large files
-    -- disable = function(lang, buf)
-    --    local max_filesize = 100 * 1024 -- 100 KB
-    --    local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
-    --    if ok and stats and stats.size > max_filesize then
-    --        return true
-    --    end
-    -- end,
-
-    -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-    -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
-    -- Using this option may slow down your editor, and you may see some duplicate highlights.
-    -- Instead of true it can also be a list of languages
-    additional_vim_regex_highlighting = false,
-  },
-  incremental_selection = {
-    enable = true,
-    keymaps = {
-      init_selection = "gnn", -- set to `false` to disable one of the mappings
-      node_incremental = "grn",
-      scope_incremental = "grc",
-      node_decremental = "grm",
-    },
-  },
-}
+-- nvim-treesitter `main` branch: `configs.setup{}` (the classic API with
+-- highlight/incremental_selection/ensure_installed options) was removed. Parsers
+-- and queries are provided by Nix on the runtimepath, so we just enable
+-- highlighting per-buffer via `vim.treesitter.start()`. It errors when no parser
+-- exists for the buffer's language, hence the pcall — filetypes without a parser
+-- silently fall back to regex syntax.
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('treesitter_highlight', { clear = true }),
+  callback = function(args)
+    pcall(vim.treesitter.start, args.buf)
+  end,
+})
+-- NOTE: incremental_selection (gnn/grn/grc/grm) was a nvim-treesitter feature and
+-- is gone in the `main` rewrite; those keymaps are no longer bound.
 
 vim.keymap.set("n", "]t", function()
   require("todo-comments").jump_next()
@@ -532,7 +502,6 @@ require("lsp-format").setup(config)
 require("neoconf").setup({
 })
 
-local lspconfig = require('lspconfig')
 --  inlay_hints = { enabled = true }
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
@@ -604,69 +573,26 @@ local buildifier = {
 --   capabilities = capabilities,
 --   on_attach = on_attach,
 -- }
-lspconfig.pyright.setup {
+-- Migrated from the deprecated `lspconfig.<server>.setup {}` framework to the
+-- built-in `vim.lsp.config()` / `vim.lsp.enable()` API (Neovim 0.11+). Base
+-- configs (cmd/filetypes/root_markers) ship with nvim-lspconfig under
+-- `lsp/<server>.lua`; below we set only our overrides. Shared capabilities and
+-- on_attach apply to every server via the '*' wildcard. Servers are enabled in
+-- one `vim.lsp.enable{}` call at the end of this section.
+vim.lsp.config('*', {
   capabilities = capabilities,
   on_attach = on_attach,
-}
-
-lspconfig.astro.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  cmd = { "npx", "astro-ls", "--stdio" }
-}
-
-lspconfig.metals.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
-
-lspconfig.haxe_language_server.setup({
-  capabilities = capabilities,
-  on_attach = on_attach,
-  cmd = { "node", "/Users/josephprice/dev/haxe-language-server/bin/server.js" },
-  init_options = {
-    displayArguments = { 'build.hxml' },
-    -- displayArguments = { 'html5.hxml' },
-  },
-
 })
 
-lspconfig.nim_langserver.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
+-- pyright, metals, nim_langserver: no overrides; enabled below.
 
-local lspconfigs = require('lspconfig.configs')
-if not lspconfigs.roc_ls then
-  lspconfigs.roc_ls = {
-    default_config = {
-      cmd = { 'roc_language_server' },
-      filetypes = { 'roc' },
-      root_dir = require('lspconfig.util').find_git_ancestor,
-      single_file_support = true,
-    },
-    docs = {
-      description = [[
-  https://github.com/roc-lang/roc/tree/main/crates/language_server#roc_language_server
+vim.lsp.config('astro', {
+  cmd = { "npx", "astro-ls", "--stdio" },
+})
 
-  The built-in language server for the Roc programming language.
-  [Installation](https://github.com/roc-lang/roc/tree/main/crates/language_server#installing)
-  ]],
-      default_config = {
-        root_dir = [[util.find_git_ancestor]],
-      },
-    },
-  }
-end
+-- roc, haxe removed (unused).
 
-lspconfig.roc_ls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
-
-lspconfig.gopls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
+vim.lsp.config('gopls', {
   settings = {
     gopls = {
       analyses = {
@@ -676,26 +602,16 @@ lspconfig.gopls.setup {
       }
     }
   }
-}
+})
 
-lspconfig.hls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
-
-lspconfig.elmls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
+-- hls, elmls: no overrides; enabled below.
 
 -- lspconfig.java_language_server.setup {
 --   capabilities = capabilities,
 --   on_attach = on_attach,
 -- }
 
-lspconfig.rust_analyzer.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
+vim.lsp.config('rust_analyzer', {
   -- Server-specific settings. See `:help lspconfig-setup`
   settings = {
     ['rust-analyzer'] = {
@@ -705,70 +621,39 @@ lspconfig.rust_analyzer.setup {
       -- },
     },
   },
-}
+})
 
-lspconfig.tailwindcss.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
+vim.lsp.config('tailwindcss', {
   cmd = {
     "node_modules/.bin/tailwindcss-language-server"
   },
-  -- init_options = {
-  --   userLanguages = {
-  --     ocaml = "html"
-  --   }
-  -- },
-  -- filetypes = { "html", "reason",
-  --   -- this is disabled due to high cpu usage
-  --   -- "ocaml" },
-  -- },
-  -- filetypes = { "ocaml", "html", "reason" },
-  -- TODO: extend defaults somehow
-  -- filetypes = vim.tbl_extend(lspconfig.tailwindcss.default_config, { "ocaml" }),
+  -- filetypes = { "ocaml", "html", "reason" }, -- extend defaults if needed
   settings = {
     tailwindCSS = {
       lint = {
         cssConflict = "error",
       },
-      -- colorDecorators = true,
-      -- includeLanguages = {
-      --   ocaml = "html"
-      -- },
-      -- TODO: get project-specific config working so this isn't global
-      -- * https://github.com/neovim/nvim-lspconfig/wiki/Project-local-settings
-      -- examples
-      -- * https://github.com/ecosse3/nvim/blob/01a4feef16d5714abb1e49ee8e047a32e7d8ec4e/lua/lsp/servers/tailwindcss.lua#L45-L53
-      -- * https://github.com/tailwindlabs/tailwindcss/issues/7553
-      -- * https://github.com/tailwindlabs/tailwindcss/discussions/7554
-      -- config schema https://github.com/tailwindlabs/tailwindcss-intellisense/blob/0b83e8d5fb81fe2d75835f38dfe8836e4e332c95/packages/vscode-tailwindcss/package.json#L204
-      -- experimental = {
-      --   classRegex = {
-      --     "~class_\\:\\s*\\(Prop.s\\s+\"([^\"]*)\"",
-      --   }
-      -- }
     }
   }
-}
+})
 
 local util = require 'lspconfig.util'
 
-lspconfig.eslint.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-}
+-- eslint: no overrides; enabled below.
 
-lspconfig.tsserver.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
-  -- root_dir = util.root_pattern(".git"),
-  single_file_support = false,
-  root_dir = util.root_pattern('package.json')
-}
+-- ts_ls (formerly `tsserver`). Attach only inside a project that has a
+-- package.json (replaces single_file_support = false + root_pattern).
+vim.lsp.config('ts_ls', {
+  root_dir = function(bufnr, on_dir)
+    local root = vim.fs.root(bufnr, { 'package.json' })
+    if root then
+      on_dir(root)
+    end
+  end,
+})
 
 -- having issues with "buffer is not modifiable" on save
-lspconfig.nil_ls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
+vim.lsp.config('nil_ls', {
   settings = {
     ['nil'] = {
       formatting = {
@@ -776,18 +661,13 @@ lspconfig.nil_ls.setup {
       },
     },
   },
-}
+})
 
-lspconfig.ocamllsp.setup {
-  capabilities = capabilities,
-  on_attach = on_attach
-}
+-- ocamllsp: no overrides; enabled below.
 
-lspconfig.mdx_analyzer.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
+vim.lsp.config('mdx_analyzer', {
   cmd = { 'npx', 'mdx-language-server', '--stdio' },
-}
+})
 
 -- vim.lsp.set_log_level("trace")
 
@@ -893,37 +773,21 @@ require 'ionide'.setup {
 --   }
 -- }
 
-lspconfig.purescriptls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach
-}
+-- purescriptls: no overrides; enabled below.
 
-lspconfig.sourcekit.setup {
-  capabilities = capabilities,
-  on_attach = on_attach,
+vim.lsp.config('sourcekit', {
   cmd = {
-    -- "xcrun",
     "xcrun",
     "--toolchain",
     "swift",
     "sourcekit-lsp",
     "--log-level",
     "warning",
-    -- "-Xswiftc",
-    -- "-sdk",
-    -- "-Xswiftc",
-    -- "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk",
-    -- "-Xswiftc",
-    -- "-target",
-    -- "-Xswiftc",
-    -- "x86_64-apple-ios17.0-simulator",
     "--completion-max-results", "100"
   }
-}
+})
 
-lspconfig.lua_ls.setup({
-  capabilities = capabilities,
-  on_attach = on_attach,
+vim.lsp.config('lua_ls', {
   settings = {
     Lua = {
       completion = {
@@ -934,6 +798,28 @@ lspconfig.lua_ls.setup({
       }
     }
   }
+})
+
+-- Enable all configured servers. Base configs come from nvim-lspconfig's
+-- lsp/<name>.lua; per-server overrides and the shared '*' config are applied above.
+vim.lsp.enable({
+  'pyright',
+  'astro',
+  'metals',
+  'nim_langserver',
+  'gopls',
+  'hls',
+  'elmls',
+  'rust_analyzer',
+  'tailwindcss',
+  'eslint',
+  'ts_ls',
+  'nil_ls',
+  'ocamllsp',
+  'mdx_analyzer',
+  'purescriptls',
+  'sourcekit',
+  'lua_ls',
 })
 
 local function get_file_name()
@@ -1102,7 +988,7 @@ vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist)
 local function highlight_symbol(event)
   local id = vim.tbl_get(event, 'data', 'client_id')
   local client = id and vim.lsp.get_client_by_id(id)
-  if client == nil or not client.supports_method('textDocument/documentHighlight') then
+  if client == nil or not client:supports_method('textDocument/documentHighlight') then
     return
   end
 

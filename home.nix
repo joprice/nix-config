@@ -21,36 +21,6 @@ let
       cp -r queries $out/queries
     '';
   };
-  treesitter-roc-src = pkgs.fetchFromGitHub {
-    owner = "nat-418";
-    repo = "tree-sitter-roc";
-    rev = "a639cb367b0ffe95cd7d94ad5b4a26da0337180f";
-    hash = "sha256-Zdm0lPH3nnCJso+7Qyc92/xl0yLd4Ee+QZa5ix0GwJY=";
-  };
-  treesitter-roc = pkgs.tree-sitter.buildGrammar {
-    language = "roc";
-    version = "0.0.0+rev=7df2c08";
-    src = treesitter-roc-src;
-    meta.homepage = "https://github.com/nat-418/tree-sitter-roc";
-  };
-  roc-wrapped-parser = pkgs.neovimUtils.grammarToPlugin treesitter-roc;
-  nvim-treesitter-roc =
-    let
-      scripts = pkgs.runCommand "neovim-treesitter-roc-scripts" { } ''
-        mkdir -p $out/after
-        mkdir -p $out/plugin
-        cp ${treesitter-roc-src}/neovim/roc.lua $out/plugin
-        mkdir -p $out/after/queries/roc
-        cp -r ${treesitter-roc-src}/neovim/queries/* $out/after/queries/roc/
-      '';
-    in
-    pkgs.symlinkJoin {
-      name = "neovim-treesitter-roc";
-      paths = [
-        roc-wrapped-parser
-        scripts
-      ];
-    };
   vim-dot-http = pkgs.vimUtils.buildVimPlugin {
     pname = "vim-dot-http";
     version = "0.0.1";
@@ -767,8 +737,6 @@ in
           tsx
           astro
           css
-          #(pkgs.neovimUtils.grammarToPlugin roc)
-          roc-wrapped-parser
           #nvim-treesitter-reason
         ]));
         # rest-nvim = callPackage
@@ -798,7 +766,6 @@ in
         #   { };
       in
       [
-        nvim-treesitter-roc
         plenary-nvim
         #rocks-nvim
         #nvimLua.pkgs.luarocks
@@ -1113,6 +1080,14 @@ in
     OPENSSL_DIR = OPENSSL_PREFIX;
     DOTNET_CLI_TELEMETRY_OPTOUT = 1;
     DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = 1;
+    # Route heavy build output onto the dedicated /mnt/build volume (p5, 147G)
+    # so 100G+ incremental builds don't fill the encrypted root. The mount is
+    # declared in fileSystems."/mnt/build" in /etc/nixos/configuration.nix.
+    # In sessionVariables (not zsh.envExtra) so GUI-launched IDEs — Android
+    # Studio's Gradle, VSCode's Cargo — inherit them too. Takes effect on next
+    # graphical login.
+    CARGO_TARGET_DIR = "/mnt/build/cargo-target";
+    GRADLE_USER_HOME = "/mnt/build/gradle";
   };
   home.file.".sbt/1.0/plugins/plugins.sbt".source = ./plugins.sbt;
   home.file.".config/nvim/coc-settings.json".source = ./coc-settings.json;
