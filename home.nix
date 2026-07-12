@@ -328,11 +328,14 @@ in
   #     }
   #   )
   # ];
-  home.stateVersion = "23.11";
+  home.stateVersion = "26.05";
   # TODO: exclude df
   home.packages = with pkgs; [
     dust
     asdf-vm
+    # Compiler cache for the RN Android native build (clang++ of reanimated/
+    # quick-crypto/folly C++). Wired via CMAKE_*_COMPILER_LAUNCHER in zsh.envExtra.
+    ccache
     # Manually-downloaded Android Studio wrapped for NixOS (see `studio` in the
     # let-block above). Replaces the nixpkgs `android-studio` which lags behind.
     studio
@@ -911,6 +914,11 @@ in
     #];
     #    # needed by coc-nvim
     withNodeJs = true;
+    # Adopt the 26.05 defaults (were implicitly true under stateVersion 23.11).
+    # No plugin here uses the Ruby/Python3 providers, so drop them from the
+    # closure. Flip back to true if a provider-dependent plugin ever needs one.
+    withRuby = false;
+    withPython3 = false;
     #    #extraConfig = builtins.toString ./vimrc;
     #    extraConfig = builtins.readFile ./vimrc;
     #    #extraConfig = lib.fileContents ./vimrc;
@@ -947,34 +955,42 @@ in
     #     #      tcomment_vim
     #   ];
   };
+  # delta moved out of programs.git.delta to top-level programs.delta (26.05);
+  # enableGitIntegration must now be set explicitly (auto-enable deprecated).
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+  };
   programs.git = {
     enable = true;
     lfs.enable = true;
-    userName = "Joseph Price";
-    userEmail = "pricejosephd@gmail.com";
-    aliases = {
-      s = "status";
-      co = "checkout";
-      d = "diff";
-      merged = "branch --merged";
-      recent = "for-each-ref --sort=committerdate refs/heads/ --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(color:red)%(objectname:short)%(color:reset) - %(contents:subject) - %(authorname) (%(color:green)%(committerdate:relative)%(color:reset))'";
-      lg = "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
-      bclean = "!f() { git branch --merged master | grep -v '^\\*' | xargs -n 1 git branch -d; }; f";
-    };
-    extraConfig = {
+    # Migrated to the consolidated `settings` schema (26.05): userName/userEmail/
+    # aliases/extraConfig all fold into programs.git.settings.*
+    settings = {
+      user = {
+        name = "Joseph Price";
+        email = "pricejosephd@gmail.com";
+      };
+      alias = {
+        s = "status";
+        co = "checkout";
+        d = "diff";
+        merged = "branch --merged";
+        recent = "for-each-ref --sort=committerdate refs/heads/ --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(color:red)%(objectname:short)%(color:reset) - %(contents:subject) - %(authorname) (%(color:green)%(committerdate:relative)%(color:reset))'";
+        lg = "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
+        bclean = "!f() { git branch --merged master | grep -v '^\\*' | xargs -n 1 git branch -d; }; f";
+      };
       pull.ff = "only";
       # add fixup!
       rebase.autosquash = true;
       url = {
+        # pushInsteadOf (not insteadOf): fetches/clones stay on HTTPS so tools
+        # like cargo work anonymously, while pushes go over SSH for auth.
         "git@github.com:" = {
-          insteadOf = "https://github.com/";
-        };
-        "git://" = {
-          insteadOf = "https://";
+          pushInsteadOf = "https://github.com/";
         };
       };
     };
-    delta.enable = true;
     ignores = [
       "*.swo"
       "*.swp"
@@ -992,8 +1008,30 @@ in
   };
   programs.zsh = {
     enable = true;
-    enableAutosuggestions = true;
+    autosuggestion.enable = true;
     history.extended = true;
+    # Sourced by .zshenv on every shell (no __HM_SESS_VARS_SOURCED guard), so
+    # changes here reach new terminal tabs without a graphical re-login.
+    # Android CLI builds (./gradlew): JDK is the one bundled in the hand-managed
+    # Android Studio tarball (~/android-studio, see ANDROID_STUDIO.md); the JBR
+    # runs directly on NixOS (no steam-run for Gradle). NDK is auto-discovered
+    # under $ANDROID_HOME/ndk/<version>.
+    envExtra = ''
+      export JAVA_HOME="$HOME/android-studio/jbr"
+      export ANDROID_HOME="$HOME/Android/Sdk"
+
+      # ccache for the RN Android native (CMake/NDK) build. CMake initialises
+      # CMAKE_<LANG>_COMPILER_LAUNCHER from these env vars at configure time, so
+      # every externalNativeBuild clang++ invocation is cached transparently.
+      # First clean build populates the cache; subsequent builds skip compilation.
+      export CMAKE_C_COMPILER_LAUNCHER="ccache"
+      export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
+      export CCACHE_DIR="$HOME/.cache/ccache"
+      export CCACHE_MAXSIZE="15G"
+      # Normalise absolute build paths so -g debug builds still hit the cache.
+      export CCACHE_BASEDIR="$HOME"
+      export CCACHE_SLOPPINESS="time_macros,include_file_mtime,include_file_ctime"
+    '';
     shellAliases = {
       vimdiff = "nvim -d";
       cat = "bat";
@@ -1009,7 +1047,9 @@ in
       # -I ignores binary files
       grep = "grep --color -I";
       ips = "ifconfig | awk '\$1 == \"inet\" {print \$2}'";
-      hup = "home-manager switch && exec $SHELL";
+      # drop __HM_SESS_VARS_SOURCED so the re-exec'd shell actually re-sources
+      # hm-session-vars.sh (the guard otherwise skips new/changed session vars)
+      hup = "home-manager switch && exec env -u __HM_SESS_VARS_SOURCED $SHELL";
       vim-debug = "vim -V9vim.log main.cpp";
       ls = "ls --color=auto";
       gh-pr = "gh pr create --fill";
@@ -1028,7 +1068,7 @@ in
       ];
       theme = "robbyrussell";
     };
-    initExtra =
+    initContent =
       let
         NIX_LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
           stdenv.cc.cc
@@ -1058,7 +1098,10 @@ in
   home.sessionVariables = rec {
     # See https://github.com/direnv/direnv/issues/203#issuecomment-189873955
     DIRENV_LOG_FORMAT = "";
-    #JAVA_HOME = "${pkgs.jdk.home}";
+    # NOTE: JAVA_HOME / ANDROID_HOME live in programs.zsh.envExtra instead of
+    # here, so they refresh in every new shell without a graphical re-login.
+    # home.sessionVariables is sourced once per session (guarded by
+    # __HM_SESS_VARS_SOURCED), so changes wouldn't reach already-open terminals.
     LESS = "-RFX";
     EDITOR = "nvim";
     #OPENSSL_PREFIX = pkgs.openssl.dev;
