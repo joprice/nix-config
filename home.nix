@@ -256,6 +256,18 @@ let
   studio = pkgs.writeShellScriptBin "studio" ''
     exec ${pkgs.steam-run}/bin/steam-run "$HOME/android-studio/bin/studio" "$@"
   '';
+  # OpenAI Codex CLI, packaged as a flake at github:sadjow/codex-cli-nix.
+  # This is a channels/non-flake home-manager config, so instead of adding a
+  # flake input we fetch the repo and callPackage its self-contained
+  # package.nix (which fetchurl's the prebuilt binary — currently v0.144.1).
+  # To update: bump rev/hash below (`nix flake prefetch github:sadjow/codex-cli-nix`).
+  codex-cli-src = pkgs.fetchFromGitHub {
+    owner = "sadjow";
+    repo = "codex-cli-nix";
+    rev = "5468bb61c4169b338bcc43010c89ebd12c44f360";
+    hash = "sha256-gjXtwuJP1EkwUQWr+Awk9tNyIfBnQSwo9ycgtZZt8ZY=";
+  };
+  codex = pkgs.callPackage "${codex-cli-src}/package.nix" { runtime = "native"; };
 in
 {
   # For options, see https://mynixos.com/home-manager/options/programs
@@ -301,6 +313,7 @@ in
   home.stateVersion = "26.05";
   # TODO: exclude df
   home.packages = with pkgs; [
+    codex
     dust
     asdf-vm
     # Compiler cache for the RN Android native build (clang++ of reanimated/
@@ -1053,6 +1066,13 @@ in
         # tools (pnpm, node, etc.) are actually found. asdf 0.16+ (Go rewrite)
         # dropped asdf.sh; the shims-on-PATH export below is all that's needed.
         export PATH="''${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+        # just completions. Sourced dynamically (not a static _just in fpath)
+        # because just is asdf-managed so its version floats, and because
+        # oh-my-zsh runs compinit before this initContent — the clap-generated
+        # script ends in `compdef _just just`, which self-registers post-compinit.
+        if command -v just &>/dev/null; then
+          source <(just --completions zsh)
+        fi
         nix-build-nodirenv() {
           pushd /; popd;
         }
@@ -1101,6 +1121,27 @@ in
   programs.vscode = {
     enable = true;
     package = pkgs.vscode.fhs;
+  };
+  programs.tmux = {
+    enable = true;
+    shell = "${pkgs.zsh}/bin/zsh";
+    terminal = "tmux-256color";
+    mouse = true;
+    baseIndex = 1;
+    escapeTime = 10; # don't swallow Esc in nvim
+    historyLimit = 50000;
+    keyMode = "vi";
+    extraConfig = ''
+      # keep the client alive across flaky wifi / laptop sleep
+      set -g focus-events on
+      set -sa terminal-features ',xterm-256color:RGB'
+      # split panes in the current pane's directory
+      bind '"' split-window -c "#{pane_current_path}"
+      bind % split-window -h -c "#{pane_current_path}"
+      bind c new-window -c "#{pane_current_path}"
+      # resize to the smallest client only when clients share a window
+      setw -g aggressive-resize on
+    '';
   };
   #nix = {
   #  distributedBuilds = true;
